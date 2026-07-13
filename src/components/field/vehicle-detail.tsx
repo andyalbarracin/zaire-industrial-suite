@@ -244,12 +244,12 @@ export function VehicleDetail({ vehicle: initialVehicle, technicians, files: ini
 
             {/* MANTENIMIENTO */}
             <TabsContent value="mantenimiento" className="mt-4">
-              <MaintenanceSection vehicleId={vehicle.id} currentUser={currentUser} items={maintenance} setItems={setMaintenance} />
+              <MaintenanceSection vehicleId={vehicle.id} technicians={technicians} currentUser={currentUser} items={maintenance} setItems={setMaintenance} />
             </TabsContent>
 
             {/* COMBUSTIBLE */}
             <TabsContent value="combustible" className="mt-4">
-              <FuelSection vehicleId={vehicle.id} currentUser={currentUser} items={fuel} setItems={setFuel} />
+              <FuelSection vehicleId={vehicle.id} technicians={technicians} currentUser={currentUser} items={fuel} setItems={setFuel} />
             </TabsContent>
           </Tabs>
         </div>
@@ -269,17 +269,38 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
+// ---------- Helpers compartidos de comprobante ----------
+async function openReceiptUrl(path: string) {
+  const supabase = createClient();
+  const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(path, 60);
+  if (error || !data) { toast.error("No se pudo abrir el comprobante"); return; }
+  window.open(data.signedUrl, "_blank");
+}
+async function uploadReceipt(vehicleId: string, prefix: string, file: File | null): Promise<string | null> {
+  if (!file) return null;
+  const supabase = createClient();
+  const ext = file.name.split(".").pop() ?? "jpg";
+  // eslint-disable-next-line react-hooks/purity
+  const path = `${vehicleId}/${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await supabase.storage.from(BUCKET).upload(path, file);
+  if (error) { toast.error("Error al subir el comprobante"); return null; }
+  return path;
+}
+
 // ---------- Mantenimiento ----------
-function MaintenanceSection({ vehicleId, currentUser, items, setItems }: {
-  vehicleId: string; currentUser: { id: string; full_name: string } | null;
+function MaintenanceSection({ vehicleId, technicians, currentUser, items, setItems }: {
+  vehicleId: string; technicians: FieldTechnician[]; currentUser: { id: string; full_name: string } | null;
   items: FieldVehicleMaintenance[]; setItems: React.Dispatch<React.SetStateAction<FieldVehicleMaintenance[]>>;
 }) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ type: "service", performed_at: "", odometer: "", cost: "", currency: "ARS", workshop: "", description: "", next_service_at: "" });
+  const [form, setForm] = useState({ type: "service", performed_at: "", odometer: "", cost: "", currency: "ARS", workshop: "", description: "", next_service_at: "", technician_id: "" });
+  const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
+  const techName = (id: string | null) => technicians.find((t) => t.id === id)?.full_name ?? "—";
 
   async function add() {
     setBusy(true);
+    const receipt = await uploadReceipt(vehicleId, "maint", file);
     const supabase = createClient();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = supabase as any;
@@ -287,12 +308,13 @@ function MaintenanceSection({ vehicleId, currentUser, items, setItems }: {
       vehicle_id: vehicleId, type: form.type, performed_at: form.performed_at || null,
       odometer: form.odometer ? Number(form.odometer) : null, cost: form.cost ? Number(form.cost) : null,
       currency: form.currency, workshop: form.workshop || null, description: form.description || null,
-      next_service_at: form.next_service_at || null, created_by: currentUser?.id ?? null,
+      next_service_at: form.next_service_at || null, technician_id: form.technician_id || null,
+      receipt_path: receipt, created_by: currentUser?.id ?? null,
     }).select().single();
     if (error) { toast.error("Error al guardar el mantenimiento"); setBusy(false); return; }
     setItems((prev) => [created as FieldVehicleMaintenance, ...prev]);
-    setBusy(false); setOpen(false);
-    setForm({ type: "service", performed_at: "", odometer: "", cost: "", currency: "ARS", workshop: "", description: "", next_service_at: "" });
+    setBusy(false); setOpen(false); setFile(null);
+    setForm({ type: "service", performed_at: "", odometer: "", cost: "", currency: "ARS", workshop: "", description: "", next_service_at: "", technician_id: "" });
     toast.success("Mantenimiento registrado");
   }
 
@@ -308,17 +330,18 @@ function MaintenanceSection({ vehicleId, currentUser, items, setItems }: {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-xs text-(--sas-text-muted) uppercase tracking-wide border-b border-(--sas-border)">
-              <tr><th className="text-left py-2">Fecha</th><th className="text-left py-2">Tipo</th><th className="text-right py-2">Odóm.</th><th className="text-right py-2">Costo</th><th className="text-left py-2 pl-3">Taller</th><th className="text-left py-2">Próx.</th></tr>
+              <tr><th className="text-left py-2">Fecha</th><th className="text-left py-2">Tipo</th><th className="text-left py-2">Técnico</th><th className="text-right py-2">Odóm.</th><th className="text-right py-2">Costo</th><th className="text-left py-2 pl-3">Taller</th><th className="text-center py-2">Compr.</th></tr>
             </thead>
             <tbody className="divide-y divide-(--sas-border)">
               {items.map((m) => (
                 <tr key={m.id}>
                   <td className="py-2">{formatDate(m.performed_at)}</td>
                   <td className="py-2">{m.type ? MAINTENANCE_TYPE_LABELS[m.type as MaintenanceType] : "—"}</td>
+                  <td className="py-2">{techName(m.technician_id)}</td>
                   <td className="py-2 text-right">{m.odometer != null ? m.odometer.toLocaleString("es-AR") : "—"}</td>
                   <td className="py-2 text-right">{m.cost != null ? formatCurrency(Number(m.cost), m.currency) : "—"}</td>
                   <td className="py-2 pl-3">{m.workshop ?? "—"}</td>
-                  <td className="py-2">{formatDate(m.next_service_at)}</td>
+                  <td className="py-2 text-center">{m.receipt_path ? <button onClick={() => openReceiptUrl(m.receipt_path!)} className="text-sas-blue" title="Ver comprobante"><FileText className="w-4 h-4 inline" /></button> : "—"}</td>
                 </tr>
               ))}
             </tbody>
@@ -338,13 +361,24 @@ function MaintenanceSection({ vehicleId, currentUser, items, setItems }: {
                   <SelectContent>{MAINTENANCE_TYPES.map((t) => (<SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>))}</SelectContent>
                 </Select>
               </div>
+              <div className="space-y-1.5">
+                <Label>Técnico</Label>
+                <Select value={form.technician_id || "__none__"} onValueChange={(v) => setForm((f) => ({ ...f, technician_id: v === "__none__" ? "" : (v ?? "") }))}>
+                  <SelectTrigger><SelectValue>{form.technician_id ? techName(form.technician_id) : "— Sin asignar —"}</SelectValue></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">— Sin asignar —</SelectItem>
+                    {technicians.map((t) => (<SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-1.5"><Label>Fecha</Label><Input type="date" value={form.performed_at} onChange={(e) => setForm((f) => ({ ...f, performed_at: e.target.value }))} /></div>
               <div className="space-y-1.5"><Label>Odómetro</Label><Input type="number" value={form.odometer} onChange={(e) => setForm((f) => ({ ...f, odometer: e.target.value }))} /></div>
               <div className="space-y-1.5"><Label>Costo</Label><Input type="number" step="0.01" value={form.cost} onChange={(e) => setForm((f) => ({ ...f, cost: e.target.value }))} /></div>
-              <div className="space-y-1.5 col-span-2"><Label>Taller</Label><Input value={form.workshop} onChange={(e) => setForm((f) => ({ ...f, workshop: e.target.value }))} /></div>
+              <div className="space-y-1.5"><Label>Taller</Label><Input value={form.workshop} onChange={(e) => setForm((f) => ({ ...f, workshop: e.target.value }))} /></div>
               <div className="space-y-1.5 col-span-2"><Label>Próximo service</Label><Input type="date" value={form.next_service_at} onChange={(e) => setForm((f) => ({ ...f, next_service_at: e.target.value }))} /></div>
             </div>
             <div className="space-y-1.5"><Label>Descripción</Label><Textarea rows={2} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} /></div>
+            <div className="space-y-1.5"><Label>Comprobante (foto o PDF)</Label><Input type="file" accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
               <Button onClick={add} disabled={busy} className="bg-sas-navy-mid hover:bg-sas-navy text-white">{busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Guardar</Button>
@@ -357,16 +391,19 @@ function MaintenanceSection({ vehicleId, currentUser, items, setItems }: {
 }
 
 // ---------- Combustible ----------
-function FuelSection({ vehicleId, currentUser, items, setItems }: {
-  vehicleId: string; currentUser: { id: string; full_name: string } | null;
+function FuelSection({ vehicleId, technicians, currentUser, items, setItems }: {
+  vehicleId: string; technicians: FieldTechnician[]; currentUser: { id: string; full_name: string } | null;
   items: FieldVehicleFuelLog[]; setItems: React.Dispatch<React.SetStateAction<FieldVehicleFuelLog[]>>;
 }) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ filled_at: "", liters: "", amount: "", currency: "ARS", odometer: "", station: "" });
+  const [form, setForm] = useState({ filled_at: "", liters: "", amount: "", currency: "ARS", odometer: "", station: "", technician_id: "" });
+  const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
+  const techName = (id: string | null) => technicians.find((t) => t.id === id)?.full_name ?? "—";
 
   async function add() {
     setBusy(true);
+    const receipt = await uploadReceipt(vehicleId, "fuel", file);
     const supabase = createClient();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = supabase as any;
@@ -374,12 +411,12 @@ function FuelSection({ vehicleId, currentUser, items, setItems }: {
       vehicle_id: vehicleId, filled_at: form.filled_at ? new Date(form.filled_at).toISOString() : new Date().toISOString(),
       liters: form.liters ? Number(form.liters) : null, amount: form.amount ? Number(form.amount) : null,
       currency: form.currency, odometer: form.odometer ? Number(form.odometer) : null, station: form.station || null,
-      created_by: currentUser?.id ?? null,
+      technician_id: form.technician_id || null, receipt_path: receipt, created_by: currentUser?.id ?? null,
     }).select().single();
     if (error) { toast.error("Error al guardar la carga"); setBusy(false); return; }
     setItems((prev) => [created as FieldVehicleFuelLog, ...prev]);
-    setBusy(false); setOpen(false);
-    setForm({ filled_at: "", liters: "", amount: "", currency: "ARS", odometer: "", station: "" });
+    setBusy(false); setOpen(false); setFile(null);
+    setForm({ filled_at: "", liters: "", amount: "", currency: "ARS", odometer: "", station: "", technician_id: "" });
     toast.success("Carga registrada");
   }
 
@@ -398,16 +435,18 @@ function FuelSection({ vehicleId, currentUser, items, setItems }: {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-xs text-(--sas-text-muted) uppercase tracking-wide border-b border-(--sas-border)">
-                <tr><th className="text-left py-2">Fecha</th><th className="text-right py-2">Litros</th><th className="text-right py-2">Monto</th><th className="text-right py-2">Odóm.</th><th className="text-left py-2 pl-3">Estación</th></tr>
+                <tr><th className="text-left py-2">Fecha</th><th className="text-left py-2">Técnico</th><th className="text-right py-2">Litros</th><th className="text-right py-2">Monto</th><th className="text-right py-2">Odóm.</th><th className="text-left py-2 pl-3">Estación</th><th className="text-center py-2">Compr.</th></tr>
               </thead>
               <tbody className="divide-y divide-(--sas-border)">
                 {items.map((f) => (
                   <tr key={f.id}>
                     <td className="py-2">{formatDate(f.filled_at)}</td>
+                    <td className="py-2">{techName(f.technician_id)}</td>
                     <td className="py-2 text-right">{f.liters != null ? f.liters : "—"}</td>
                     <td className="py-2 text-right">{f.amount != null ? formatCurrency(Number(f.amount), f.currency) : "—"}</td>
                     <td className="py-2 text-right">{f.odometer != null ? f.odometer.toLocaleString("es-AR") : "—"}</td>
                     <td className="py-2 pl-3">{f.station ?? "—"}</td>
+                    <td className="py-2 text-center">{f.receipt_path ? <button onClick={() => openReceiptUrl(f.receipt_path!)} className="text-sas-blue" title="Ver comprobante"><FileText className="w-4 h-4 inline" /></button> : "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -418,11 +457,21 @@ function FuelSection({ vehicleId, currentUser, items, setItems }: {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Nueva carga de combustible</DialogTitle></DialogHeader>
           <div className="space-y-3 mt-2">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5"><Label>Fecha</Label><Input type="date" value={form.filled_at} onChange={(e) => setForm((f) => ({ ...f, filled_at: e.target.value }))} /></div>
+              <div className="space-y-1.5">
+                <Label>Técnico</Label>
+                <Select value={form.technician_id || "__none__"} onValueChange={(v) => setForm((f) => ({ ...f, technician_id: v === "__none__" ? "" : (v ?? "") }))}>
+                  <SelectTrigger><SelectValue>{form.technician_id ? techName(form.technician_id) : "— Sin asignar —"}</SelectValue></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">— Sin asignar —</SelectItem>
+                    {technicians.map((t) => (<SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-1.5"><Label>Litros</Label><Input type="number" step="0.01" value={form.liters} onChange={(e) => setForm((f) => ({ ...f, liters: e.target.value }))} /></div>
               <div className="space-y-1.5"><Label>Monto</Label><Input type="number" step="0.01" value={form.amount} onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))} /></div>
               <div className="space-y-1.5">
@@ -435,6 +484,7 @@ function FuelSection({ vehicleId, currentUser, items, setItems }: {
               <div className="space-y-1.5"><Label>Odómetro</Label><Input type="number" value={form.odometer} onChange={(e) => setForm((f) => ({ ...f, odometer: e.target.value }))} /></div>
               <div className="space-y-1.5"><Label>Estación</Label><Input value={form.station} onChange={(e) => setForm((f) => ({ ...f, station: e.target.value }))} /></div>
             </div>
+            <div className="space-y-1.5"><Label>Comprobante / ticket (foto o PDF)</Label><Input type="file" accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
               <Button onClick={add} disabled={busy} className="bg-sas-navy-mid hover:bg-sas-navy text-white">{busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Guardar</Button>

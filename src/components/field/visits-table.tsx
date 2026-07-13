@@ -20,6 +20,7 @@ import { Plus, Search, Pencil, Eye, ArrowUpDown, Download } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { FilterBar } from "@/components/field/filter-bar";
 import { StatusDot } from "@/components/shared/status-dot";
 import { cn, formatDateTime } from "@/lib/utils";
 import { BRANCHES } from "@/lib/constants";
@@ -56,12 +57,12 @@ export function VisitsTable({ initialVisits }: VisitsTableProps) {
   const [globalFilter, setGlobalFilter] = useState("");
   const [sorting, setSorting] = useState<SortingState>([]);
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
-  const [branchFilter, setBranchFilter] = useState<string>("");
+  const [branchFilter, setBranchFilter] = useState<string[]>([]);
 
   const filtered = useMemo(() => {
     return initialVisits.filter((v) => {
       if (statusFilter.length && !statusFilter.includes(v.status)) return false;
-      if (branchFilter && v.branch_id !== branchFilter) return false;
+      if (branchFilter.length && !branchFilter.includes(v.branch_id ?? "")) return false;
       return true;
     });
   }, [initialVisits, statusFilter, branchFilter]);
@@ -157,6 +158,9 @@ export function VisitsTable({ initialVisits }: VisitsTableProps) {
   function toggleStatus(value: string) {
     setStatusFilter((prev) => (prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value]));
   }
+  function toggleBranch(value: string) {
+    setBranchFilter((prev) => (prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value]));
+  }
 
   function exportExcel() {
     const rows = table.getFilteredRowModel().rows.map((r) => {
@@ -183,21 +187,9 @@ export function VisitsTable({ initialVisits }: VisitsTableProps) {
     <div className="sas-card">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-(--sas-border)">
-        <div className="flex items-center gap-2">
-          <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--sas-text-muted)" />
-            <Input placeholder="Buscar visitas..." value={globalFilter} onChange={(e) => setGlobalFilter(e.target.value)} className="pl-9 h-9" />
-          </div>
-          <select
-            value={branchFilter}
-            onChange={(e) => setBranchFilter(e.target.value)}
-            className="h-9 rounded-lg border border-(--sas-border) bg-white px-2 text-sm text-(--sas-text)"
-          >
-            <option value="">Todas las sucursales</option>
-            {BRANCHES.map((b) => (
-              <option key={b.id} value={b.id}>{b.name}</option>
-            ))}
-          </select>
+        <div className="relative w-64">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--sas-text-muted)" />
+          <Input placeholder="Buscar visitas..." value={globalFilter} onChange={(e) => setGlobalFilter(e.target.value)} className="pl-9 h-9" />
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={exportExcel} className="h-9">
@@ -209,23 +201,14 @@ export function VisitsTable({ initialVisits }: VisitsTableProps) {
         </div>
       </div>
 
-      {/* Chips de estado */}
-      <div className="flex flex-wrap items-center gap-1.5 px-4 py-2.5 border-b border-(--sas-border)">
-        {VISIT_STATUSES.map((s) => (
-          <button
-            key={s.value}
-            onClick={() => toggleStatus(s.value)}
-            className={cn(
-              "px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
-              statusFilter.includes(s.value)
-                ? VISIT_STATUS_COLORS[s.value]
-                : "bg-white text-(--sas-text-muted) border-(--sas-border) hover:bg-slate-50"
-            )}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
+      {/* Filtros unificados */}
+      <FilterBar
+        groups={[
+          { key: "estado", label: "Estado", options: VISIT_STATUSES.map((s) => ({ value: s.value, label: s.label })), selected: statusFilter, onToggle: toggleStatus },
+          { key: "sucursal", label: "Sucursal", options: BRANCHES.map((b) => ({ value: b.id, label: b.code })), selected: branchFilter, onToggle: toggleBranch },
+        ]}
+        onClear={() => { setStatusFilter([]); setBranchFilter([]); }}
+      />
 
       {/* Table */}
       <div className="overflow-x-auto">
@@ -273,8 +256,16 @@ export function VisitsTable({ initialVisits }: VisitsTableProps) {
         </table>
       </div>
 
-      <div className="flex items-center justify-between px-4 py-3 border-t border-(--sas-border) text-sm text-(--sas-text-muted)">
-        <span>{table.getFilteredRowModel().rows.length} registros</span>
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-(--sas-border) text-sm text-(--sas-text-muted)">
+        <div className="flex items-center gap-2">
+          <span>{table.getFilteredRowModel().rows.length} registros</span>
+          <span className="text-(--sas-border)">·</span>
+          <label className="flex items-center gap-1.5">Mostrar
+            <select value={table.getState().pagination.pageSize} onChange={(e) => table.setPageSize(Number(e.target.value))} className="h-8 rounded-lg border border-(--sas-border) bg-white px-2 text-sm text-(--sas-text)">
+              {[10, 20, 50, 100].map((n) => (<option key={n} value={n}>{n}</option>))}
+            </select>
+          </label>
+        </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>Anterior</Button>
           <span className="text-xs">Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}</span>

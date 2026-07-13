@@ -192,7 +192,7 @@ export async function getVehicleMaintenance(vehicleId: string) {
   const sb = supabase as any;
   const { data } = await sb
     .from("field_vehicle_maintenance")
-    .select("id, vehicle_id, type, performed_at, odometer, cost, currency, workshop, description, next_service_at, created_by, created_at, updated_at, deleted_at")
+    .select("id, vehicle_id, type, performed_at, odometer, cost, currency, workshop, description, next_service_at, technician_id, receipt_path, created_by, created_at, updated_at, deleted_at")
     .eq("vehicle_id", vehicleId)
     .is("deleted_at", null)
     .order("performed_at", { ascending: false });
@@ -205,7 +205,7 @@ export async function getVehicleFuelLogs(vehicleId: string) {
   const sb = supabase as any;
   const { data } = await sb
     .from("field_vehicle_fuel_logs")
-    .select("id, vehicle_id, filled_at, liters, amount, currency, odometer, station, technician_id, created_by, created_at, deleted_at")
+    .select("id, vehicle_id, filled_at, liters, amount, currency, odometer, station, technician_id, receipt_path, created_by, created_at, deleted_at")
     .eq("vehicle_id", vehicleId)
     .is("deleted_at", null)
     .order("filled_at", { ascending: false });

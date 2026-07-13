@@ -204,6 +204,8 @@ export interface FieldVehicleMaintenance {
   workshop: string | null;
   description: string | null;
   next_service_at: string | null;
+  technician_id: string | null;
+  receipt_path: string | null;
   created_by: string | null;
   deleted_at: string | null;
   created_at: string;
@@ -220,6 +222,7 @@ export interface FieldVehicleFuelLog {
   odometer: number | null;
   station: string | null;
   technician_id: string | null;
+  receipt_path: string | null;
   created_by: string | null;
   deleted_at: string | null;
   created_at: string;

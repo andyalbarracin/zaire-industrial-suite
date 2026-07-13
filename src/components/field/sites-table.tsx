@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FieldMap, type MapMarker } from "@/components/field/field-map";
 import { SiteForm } from "./site-form";
+import { FilterBar } from "@/components/field/filter-bar";
 import { cn } from "@/lib/utils";
 import type { FieldSite, Client } from "@/lib/field/types";
 
@@ -27,7 +28,7 @@ export function SitesTable({ initialSites, clients }: SitesTableProps) {
   const [activeFilter, setActiveFilter] = useState<string>("");
   const [locFilter, setLocFilter] = useState<string>("");
   const [formOpen, setFormOpen] = useState(false);
-  const [showMap, setShowMap] = useState(false);
+  const [showMap, setShowMap] = useState(true);
   const [pageSize, setPageSize] = useState(20);
   const [page, setPage] = useState(0);
 
@@ -75,10 +76,6 @@ export function SitesTable({ initialSites, clients }: SitesTableProps) {
     XLSX.writeFile(wb, `Zaire_Field_Plantas_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
-  const pill = (active: boolean, extra = "") =>
-    cn("px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
-      active ? "bg-sas-navy text-white border-sas-navy" : "bg-white text-(--sas-text-muted) border-(--sas-border) hover:bg-slate-50", extra);
-
   return (
     <div className="space-y-4">
       {showMap && mapMarkers.length > 0 && (
@@ -100,13 +97,13 @@ export function SitesTable({ initialSites, clients }: SitesTableProps) {
           </div>
         </div>
 
-        <div className="px-4 py-2.5 border-b border-(--sas-border) flex flex-wrap items-center gap-1.5">
-          <button onClick={() => { setActiveFilter(activeFilter === "activas" ? "" : "activas"); setPage(0); }} className={pill(activeFilter === "activas", "border-green-200")}>Activas</button>
-          <button onClick={() => { setActiveFilter(activeFilter === "inactivas" ? "" : "inactivas"); setPage(0); }} className={pill(activeFilter === "inactivas", "border-red-200")}>Inactivas</button>
-          <span className="w-px h-4 bg-(--sas-border) mx-1" />
-          <button onClick={() => { setLocFilter(locFilter === "con" ? "" : "con"); setPage(0); }} className={pill(locFilter === "con")}>Con ubicación</button>
-          <button onClick={() => { setLocFilter(locFilter === "sin" ? "" : "sin"); setPage(0); }} className={pill(locFilter === "sin", "border-amber-200")}>Sin ubicación</button>
-        </div>
+        <FilterBar
+          groups={[
+            { key: "estado", label: "Estado", options: [{ value: "activas", label: "Activas" }, { value: "inactivas", label: "Inactivas" }], selected: activeFilter ? [activeFilter] : [], onToggle: (v) => { setActiveFilter(activeFilter === v ? "" : v); setPage(0); } },
+            { key: "ubic", label: "Ubicación", options: [{ value: "con", label: "Con ubicación" }, { value: "sin", label: "Sin ubicación" }], selected: locFilter ? [locFilter] : [], onToggle: (v) => { setLocFilter(locFilter === v ? "" : v); setPage(0); } },
+          ]}
+          onClear={() => { setActiveFilter(""); setLocFilter(""); setPage(0); }}
+        />
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

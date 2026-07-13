@@ -10,6 +10,7 @@ import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BRANCHES } from "@/lib/constants";
+import { FilterBar } from "@/components/field/filter-bar";
 import { cn } from "@/lib/utils";
 import type { FieldTechnician } from "@/lib/field/types";
 
@@ -66,10 +67,6 @@ export function TechniciansTable({ initialTechnicians }: TechniciansTableProps) 
     XLSX.writeFile(wb, `Zaire_Field_Tecnicos_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
-  const pill = (active: boolean, extra = "") =>
-    cn("px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
-      active ? "bg-sas-navy text-white border-sas-navy" : "bg-white text-(--sas-text-muted) border-(--sas-border) hover:bg-slate-50", extra);
-
   return (
     <div className="sas-card">
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-(--sas-border)">
@@ -85,12 +82,13 @@ export function TechniciansTable({ initialTechnicians }: TechniciansTableProps) 
         </div>
       </div>
 
-      <div className="px-4 py-2.5 border-b border-(--sas-border) flex flex-wrap items-center gap-1.5">
-        {BRANCHES.map((b) => (<button key={b.id} onClick={() => toggleBranch(b.id)} className={pill(branchFilter.includes(b.id))}>{b.code}</button>))}
-        <span className="w-px h-4 bg-(--sas-border) mx-1" />
-        <button onClick={() => { setActiveFilter(activeFilter === "activos" ? "" : "activos"); setPage(0); }} className={pill(activeFilter === "activos", "border-green-200")}>Activos</button>
-        <button onClick={() => { setActiveFilter(activeFilter === "inactivos" ? "" : "inactivos"); setPage(0); }} className={pill(activeFilter === "inactivos", "border-red-200")}>Inactivos</button>
-      </div>
+      <FilterBar
+        groups={[
+          { key: "sucursal", label: "Sucursal", options: BRANCHES.map((b) => ({ value: b.id, label: b.code })), selected: branchFilter, onToggle: toggleBranch },
+          { key: "estado", label: "Estado", options: [{ value: "activos", label: "Activos" }, { value: "inactivos", label: "Inactivos" }], selected: activeFilter ? [activeFilter] : [], onToggle: (v) => { setActiveFilter(activeFilter === v ? "" : v); setPage(0); } },
+        ]}
+        onClear={() => { setBranchFilter([]); setActiveFilter(""); setPage(0); }}
+      />
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">

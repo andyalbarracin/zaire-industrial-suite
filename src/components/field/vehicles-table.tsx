@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { BRANCHES } from "@/lib/constants";
 import { VEHICLE_TYPES, VEHICLE_TYPE_LABELS } from "@/lib/field/constants";
 import { VehicleForm } from "./vehicle-form";
+import { FilterBar } from "@/components/field/filter-bar";
 import { cn } from "@/lib/utils";
 import type { FieldVehicle, FieldTechnician, VehicleType } from "@/lib/field/types";
 
@@ -83,10 +84,6 @@ export function VehiclesTable({ initialVehicles, technicians }: VehiclesTablePro
     XLSX.writeFile(wb, `Zaire_Field_Unidades_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
-  const pill = (active: boolean, extra = "") =>
-    cn("px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
-      active ? "bg-sas-navy text-white border-sas-navy" : "bg-white text-(--sas-text-muted) border-(--sas-border) hover:bg-slate-50", extra);
-
   return (
     <div className="sas-card">
       {/* Toolbar */}
@@ -103,19 +100,15 @@ export function VehiclesTable({ initialVehicles, technicians }: VehiclesTablePro
         </div>
       </div>
 
-      {/* Filtros en pills */}
-      <div className="px-4 py-2.5 border-b border-(--sas-border) flex flex-wrap items-center gap-1.5">
-        {VEHICLE_TYPES.map((t) => (
-          <button key={t.value} onClick={() => toggle(typeFilter, setTypeFilter, t.value)} className={pill(typeFilter.includes(t.value))}>{t.label}</button>
-        ))}
-        <span className="w-px h-4 bg-(--sas-border) mx-1" />
-        {BRANCHES.map((b) => (
-          <button key={b.id} onClick={() => toggle(branchFilter, setBranchFilter, b.id)} className={pill(branchFilter.includes(b.id))}>{b.code}</button>
-        ))}
-        <span className="w-px h-4 bg-(--sas-border) mx-1" />
-        <button onClick={() => { setActiveFilter(activeFilter === "activas" ? "" : "activas"); setPage(0); }} className={pill(activeFilter === "activas", "border-green-200")}>Activas</button>
-        <button onClick={() => { setActiveFilter(activeFilter === "inactivas" ? "" : "inactivas"); setPage(0); }} className={pill(activeFilter === "inactivas", "border-red-200")}>Inactivas</button>
-      </div>
+      {/* Filtros unificados */}
+      <FilterBar
+        groups={[
+          { key: "tipo", label: "Tipo", options: VEHICLE_TYPES.map((t) => ({ value: t.value, label: t.label })), selected: typeFilter, onToggle: (v) => toggle(typeFilter, setTypeFilter, v) },
+          { key: "sucursal", label: "Sucursal", options: BRANCHES.map((b) => ({ value: b.id, label: b.code })), selected: branchFilter, onToggle: (v) => toggle(branchFilter, setBranchFilter, v) },
+          { key: "estado", label: "Estado", options: [{ value: "activas", label: "Activas" }, { value: "inactivas", label: "Inactivas" }], selected: activeFilter ? [activeFilter] : [], onToggle: (v) => { setActiveFilter(activeFilter === v ? "" : v); setPage(0); } },
+        ]}
+        onClear={() => { setTypeFilter([]); setBranchFilter([]); setActiveFilter(""); setPage(0); }}
+      />
 
       {/* Tabla */}
       <div className="overflow-x-auto">

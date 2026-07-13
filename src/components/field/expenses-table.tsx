@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FilterBar } from "@/components/field/filter-bar";
 import { formatCurrency, formatDate, cn } from "@/lib/utils";
 import {
   EXPENSE_CATEGORIES,
@@ -229,22 +230,25 @@ export function ExpensesTable({ initialExpenses, visits, currentUser }: Expenses
 
   return (
     <div className="space-y-4">
-      {/* Mini-cards de resumen (estilo dashboard) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
-        <div className="sas-card p-3.5 flex flex-col justify-between bg-sas-navy text-white">
+      {/* Resumen por categoría (responsive: las cards crecen para llenar el ancho) */}
+      <div className="flex flex-wrap gap-3">
+        <div className="flex-1 basis-[160px] min-w-[150px] rounded-xl p-3.5 bg-sas-navy text-white shadow-sm flex flex-col justify-between">
           <span className="text-[11px] font-medium text-white/70">Total ARS (filtrado)</span>
-          <span className="text-lg font-bold mt-1">{formatCurrency(summary.total, "ARS")}</span>
+          <span className="text-xl font-bold mt-1">{formatCurrency(summary.total, "ARS")}</span>
         </div>
         {summary.cats.map(({ cat, amount, share }) => {
           const c = CATEGORY_COLOR[cat] ?? CATEGORY_COLOR.otro;
           return (
-            <div key={cat} className={cn("sas-card p-3.5 flex flex-col justify-between", c.bg)}>
+            <div key={cat} className="flex-1 basis-[160px] min-w-[150px] rounded-xl border border-(--sas-border) bg-white p-3.5 shadow-sm flex flex-col">
               <div className="flex items-center justify-between">
-                <span className={cn("text-[11px] font-medium", c.text)}>{EXPENSE_CATEGORY_LABELS[cat as ExpenseCategory]}</span>
+                <span className="flex items-center gap-1.5 text-[11px] font-medium text-(--sas-text)">
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.hex }} />
+                  {EXPENSE_CATEGORY_LABELS[cat as ExpenseCategory]}
+                </span>
                 <span className="text-[10px] text-(--sas-text-muted)">{Math.round(share * 100)}%</span>
               </div>
-              <span className="text-base font-bold text-(--sas-text) mt-1">{formatCurrency(amount, "ARS")}</span>
-              <div className="mt-2 h-1.5 rounded-full bg-black/5 overflow-hidden">
+              <span className="text-base font-bold text-(--sas-text) mt-1.5">{formatCurrency(amount, "ARS")}</span>
+              <div className="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden">
                 <div className="h-full rounded-full" style={{ width: `${Math.max(share * 100, 4)}%`, backgroundColor: c.hex }} />
               </div>
             </div>
@@ -269,44 +273,14 @@ export function ExpensesTable({ initialExpenses, visits, currentUser }: Expenses
           </div>
         </div>
 
-        {/* Filtros en pills */}
-        <div className="px-4 py-2.5 border-b border-(--sas-border) space-y-2">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[11px] font-semibold text-(--sas-text-muted) uppercase tracking-wide mr-1">Categoría</span>
-            {EXPENSE_CATEGORIES.map((c) => (
-              <button
-                key={c.value}
-                onClick={() => toggle(categoryFilter, setCategoryFilter, c.value)}
-                className={cn(
-                  "px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
-                  categoryFilter.includes(c.value)
-                    ? "bg-sas-navy text-white border-sas-navy"
-                    : "bg-white text-(--sas-text-muted) border-(--sas-border) hover:bg-slate-50"
-                )}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[11px] font-semibold text-(--sas-text-muted) uppercase tracking-wide mr-1">Estado</span>
-            {EXPENSE_STATUSES.map((s) => (
-              <button
-                key={s.value}
-                onClick={() => toggle(statusFilter, setStatusFilter, s.value)}
-                className={cn(
-                  "px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
-                  statusFilter.includes(s.value) ? EXPENSE_STATUS_COLORS[s.value as ExpenseStatus] : "bg-white text-(--sas-text-muted) border-(--sas-border) hover:bg-slate-50"
-                )}
-              >
-                {s.label}
-              </button>
-            ))}
-            {(categoryFilter.length > 0 || statusFilter.length > 0) && (
-              <button onClick={() => { setCategoryFilter([]); setStatusFilter([]); setPage(0); }} className="text-xs text-sas-blue hover:underline ml-1">Limpiar</button>
-            )}
-          </div>
-        </div>
+        {/* Filtros unificados */}
+        <FilterBar
+          groups={[
+            { key: "cat", label: "Categoría", options: EXPENSE_CATEGORIES.map((c) => ({ value: c.value, label: c.label })), selected: categoryFilter, onToggle: (v) => toggle(categoryFilter, setCategoryFilter, v) },
+            { key: "estado", label: "Estado", options: EXPENSE_STATUSES.map((s) => ({ value: s.value, label: s.label })), selected: statusFilter, onToggle: (v) => toggle(statusFilter, setStatusFilter, v) },
+          ]}
+          onClear={() => { setCategoryFilter([]); setStatusFilter([]); setPage(0); }}
+        />
 
         {/* Table */}
         <div className="overflow-x-auto">

@@ -16,12 +16,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusDot } from "@/components/shared/status-dot";
+import { FilterBar } from "@/components/field/filter-bar";
 import { formatDate } from "@/lib/utils";
 import { DOC_TYPES, DOC_TYPE_LABELS } from "@/lib/field/constants";
 import type { FieldDocumentWithExpiry } from "@/lib/field/queries";
 import type { FieldTechnician, FieldVehicle, DocType } from "@/lib/field/types";
 
 const BUCKET = "field-docs";
+const PAGE_SIZES = [10, 20, 50, 100];
 
 interface DocumentsTableProps {
   initialDocuments: FieldDocumentWithExpiry[];
@@ -52,9 +54,12 @@ export function DocumentsTable({ initialDocuments, technicians, vehicles }: Docu
   const [documents, setDocuments] = useState<FieldDocumentWithExpiry[]>(initialDocuments);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
-  const [expiryFilter, setExpiryFilter] = useState("");
+  const [entityFilter, setEntityFilter] = useState<string[]>([]);
+  const [expiryFilter, setExpiryFilter] = useState<string[]>([]);
   const [addOpen, setAddOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [pageSize, setPageSize] = useState(20);
+  const [page, setPage] = useState(0);
 
   const { register, handleSubmit, reset, watch, setValue, formState: { errors, isSubmitting } } = useForm<AddData>({
     resolver: zodResolver(addSchema),
@@ -67,12 +72,16 @@ export function DocumentsTable({ initialDocuments, technicians, vehicles }: Docu
     const s = search.toLowerCase();
     return documents.filter((d) => {
       if (typeFilter && d.doc_type !== typeFilter) return false;
-      if (expiryFilter) {
+      if (entityFilter.length && !entityFilter.includes(d.entity_type ?? "")) return false;
+      if (expiryFilter.length) {
         const dd = d.days_until_expiry;
-        if (expiryFilter === "vencido" && !(dd != null && dd < 0)) return false;
-        if (expiryFilter === "7" && !(dd != null && dd >= 0 && dd <= 7)) return false;
-        if (expiryFilter === "30" && !(dd != null && dd > 7 && dd <= 30)) return false;
-        if (expiryFilter === "vigente" && !(dd == null || dd > 30)) return false;
+        const ok = expiryFilter.some((f) =>
+          (f === "vencido" && dd != null && dd < 0) ||
+          (f === "7" && dd != null && dd >= 0 && dd <= 7) ||
+          (f === "30" && dd != null && dd > 7 && dd <= 30) ||
+          (f === "vigente" && (dd == null || dd > 30))
+        );
+        if (!ok) return false;
       }
       if (s) {
         const hay = `${d.technician?.full_name ?? ""} ${d.vehicle?.plate ?? ""} ${d.doc_number ?? ""}`.toLowerCase();
@@ -80,7 +89,12 @@ export function DocumentsTable({ initialDocuments, technicians, vehicles }: Docu
       }
       return true;
     });
-  }, [documents, search, typeFilter, expiryFilter]);
+  }, [documents, search, typeFilter, entityFilter, expiryFilter]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, pageCount - 1);
+  const pageRows = filtered.slice(safePage * pageSize, safePage * pageSize + pageSize);
+  const toggle = (list: string[], set: (v: string[]) => void, v: string) => { setPage(0); set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]); };
 
   function entityName(d: FieldDocumentWithExpiry): string {
     if (d.entity_type === "technician") return d.technician?.full_name ?? "—";
@@ -149,22 +163,23 @@ export function DocumentsTable({ initialDocuments, technicians, vehicles }: Docu
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--sas-text-muted)" />
             <Input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9" />
           </div>
-          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="h-9 rounded-lg border border-(--sas-border) bg-white px-2 text-sm">
+          <select value={typeFilter} onChange={(e) => { setTypeFilter(e.target.value); setPage(0); }} className="h-9 rounded-lg border border-(--sas-border) bg-white px-2 text-sm">
             <option value="">Todos los tipos</option>
             {DOC_TYPES.map((t) => (<option key={t.value} value={t.value}>{t.label}</option>))}
-          </select>
-          <select value={expiryFilter} onChange={(e) => setExpiryFilter(e.target.value)} className="h-9 rounded-lg border border-(--sas-border) bg-white px-2 text-sm">
-            <option value="">Todos</option>
-            <option value="vencido">Vencidos</option>
-            <option value="7">Vence ≤7 días</option>
-            <option value="30">Vence ≤30 días</option>
-            <option value="vigente">Vigentes</option>
           </select>
         </div>
         <Button onClick={openAdd} className="bg-sas-navy-mid hover:bg-sas-navy text-white h-9">
           <Plus className="w-4 h-4 mr-1.5" /> Nuevo Documento
         </Button>
       </div>
+
+      <FilterBar
+        groups={[
+          { key: "entidad", label: "Entidad", options: [{ value: "technician", label: "Técnico" }, { value: "vehicle", label: "Vehículo" }], selected: entityFilter, onToggle: (v) => toggle(entityFilter, setEntityFilter, v) },
+          { key: "venc", label: "Vencimiento", options: [{ value: "vencido", label: "Vencidos" }, { value: "7", label: "≤7 días" }, { value: "30", label: "≤30 días" }, { value: "vigente", label: "Vigentes" }], selected: expiryFilter, onToggle: (v) => toggle(expiryFilter, setExpiryFilter, v) },
+        ]}
+        onClear={() => { setEntityFilter([]); setExpiryFilter([]); setPage(0); }}
+      />
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -180,7 +195,7 @@ export function DocumentsTable({ initialDocuments, technicians, vehicles }: Docu
             </tr>
           </thead>
           <tbody className="divide-y divide-(--sas-border)">
-            {filtered.map((d) => (
+            {pageRows.map((d) => (
               <tr key={d.id} className="hover:bg-slate-50/80">
                 <td className="px-4 py-3">
                   <span className="font-medium text-(--sas-text)">{entityName(d)}</span>
@@ -205,11 +220,28 @@ export function DocumentsTable({ initialDocuments, technicians, vehicles }: Docu
                 </td>
               </tr>
             ))}
-            {!filtered.length && (
+            {!pageRows.length && (
               <tr><td colSpan={7} className="px-4 py-12 text-center text-(--sas-text-muted)">No se encontraron documentos</td></tr>
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-(--sas-border) text-sm text-(--sas-text-muted)">
+        <div className="flex items-center gap-2">
+          <span>{filtered.length} registros</span>
+          <span className="text-(--sas-border)">·</span>
+          <label className="flex items-center gap-1.5">Mostrar
+            <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }} className="h-8 rounded-lg border border-(--sas-border) bg-white px-2 text-sm text-(--sas-text)">
+              {PAGE_SIZES.map((n) => (<option key={n} value={n}>{n}</option>))}
+            </select>
+          </label>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={safePage === 0}>Anterior</Button>
+          <span className="text-xs">Página {safePage + 1} de {pageCount}</span>
+          <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))} disabled={safePage >= pageCount - 1}>Siguiente</Button>
+        </div>
       </div>
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
