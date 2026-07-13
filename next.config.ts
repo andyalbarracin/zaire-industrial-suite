@@ -1,5 +1,5 @@
 /* next.config.ts — 2026-05-19
-   Configuración de Next.js 16 para SAS Trace */
+   Configuración de Next.js 16 para Zaire Trace */
 
 import type { NextConfig } from "next";
 
@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
               "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
-              "img-src 'self' data: blob: https://*.supabase.co",
+              "img-src 'self' data: blob: https://*.supabase.co https://*.tile.openstreetmap.org https://tile.openstreetmap.org",
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
             ].join("; "),
           },

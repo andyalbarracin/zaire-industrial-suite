@@ -1,5 +1,5 @@
 // layout.tsx — src/app/layout.tsx — 2026-05-19
-// Root layout de SAS Trace con Inter font y Sonner toaster
+// Root layout de Zaire Trace con Inter font y Sonner toaster
 
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";

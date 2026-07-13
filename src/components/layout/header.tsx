@@ -5,7 +5,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { ChevronRight, Search, Bell, AlertCircle, Clock } from "lucide-react";
+import { ChevronRight, Search, Bell, AlertCircle, Clock, FileCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Notification } from "@/app/(dashboard)/layout";
 
@@ -190,10 +190,11 @@ export function Header({ notifications }: HeaderProps) {
                   const days = getDaysUntilDue(n.date_due);
                   const isOverdue = days < 0;
                   const isUrgent = days >= 0 && days <= 2;
+                  const isField = n.kind === "field_doc";
                   return (
                     <Link
                       key={n.id}
-                      href={`/ordenes/${n.id}`}
+                      href={n.href}
                       onClick={() => setIsNotifOpen(false)}
                       className="flex items-start gap-3 px-4 py-3 border-b border-(--sas-border) last:border-0 hover:bg-slate-50 transition-colors duration-100"
                     >
@@ -201,14 +202,19 @@ export function Header({ notifications }: HeaderProps) {
                         "mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center shrink-0",
                         isOverdue ? "bg-red-50" : isUrgent ? "bg-amber-50" : "bg-slate-50"
                       )}>
-                        {isOverdue
-                          ? <AlertCircle className="w-3.5 h-3.5 text-red-500" />
-                          : <Clock className="w-3.5 h-3.5 text-amber-500" />
+                        {isField
+                          ? <FileCheck className={cn("w-3.5 h-3.5", isOverdue ? "text-red-500" : "text-amber-500")} />
+                          : isOverdue
+                            ? <AlertCircle className="w-3.5 h-3.5 text-red-500" />
+                            : <Clock className="w-3.5 h-3.5 text-amber-500" />
                         }
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-(--sas-text) font-mono">{n.order_number}</p>
-                        <p className="text-xs text-(--sas-text-muted) truncate">{n.clients?.business_name ?? "—"}</p>
+                        <p className={cn("text-sm font-medium text-(--sas-text)", !isField && "font-mono")}>
+                          {n.title}
+                          {isField && <span className="ml-1.5 text-[10px] font-semibold text-violet-600 bg-violet-50 border border-violet-100 rounded px-1 py-0.5">FIELD</span>}
+                        </p>
+                        <p className="text-xs text-(--sas-text-muted) truncate">{n.subtitle}</p>
                       </div>
                       <span className={cn(
                         "text-xs font-semibold shrink-0 mt-0.5",

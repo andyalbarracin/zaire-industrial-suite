@@ -1,5 +1,5 @@
 // database.ts — src/lib/types/database.ts — 2026-05-27
-// Tipos TypeScript para todas las tablas de Supabase / SAS Trace
+// Tipos TypeScript para todas las tablas de Supabase / Zaire Trace
 
 export type OrderStatus =
   | "ingresada"

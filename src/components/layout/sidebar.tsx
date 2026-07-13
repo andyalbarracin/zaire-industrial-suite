@@ -1,6 +1,6 @@
 "use client";
 // sidebar.tsx — src/components/layout/sidebar.tsx — 2026-05-19
-// Sidebar de navegación colapsable con branding SAS Trace
+// Sidebar de navegación colapsable con branding Zaire Trace
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -18,6 +18,12 @@ import {
   ChevronRight,
   LogOut,
   LifeBuoy,
+  MapPin,
+  HardHat,
+  Truck,
+  Factory,
+  Receipt,
+  FileCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -44,6 +50,17 @@ const NAV_GESTION: NavItem[] = [
   { href: "/configuracion", label: "Configuración", icon: Settings, adminOnly: true },
 ];
 
+const NAV_FIELD: NavItem[] = [
+  { href: "/field", label: "Panel Field", icon: LayoutDashboard },
+  { href: "/field/visitas", label: "Visitas", icon: MapPin },
+  { href: "/field/tecnicos", label: "Técnicos", icon: HardHat },
+  { href: "/field/unidades", label: "Unidades", icon: Truck },
+  { href: "/field/plantas", label: "Plantas", icon: Factory },
+  { href: "/field/gastos", label: "Gastos", icon: Receipt },
+  { href: "/field/documentos", label: "Documentos", icon: FileCheck },
+  { href: "/field/reportes", label: "Reportes Field", icon: BarChart3 },
+];
+
 interface SidebarProps {
   profile: Profile | null;
 }
@@ -61,7 +78,8 @@ export function Sidebar({ profile }: SidebarProps) {
   }
 
   const isActive = (href: string) => {
-    if (href === "/") return pathname === "/";
+    // Rutas "índice" con match exacto para no activarse en sus subrutas
+    if (href === "/" || href === "/field") return pathname === href;
     return pathname.startsWith(href);
   };
 
@@ -131,6 +149,32 @@ export function Sidebar({ profile }: SidebarProps) {
           {NAV_GESTION.filter(
             (item) => !item.adminOnly || profile?.role === "admin"
           ).map((item) => (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                className={cn(
+                  "relative flex items-center gap-3 px-3 py-2.5 rounded-[9px] text-[13.5px] font-medium transition-colors duration-140",
+                  isActive(item.href)
+                    ? "bg-linear-to-r from-sas-blue/30 to-sas-blue/15 text-white before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:rounded-r-[3px] before:bg-sas-light"
+                    : "text-[#B7C5E0] hover:text-white hover:bg-white/6",
+                  collapsed && "justify-center px-2"
+                )}
+                title={collapsed ? item.label : undefined}
+              >
+                <item.icon className="w-4.5 h-4.5 shrink-0" />
+                {!collapsed && <span className="truncate">{item.label}</span>}
+              </Link>
+            </li>
+          ))}
+        </ul>
+
+        {/* Divider + label Zaire Field */}
+        <div className="h-px bg-white/[0.07] mx-3 my-2.5" />
+        {!collapsed && (
+          <div className="text-[10px] font-semibold tracking-widest uppercase text-[#5C719B] px-6 pb-1.5">Zaire Field</div>
+        )}
+        <ul className="space-y-0.5 px-3.5">
+          {NAV_FIELD.map((item) => (
             <li key={item.href}>
               <Link
                 href={item.href}

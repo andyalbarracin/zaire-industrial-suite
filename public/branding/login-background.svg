@@ -14,5 +14,5 @@
   <circle cx="200" cy="150" r="180" fill="#60a5fa" opacity="0.03"/>
   <circle cx="1200" cy="700" r="250" fill="#3b82f6" opacity="0.04"/>
   <circle cx="900" cy="200" r="120" fill="#60a5fa" opacity="0.03"/>
-  <text x="720" y="880" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="rgba(255,255,255,0.15)" letter-spacing="4">SAS TRACE — SISTEMA DE TRAZABILIDAD INDUSTRIAL</text>
+  <text x="720" y="880" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="rgba(255,255,255,0.15)" letter-spacing="4">ZAIRE TRACE — SISTEMA DE TRAZABILIDAD INDUSTRIAL</text>
 </svg>
