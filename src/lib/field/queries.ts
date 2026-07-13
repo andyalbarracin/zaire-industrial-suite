@@ -202,7 +202,7 @@ export async function getVisitReport(visitId: string) {
   const { data } = await sb
     .from("field_visit_reports")
     .select(
-      "id, visit_id, equipment_tag, serial_number, medida, unidad_medida, marca, modelo, materiales_caras, materiales_orings, findings, recommendations, requires_repair, created_work_order_item_id, created_at, updated_at"
+      "id, visit_id, equipment_tag, serial_number, medida, unidad_medida, marca, modelo, materiales_caras, materiales_orings, findings, recommendations, requires_repair, created_work_order_item_id, ot_requested, ot_request_status, ot_request_notes, ot_requested_at, created_at, updated_at"
     )
     .eq("visit_id", visitId)
     .maybeSingle();
@@ -223,6 +223,34 @@ export async function getVisitExpenses(visitId: string) {
     .is("deleted_at", null)
     .order("incurred_at", { ascending: false });
   return (data ?? []) as FieldExpense[];
+}
+
+// ---------- Detalle de un gasto + su log de auditoría ----------
+export async function getExpense(id: string): Promise<FieldExpense | null> {
+  const supabase = await createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any;
+  const { data } = await sb
+    .from("field_expenses")
+    .select(
+      "id, visit_id, technician_id, category, amount, currency, description, incurred_at, receipt_path, status, is_billable, approved_by, created_at, updated_at, deleted_at, technician:field_technicians(id, full_name, branch_id), visit:field_visits(id, visit_number, branch_id)"
+    )
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  return (data ?? null) as FieldExpense | null;
+}
+
+export async function getExpenseEvents(expenseId: string) {
+  const supabase = await createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any;
+  const { data } = await sb
+    .from("field_expense_events")
+    .select("id, expense_id, event_type, old_status, new_status, comment, metadata, created_by, created_at, profile:profiles(full_name)")
+    .eq("expense_id", expenseId)
+    .order("created_at", { ascending: true });
+  return (data ?? []) as import("@/lib/field/types").FieldExpenseEvent[];
 }
 
 // ---------- Datos para el form de visitas ----------

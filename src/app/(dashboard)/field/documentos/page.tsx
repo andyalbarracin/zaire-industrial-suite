@@ -18,6 +18,10 @@ export default async function DocumentosPage() {
       <div>
         <h1 className="text-2xl font-bold text-(--sas-text)">Documentos</h1>
         <p className="text-sm text-(--sas-text-muted) mt-0.5">{documents.length} documentos registrados</p>
+        <p className="text-xs text-(--sas-text-muted) mt-1">
+          Podés cargar <strong>múltiples documentos</strong> por técnico o unidad: licencia, VTV, RTO, seguro,
+          cédula, título, ADR/SENASA, ART, apto médico, certificados de seguridad, trabajo en altura, cursos y más.
+        </p>
       </div>
       <DocumentsTable initialDocuments={documents} technicians={technicians} vehicles={vehicles} />
     </div>

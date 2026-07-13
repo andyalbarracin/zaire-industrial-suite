@@ -52,14 +52,36 @@ export type ExpenseStatus = "pendiente" | "aprobado" | "reintegrado" | "rechazad
 export type DocEntityType = "technician" | "vehicle";
 
 export type DocType =
+  // Vehículo / unidad
   | "licencia_conducir"
   | "vtv"
   | "rto"
   | "seguro"
   | "cedula"
+  | "titulo"
+  | "adr"
+  | "senasa"
+  // Técnico / persona
   | "art"
   | "carnet_profesional"
+  | "apto_medico"
+  | "certificado_seguridad"
+  | "trabajo_altura"
+  | "espacios_confinados"
+  | "manejo_defensivo"
+  | "curso"
+  | "contrato"
   | "otro";
+
+export type ExpenseEventType =
+  | "creado"
+  | "editado"
+  | "aprobado"
+  | "rechazado"
+  | "reintegrado"
+  | "revertido"
+  | "comentario"
+  | "adjunto";
 
 export type DevicePlatform = "ios" | "android";
 
@@ -195,10 +217,29 @@ export interface FieldVisitReport {
   recommendations: string | null;
   requires_repair: boolean;
   created_work_order_item_id: string | null;
+  // Solicitud de OT/OTS (la crea el admin en Zaire Tracking; Field solo solicita)
+  ot_requested: boolean;
+  ot_request_status: "no_solicitada" | "solicitada" | "vinculada" | "rechazada";
+  ot_request_notes: string | null;
+  ot_requested_at: string | null;
   created_at: string;
   updated_at: string;
   // Joins
   photos?: FieldVisitPhoto[];
+}
+
+export interface FieldExpenseEvent {
+  id: string;
+  expense_id: string;
+  event_type: ExpenseEventType;
+  old_status: string | null;
+  new_status: string | null;
+  comment: string | null;
+  metadata: Record<string, unknown> | null;
+  created_by: string | null;
+  created_at: string;
+  // Joins
+  profile?: Profile;
 }
 
 export interface FieldVisitPhoto {

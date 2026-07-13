@@ -16,9 +16,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { UNIDADES_MEDIDA } from "@/lib/constants";
-import { GitBranchPlus } from "lucide-react";
-import { GenerateOtItemDialog } from "@/components/field/generate-ot-item-dialog";
+import { GitBranchPlus, Link2, Loader2 as Loader } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { FieldVisitReport } from "@/lib/field/types";
 
 interface VisitContext {
@@ -56,7 +57,65 @@ interface VisitReportSectionProps {
 export function VisitReportSection({ visitId, report, visit, clientWorkOrders, currentUser }: VisitReportSectionProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
-  const [otDialogOpen, setOtDialogOpen] = useState(false);
+  const [requestOpen, setRequestOpen] = useState(false);
+  const [requestNotes, setRequestNotes] = useState("");
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [selectedOt, setSelectedOt] = useState<string>("");
+  const [otBusy, setOtBusy] = useState(false);
+
+  const reqStatus = report?.ot_request_status ?? "no_solicitada";
+
+  async function submitOtRequest() {
+    if (!report) return;
+    setOtBusy(true);
+    const supabase = createClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = supabase as any;
+    const { error } = await sb.from("field_visit_reports").update({
+      ot_requested: true,
+      ot_request_status: "solicitada",
+      ot_request_notes: requestNotes || null,
+      ot_requested_at: new Date().toISOString(),
+    }).eq("id", report.id);
+    if (error) { toast.error("Error al enviar la solicitud"); setOtBusy(false); return; }
+    await sb.from("audit_logs").insert({
+      entity_type: "field_visit_report", entity_id: report.id, action: "update",
+      description: "Solicitud de OT/OTS desde Zaire Field",
+      user_id: currentUser?.id ?? null, user_name: currentUser?.full_name ?? null,
+    });
+    toast.success("OT/OTS solicitada al administrador");
+    setOtBusy(false); setRequestOpen(false); setRequestNotes("");
+    router.refresh();
+  }
+
+  async function linkOt() {
+    if (!report || !selectedOt) return;
+    setOtBusy(true);
+    const supabase = createClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = supabase as any;
+    await sb.from("field_visits").update({ work_order_id: selectedOt }).eq("id", visit.id);
+    const { error } = await sb.from("field_visit_reports").update({ ot_request_status: "vinculada" }).eq("id", report.id);
+    if (error) { toast.error("Error al vincular la OT"); setOtBusy(false); return; }
+    await sb.from("audit_logs").insert({
+      entity_type: "field_visit_report", entity_id: report.id, action: "update",
+      description: "OT vinculada a la visita",
+      user_id: currentUser?.id ?? null, user_name: currentUser?.full_name ?? null,
+    });
+    toast.success("OT vinculada a la visita");
+    setOtBusy(false); setLinkOpen(false);
+    router.refresh();
+  }
+
+  async function setReqStatus(status: string) {
+    if (!report) return;
+    const supabase = createClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = supabase as any;
+    await sb.from("field_visit_reports").update({ ot_request_status: status }).eq("id", report.id);
+    toast.success("Solicitud actualizada");
+    router.refresh();
+  }
 
   const {
     register,
@@ -121,29 +180,91 @@ export function VisitReportSection({ visitId, report, visit, clientWorkOrders, c
         <h2 className="text-sm font-semibold text-(--sas-text) uppercase tracking-wide flex items-center gap-2">
           <ClipboardList className="w-4 h-4 text-sas-blue" /> Reporte de visita
         </h2>
-        <div className="flex items-center gap-2">
-          {report?.created_work_order_item_id ? (
-            <span className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">
-              Ítem de OT generado
-            </span>
-          ) : report ? (
-            <Button size="sm" variant="outline" className="h-8" onClick={() => setOtDialogOpen(true)}>
-              <GitBranchPlus className="w-4 h-4 mr-1" /> Generar ítem de OT
-            </Button>
-          ) : null}
-        </div>
+        {report && (
+          <div className="flex items-center gap-2">
+            {reqStatus === "no_solicitada" && (
+              <Button size="sm" variant="outline" className="h-8" onClick={() => setRequestOpen(true)}>
+                <GitBranchPlus className="w-4 h-4 mr-1" /> Solicitar OT/OTS
+              </Button>
+            )}
+            {reqStatus === "solicitada" && (
+              <>
+                <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">OT/OTS solicitada</span>
+                <Button size="sm" variant="outline" className="h-8" onClick={() => setLinkOpen(true)} title="Vincular una OT existente (admin)">
+                  <Link2 className="w-4 h-4 mr-1" /> Vincular OT
+                </Button>
+                <Button size="sm" variant="ghost" className="h-8 text-red-600" onClick={() => setReqStatus("rechazada")} title="Rechazar solicitud (admin)">Rechazar</Button>
+              </>
+            )}
+            {reqStatus === "vinculada" && (
+              <span className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">
+                OT vinculada{visit.work_order_number ? `: ${visit.work_order_number}` : ""}
+              </span>
+            )}
+            {reqStatus === "rechazada" && (
+              <>
+                <span className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-full px-2 py-0.5">Solicitud rechazada</span>
+                <Button size="sm" variant="ghost" className="h-8" onClick={() => setReqStatus("solicitada")}>Reabrir</Button>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
-      {report && (
-        <GenerateOtItemDialog
-          open={otDialogOpen}
-          onOpenChange={setOtDialogOpen}
-          report={report}
-          visit={visit}
-          clientWorkOrders={clientWorkOrders}
-          currentUser={currentUser}
-        />
-      )}
+      {/* Diálogo: solicitar OT/OTS */}
+      <Dialog open={requestOpen} onOpenChange={setRequestOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Solicitar OT/OTS</DialogTitle></DialogHeader>
+          <div className="space-y-3 mt-2">
+            <p className="text-sm text-(--sas-text-muted)">
+              Esto <strong>no crea</strong> la orden. Deja una solicitud con los datos del reporte para que un
+              administrador cree la OT/OTS en Zaire Tracking (con su número correlativo) y la vincule a esta visita.
+            </p>
+            <div className="space-y-1.5">
+              <Label>Notas para el administrador</Label>
+              <Textarea value={requestNotes} onChange={(e) => setRequestNotes(e.target.value)} rows={3} placeholder="Contexto, urgencia, tipo de trabajo requerido..." />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setRequestOpen(false)}>Cancelar</Button>
+              <Button onClick={submitOtRequest} disabled={otBusy} className="bg-sas-navy-mid hover:bg-sas-navy text-white">
+                {otBusy && <Loader className="w-4 h-4 mr-2 animate-spin" />} Enviar solicitud
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Diálogo: vincular OT existente (admin) */}
+      <Dialog open={linkOpen} onOpenChange={setLinkOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Vincular OT existente</DialogTitle></DialogHeader>
+          <div className="space-y-3 mt-2">
+            <p className="text-sm text-(--sas-text-muted)">
+              Elegí una OT ya creada en Zaire Tracking para vincularla a esta visita. Si todavía no existe,
+              creala primero en Zaire Tracking y volvé acá.
+            </p>
+            {clientWorkOrders.length === 0 ? (
+              <p className="text-sm text-amber-600">El cliente de la visita no tiene OTs. Creá una en Zaire Tracking primero.</p>
+            ) : (
+              <div className="space-y-1.5">
+                <Label>OT destino</Label>
+                <Select value={selectedOt} onValueChange={(v) => setSelectedOt(v ?? "")}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar OT...">{selectedOt ? clientWorkOrders.find((w) => w.id === selectedOt)?.order_number : null}</SelectValue></SelectTrigger>
+                  <SelectContent>
+                    {clientWorkOrders.map((w) => (<SelectItem key={w.id} value={w.id}>{w.order_number}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setLinkOpen(false)}>Cancelar</Button>
+              <Button onClick={linkOt} disabled={otBusy || !selectedOt} className={cn("bg-sas-navy-mid hover:bg-sas-navy text-white")}>
+                {otBusy && <Loader className="w-4 h-4 mr-2 animate-spin" />} Vincular
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">

@@ -146,15 +146,29 @@ export const VEHICLE_TYPE_LABELS: Record<VehicleType, string> = {
   otro: "Otro",
 };
 
+// Lista manejada desde acá (el CHECK de doc_type se flexibilizó en la BD).
+// `group`: "vehicle" | "technician" | "ambos" — para agrupar en la UI.
 export const DOC_TYPES = [
-  { value: "licencia_conducir", label: "Licencia de Conducir" },
-  { value: "vtv", label: "VTV" },
-  { value: "rto", label: "RTO" },
-  { value: "seguro", label: "Seguro" },
-  { value: "cedula", label: "Cédula" },
-  { value: "art", label: "ART" },
-  { value: "carnet_profesional", label: "Carnet Profesional" },
-  { value: "otro", label: "Otro" },
+  // Vehículo / unidad
+  { value: "licencia_conducir", label: "Licencia de Conducir", group: "technician" },
+  { value: "vtv", label: "VTV", group: "vehicle" },
+  { value: "rto", label: "RTO", group: "vehicle" },
+  { value: "seguro", label: "Seguro", group: "vehicle" },
+  { value: "cedula", label: "Cédula del vehículo", group: "vehicle" },
+  { value: "titulo", label: "Título de propiedad", group: "vehicle" },
+  { value: "adr", label: "ADR (transporte peligrosos)", group: "vehicle" },
+  { value: "senasa", label: "SENASA / habilitación", group: "vehicle" },
+  // Técnico / persona
+  { value: "art", label: "ART", group: "technician" },
+  { value: "carnet_profesional", label: "Carnet Profesional", group: "technician" },
+  { value: "apto_medico", label: "Apto Médico", group: "technician" },
+  { value: "certificado_seguridad", label: "Certificado de Seguridad", group: "technician" },
+  { value: "trabajo_altura", label: "Trabajo en Altura", group: "technician" },
+  { value: "espacios_confinados", label: "Espacios Confinados", group: "technician" },
+  { value: "manejo_defensivo", label: "Manejo Defensivo", group: "technician" },
+  { value: "curso", label: "Curso / Capacitación", group: "technician" },
+  { value: "contrato", label: "Contrato", group: "technician" },
+  { value: "otro", label: "Otro", group: "ambos" },
 ] as const;
 
 export const DOC_TYPE_LABELS: Record<DocType, string> = {
@@ -162,9 +176,19 @@ export const DOC_TYPE_LABELS: Record<DocType, string> = {
   vtv: "VTV",
   rto: "RTO",
   seguro: "Seguro",
-  cedula: "Cédula",
+  cedula: "Cédula del vehículo",
+  titulo: "Título de propiedad",
+  adr: "ADR (transporte peligrosos)",
+  senasa: "SENASA / habilitación",
   art: "ART",
   carnet_profesional: "Carnet Profesional",
+  apto_medico: "Apto Médico",
+  certificado_seguridad: "Certificado de Seguridad",
+  trabajo_altura: "Trabajo en Altura",
+  espacios_confinados: "Espacios Confinados",
+  manejo_defensivo: "Manejo Defensivo",
+  curso: "Curso / Capacitación",
+  contrato: "Contrato",
   otro: "Otro",
 };
 

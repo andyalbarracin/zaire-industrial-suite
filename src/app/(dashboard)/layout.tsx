@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
+import { Footer } from "@/components/layout/footer";
 import { DOC_TYPE_LABELS } from "@/lib/field/constants";
 import type { DocType } from "@/lib/field/types";
 
@@ -92,7 +93,12 @@ export default async function DashboardLayout({
       <Sidebar profile={profile} />
       <div className="flex flex-col flex-1 overflow-hidden">
         <Header notifications={notifications} />
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto">
+          <div className="min-h-full p-6 flex flex-col">
+            <div className="flex-1">{children}</div>
+            <Footer />
+          </div>
+        </main>
       </div>
     </div>
   );

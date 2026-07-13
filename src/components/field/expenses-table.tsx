@@ -1,21 +1,25 @@
 "use client";
 // expenses-table.tsx — src/components/field/expenses-table.tsx — 2026-07-13
-// Gastos/viáticos global: lista + filtros + aprobar/rechazar + totales + alta.
+// Gastos/viáticos global: resumen en mini-cards, filtros en pills, paginación + selector,
+// export XLS/CSV, aprobar/rechazar con modal de confirmación.
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Search, Check, X, Plus, Loader2 } from "lucide-react";
+import { Search, Check, X, Plus, Loader2, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency, formatDate, cn } from "@/lib/utils";
 import {
@@ -35,6 +39,19 @@ interface ExpensesTableProps {
   currentUser: { id: string; full_name: string } | null;
 }
 
+// Color por categoría para las mini-cards (hex para la barra + clases suaves para el fondo)
+const CATEGORY_COLOR: Record<string, { hex: string; bg: string; text: string }> = {
+  combustible: { hex: "#576CBC", bg: "bg-blue-50", text: "text-blue-700" },
+  peaje: { hex: "#06B6D4", bg: "bg-cyan-50", text: "text-cyan-700" },
+  comida: { hex: "#EAB308", bg: "bg-amber-50", text: "text-amber-700" },
+  hotel: { hex: "#8B5CF6", bg: "bg-violet-50", text: "text-violet-700" },
+  estacionamiento: { hex: "#64748B", bg: "bg-slate-50", text: "text-slate-700" },
+  insumos: { hex: "#16A34A", bg: "bg-green-50", text: "text-green-700" },
+  otro: { hex: "#94A3B8", bg: "bg-slate-50", text: "text-slate-600" },
+};
+
+const PAGE_SIZES = [10, 20, 50, 100];
+
 const addSchema = z.object({
   visit_id: z.string().min(1, "Elegí una visita"),
   category: z.string().optional(),
@@ -47,11 +64,16 @@ const addSchema = z.object({
 type AddData = z.infer<typeof addSchema>;
 
 export function ExpensesTable({ initialExpenses, visits, currentUser }: ExpensesTableProps) {
+  const router = useRouter();
   const [expenses, setExpenses] = useState<FieldExpense[]>(initialExpenses);
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [addOpen, setAddOpen] = useState(false);
+  const [pageSize, setPageSize] = useState(20);
+  const [page, setPage] = useState(0);
+  const [confirm, setConfirm] = useState<{ expense: FieldExpense; status: ExpenseStatus } | null>(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   const { register, handleSubmit, reset, watch, setValue, formState: { errors, isSubmitting } } = useForm<AddData>({
     resolver: zodResolver(addSchema),
@@ -61,8 +83,8 @@ export function ExpensesTable({ initialExpenses, visits, currentUser }: Expenses
   const filtered = useMemo(() => {
     const s = search.toLowerCase();
     return expenses.filter((e) => {
-      if (categoryFilter && e.category !== categoryFilter) return false;
-      if (statusFilter && e.status !== statusFilter) return false;
+      if (categoryFilter.length && !categoryFilter.includes(e.category ?? "otro")) return false;
+      if (statusFilter.length && !statusFilter.includes(e.status)) return false;
       if (s) {
         const hay = `${e.technician?.full_name ?? ""} ${e.description ?? ""} ${e.visit?.visit_number ?? ""}`.toLowerCase();
         if (!hay.includes(s)) return false;
@@ -71,27 +93,62 @@ export function ExpensesTable({ initialExpenses, visits, currentUser }: Expenses
     });
   }, [expenses, search, categoryFilter, statusFilter]);
 
-  const totalsByCategory = useMemo(() => {
+  // Resumen por categoría (ARS) para las mini-cards
+  const summary = useMemo(() => {
     const map = new Map<string, number>();
+    let total = 0;
     for (const e of filtered) {
       if (e.currency !== "ARS") continue;
-      const key = e.category ?? "otro";
-      map.set(key, (map.get(key) ?? 0) + Number(e.amount));
+      const k = e.category ?? "otro";
+      map.set(k, (map.get(k) ?? 0) + Number(e.amount));
+      total += Number(e.amount);
     }
-    return Array.from(map.entries());
+    const cats = Array.from(map.entries())
+      .map(([cat, amount]) => ({ cat, amount, share: total > 0 ? amount / total : 0 }))
+      .sort((a, b) => b.amount - a.amount);
+    return { cats, total };
   }, [filtered]);
 
-  const totalArs = filtered.filter((e) => e.currency === "ARS").reduce((s, e) => s + Number(e.amount), 0);
+  // Paginación manual (sobre filtered)
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, pageCount - 1);
+  const pageRows = filtered.slice(safePage * pageSize, safePage * pageSize + pageSize);
 
-  async function setStatus(expense: FieldExpense, status: ExpenseStatus) {
+  function toggle(list: string[], setList: (v: string[]) => void, value: string) {
+    setPage(0);
+    setList(list.includes(value) ? list.filter((x) => x !== value) : [...list, value]);
+  }
+
+  async function doSetStatus() {
+    if (!confirm) return;
+    setConfirmLoading(true);
+    const { expense, status } = confirm;
     const supabase = createClient();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = supabase as any;
     const patch = status === "aprobado" || status === "rechazado" ? { status, approved_by: currentUser?.id ?? null } : { status };
     const { error } = await sb.from("field_expenses").update(patch).eq("id", expense.id);
-    if (error) { toast.error("Error al actualizar el gasto"); return; }
+    if (error) { toast.error("Error al actualizar el gasto"); setConfirmLoading(false); return; }
+    // Auditoría: log inmutable por-gasto + audit global
+    await sb.from("field_expense_events").insert({
+      expense_id: expense.id,
+      event_type: status,
+      old_status: expense.status,
+      new_status: status,
+      created_by: currentUser?.id ?? null,
+    });
+    await sb.from("audit_logs").insert({
+      entity_type: "field_expense",
+      entity_id: expense.id,
+      action: "status_change",
+      description: `Gasto ${expense.status} → ${status}`,
+      user_id: currentUser?.id ?? null,
+      user_name: currentUser?.full_name ?? null,
+    });
     setExpenses((prev) => prev.map((e) => (e.id === expense.id ? { ...e, ...patch } as FieldExpense : e)));
-    toast.success(status === "aprobado" ? "Gasto aprobado" : status === "rechazado" ? "Gasto rechazado" : "Actualizado");
+    toast.success(status === "aprobado" ? "Gasto aprobado" : "Gasto rechazado");
+    setConfirmLoading(false);
+    setConfirm(null);
   }
 
   function openAdd() {
@@ -121,9 +178,48 @@ export function ExpensesTable({ initialExpenses, visits, currentUser }: Expenses
       .select("id, visit_id, technician_id, category, amount, currency, description, incurred_at, receipt_path, status, is_billable, approved_by, created_at, updated_at, deleted_at, technician:field_technicians(id, full_name), visit:field_visits(id, visit_number)")
       .single();
     if (error) { toast.error("Error al cargar el gasto"); return; }
+    // Auditoría: evento "creado"
+    await sb.from("field_expense_events").insert({
+      expense_id: created.id,
+      event_type: "creado",
+      new_status: "pendiente",
+      created_by: currentUser?.id ?? null,
+    });
     setExpenses((prev) => [created as FieldExpense, ...prev]);
     setAddOpen(false);
     toast.success("Gasto cargado");
+  }
+
+  function buildExportRows() {
+    return filtered.map((e) => ({
+      Fecha: formatDate(e.incurred_at),
+      Técnico: e.technician?.full_name ?? "",
+      Visita: e.visit?.visit_number ?? "",
+      Categoría: e.category ? EXPENSE_CATEGORY_LABELS[e.category as ExpenseCategory] : "",
+      Monto: Number(e.amount),
+      Moneda: e.currency,
+      Estado: EXPENSE_STATUS_LABELS[e.status as ExpenseStatus],
+      Facturable: e.is_billable ? "Sí" : "No",
+      Descripción: e.description ?? "",
+    }));
+  }
+  function exportExcel() {
+    const ws = XLSX.utils.json_to_sheet(buildExportRows());
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Gastos");
+    XLSX.writeFile(wb, `Zaire_Field_Gastos_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  }
+  function exportCSV() {
+    const rows = buildExportRows();
+    const headers = Object.keys(rows[0] ?? { Fecha: "" });
+    const body = rows.map((r) => headers.map((h) => `"${String((r as Record<string, unknown>)[h] ?? "").replace(/"/g, '""')}"`).join(";"));
+    const csv = "﻿" + [headers.join(";"), ...body].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `Zaire_Field_Gastos_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
   }
 
   const currency = watch("currency");
@@ -132,89 +228,181 @@ export function ExpensesTable({ initialExpenses, visits, currentUser }: Expenses
   const isBillable = watch("is_billable");
 
   return (
-    <div className="sas-card">
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-(--sas-border)">
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="relative w-56">
+    <div className="space-y-4">
+      {/* Mini-cards de resumen (estilo dashboard) */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+        <div className="sas-card p-3.5 flex flex-col justify-between bg-sas-navy text-white">
+          <span className="text-[11px] font-medium text-white/70">Total ARS (filtrado)</span>
+          <span className="text-lg font-bold mt-1">{formatCurrency(summary.total, "ARS")}</span>
+        </div>
+        {summary.cats.map(({ cat, amount, share }) => {
+          const c = CATEGORY_COLOR[cat] ?? CATEGORY_COLOR.otro;
+          return (
+            <div key={cat} className={cn("sas-card p-3.5 flex flex-col justify-between", c.bg)}>
+              <div className="flex items-center justify-between">
+                <span className={cn("text-[11px] font-medium", c.text)}>{EXPENSE_CATEGORY_LABELS[cat as ExpenseCategory]}</span>
+                <span className="text-[10px] text-(--sas-text-muted)">{Math.round(share * 100)}%</span>
+              </div>
+              <span className="text-base font-bold text-(--sas-text) mt-1">{formatCurrency(amount, "ARS")}</span>
+              <div className="mt-2 h-1.5 rounded-full bg-black/5 overflow-hidden">
+                <div className="h-full rounded-full" style={{ width: `${Math.max(share * 100, 4)}%`, backgroundColor: c.hex }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Tabla */}
+      <div className="sas-card">
+        {/* Toolbar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-(--sas-border)">
+          <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--sas-text-muted)" />
-            <Input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9" />
+            <Input placeholder="Buscar..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} className="pl-9 h-9" />
           </div>
-          <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="h-9 rounded-lg border border-(--sas-border) bg-white px-2 text-sm">
-            <option value="">Todas las categorías</option>
-            {EXPENSE_CATEGORIES.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
-          </select>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-9 rounded-lg border border-(--sas-border) bg-white px-2 text-sm">
-            <option value="">Todos los estados</option>
-            {EXPENSE_STATUSES.map((s) => (<option key={s.value} value={s.value}>{s.label}</option>))}
-          </select>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={exportCSV} className="h-9">CSV</Button>
+            <Button variant="outline" size="sm" onClick={exportExcel} className="h-9"><Download className="w-4 h-4 mr-1.5" /> Excel</Button>
+            <Button onClick={openAdd} className="bg-sas-navy-mid hover:bg-sas-navy text-white h-9">
+              <Plus className="w-4 h-4 mr-1.5" /> Nuevo Gasto
+            </Button>
+          </div>
         </div>
-        <Button onClick={openAdd} className="bg-sas-navy-mid hover:bg-sas-navy text-white h-9">
-          <Plus className="w-4 h-4 mr-1.5" /> Nuevo Gasto
-        </Button>
-      </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-(--sas-border) text-xs text-(--sas-text-muted) uppercase tracking-wide">
-            <tr>
-              <th className="text-left px-4 py-3">Fecha</th>
-              <th className="text-left px-4 py-3">Técnico</th>
-              <th className="text-left px-4 py-3">Visita</th>
-              <th className="text-left px-4 py-3">Categoría</th>
-              <th className="text-right px-4 py-3">Monto</th>
-              <th className="text-left px-4 py-3">Estado</th>
-              <th className="text-center px-4 py-3">Fact.</th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-(--sas-border)">
-            {filtered.map((e) => (
-              <tr key={e.id} className="hover:bg-slate-50/80">
-                <td className="px-4 py-3">{formatDate(e.incurred_at)}</td>
-                <td className="px-4 py-3">{e.technician?.full_name ?? "—"}</td>
-                <td className="px-4 py-3">
-                  {e.visit ? <Link href={`/field/visitas/${e.visit.id}`} className="font-mono text-xs text-sas-blue hover:underline">{e.visit.visit_number}</Link> : "—"}
-                </td>
-                <td className="px-4 py-3">{e.category ? EXPENSE_CATEGORY_LABELS[e.category as ExpenseCategory] : "—"}</td>
-                <td className="px-4 py-3 text-right font-medium">{formatCurrency(Number(e.amount), e.currency)}</td>
-                <td className="px-4 py-3">
-                  <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border", EXPENSE_STATUS_COLORS[e.status as ExpenseStatus])}>
-                    {EXPENSE_STATUS_LABELS[e.status as ExpenseStatus]}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-center">{e.is_billable ? "Sí" : "—"}</td>
-                <td className="px-4 py-3">
-                  {e.status === "pendiente" && (
-                    <div className="flex items-center gap-1 justify-end">
-                      <Button variant="ghost" size="sm" onClick={() => setStatus(e, "aprobado")} title="Aprobar" className="text-green-600">
-                        <Check className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setStatus(e, "rechazado")} title="Rechazar" className="text-red-600">
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  )}
-                </td>
-              </tr>
+        {/* Filtros en pills */}
+        <div className="px-4 py-2.5 border-b border-(--sas-border) space-y-2">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] font-semibold text-(--sas-text-muted) uppercase tracking-wide mr-1">Categoría</span>
+            {EXPENSE_CATEGORIES.map((c) => (
+              <button
+                key={c.value}
+                onClick={() => toggle(categoryFilter, setCategoryFilter, c.value)}
+                className={cn(
+                  "px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
+                  categoryFilter.includes(c.value)
+                    ? "bg-sas-navy text-white border-sas-navy"
+                    : "bg-white text-(--sas-text-muted) border-(--sas-border) hover:bg-slate-50"
+                )}
+              >
+                {c.label}
+              </button>
             ))}
-            {!filtered.length && (
-              <tr><td colSpan={8} className="px-4 py-12 text-center text-(--sas-text-muted)">No se encontraron gastos</td></tr>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] font-semibold text-(--sas-text-muted) uppercase tracking-wide mr-1">Estado</span>
+            {EXPENSE_STATUSES.map((s) => (
+              <button
+                key={s.value}
+                onClick={() => toggle(statusFilter, setStatusFilter, s.value)}
+                className={cn(
+                  "px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
+                  statusFilter.includes(s.value) ? EXPENSE_STATUS_COLORS[s.value as ExpenseStatus] : "bg-white text-(--sas-text-muted) border-(--sas-border) hover:bg-slate-50"
+                )}
+              >
+                {s.label}
+              </button>
+            ))}
+            {(categoryFilter.length > 0 || statusFilter.length > 0) && (
+              <button onClick={() => { setCategoryFilter([]); setStatusFilter([]); setPage(0); }} className="text-xs text-sas-blue hover:underline ml-1">Limpiar</button>
             )}
-          </tbody>
-        </table>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 border-b border-(--sas-border) text-xs text-(--sas-text-muted) uppercase tracking-wide">
+              <tr>
+                <th className="text-left px-4 py-3">Fecha</th>
+                <th className="text-left px-4 py-3">Técnico</th>
+                <th className="text-left px-4 py-3">Visita</th>
+                <th className="text-left px-4 py-3">Categoría</th>
+                <th className="text-right px-4 py-3">Monto</th>
+                <th className="text-left px-4 py-3">Estado</th>
+                <th className="text-center px-4 py-3">Fact.</th>
+                <th className="px-4 py-3"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-(--sas-border)">
+              {pageRows.map((e) => (
+                <tr
+                  key={e.id}
+                  onClick={() => router.push(`/field/gastos/${e.id}`)}
+                  className="hover:bg-slate-50/80 cursor-pointer"
+                >
+                  <td className="px-4 py-3">{formatDate(e.incurred_at)}</td>
+                  <td className="px-4 py-3">{e.technician?.full_name ?? "—"}</td>
+                  <td className="px-4 py-3">
+                    {e.visit ? <Link href={`/field/visitas/${e.visit.id}`} onClick={(ev) => ev.stopPropagation()} className="font-mono text-xs text-sas-blue hover:underline">{e.visit.visit_number}</Link> : "—"}
+                  </td>
+                  <td className="px-4 py-3">{e.category ? EXPENSE_CATEGORY_LABELS[e.category as ExpenseCategory] : "—"}</td>
+                  <td className="px-4 py-3 text-right font-medium">{formatCurrency(Number(e.amount), e.currency)}</td>
+                  <td className="px-4 py-3">
+                    <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border", EXPENSE_STATUS_COLORS[e.status as ExpenseStatus])}>
+                      {EXPENSE_STATUS_LABELS[e.status as ExpenseStatus]}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-center">{e.is_billable ? "Sí" : "—"}</td>
+                  <td className="px-4 py-3" onClick={(ev) => ev.stopPropagation()}>
+                    {e.status === "pendiente" && (
+                      <div className="flex items-center gap-1 justify-end">
+                        <Button variant="ghost" size="sm" onClick={() => setConfirm({ expense: e, status: "aprobado" })} title="Aprobar" className="text-green-600">
+                          <Check className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setConfirm({ expense: e, status: "rechazado" })} title="Rechazar" className="text-red-600">
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+              {!pageRows.length && (
+                <tr><td colSpan={8} className="px-4 py-12 text-center text-(--sas-text-muted)">No se encontraron gastos</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Paginación + selector de registros por página */}
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-(--sas-border) text-sm text-(--sas-text-muted)">
+          <div className="flex items-center gap-2">
+            <span>{filtered.length} registros</span>
+            <span className="text-(--sas-border)">·</span>
+            <label className="flex items-center gap-1.5">
+              Mostrar
+              <select
+                value={pageSize}
+                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }}
+                className="h-8 rounded-lg border border-(--sas-border) bg-white px-2 text-sm text-(--sas-text)"
+              >
+                {PAGE_SIZES.map((n) => (<option key={n} value={n}>{n}</option>))}
+              </select>
+            </label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={safePage === 0}>Anterior</Button>
+            <span className="text-xs">Página {safePage + 1} de {pageCount}</span>
+            <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))} disabled={safePage >= pageCount - 1}>Siguiente</Button>
+          </div>
+        </div>
       </div>
 
-      {/* Totales */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-(--sas-border) text-sm">
-        <div className="flex flex-wrap gap-3 text-(--sas-text-muted)">
-          {totalsByCategory.map(([cat, total]) => (
-            <span key={cat}>{EXPENSE_CATEGORY_LABELS[cat as ExpenseCategory]}: <strong className="text-(--sas-text)">{formatCurrency(total, "ARS")}</strong></span>
-          ))}
-        </div>
-        <span className="text-(--sas-text)">Total ARS: <strong>{formatCurrency(totalArs, "ARS")}</strong></span>
-      </div>
+      {/* Modal de confirmación aprobar/rechazar */}
+      <ConfirmDialog
+        open={!!confirm}
+        onOpenChange={(o) => { if (!o) setConfirm(null); }}
+        title={confirm?.status === "aprobado" ? "Aprobar gasto" : "Rechazar gasto"}
+        description={
+          confirm
+            ? `¿Confirmás ${confirm.status === "aprobado" ? "aprobar" : "rechazar"} el gasto de ${formatCurrency(Number(confirm.expense.amount), confirm.expense.currency)}${confirm.expense.category ? ` (${EXPENSE_CATEGORY_LABELS[confirm.expense.category as ExpenseCategory]})` : ""}? Queda registrado en la auditoría.`
+            : ""
+        }
+        confirmLabel={confirm?.status === "aprobado" ? "Aprobar" : "Rechazar"}
+        variant={confirm?.status === "rechazado" ? "destructive" : "default"}
+        loading={confirmLoading}
+        onConfirm={doSetStatus}
+      />
 
       {/* Alta */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
