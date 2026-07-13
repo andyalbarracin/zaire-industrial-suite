@@ -87,6 +87,61 @@ export async function getVehicles(includeInactive = false): Promise<FieldVehicle
   return (data ?? []) as FieldVehicle[];
 }
 
+// ---------- Detalle de unidad + archivos, mantenimiento, combustible ----------
+export async function getVehicle(id: string): Promise<FieldVehicle | null> {
+  const supabase = await createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any;
+  const { data } = await sb
+    .from("field_vehicles")
+    .select(
+      "id, plate, brand, model, year, type, branch_id, assigned_technician_id, is_active, notes, cover_photo_path, current_odometer, created_at, updated_at, deleted_at, technician:field_technicians(id, full_name)"
+    )
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  return (data ?? null) as FieldVehicle | null;
+}
+
+export async function getVehicleFiles(vehicleId: string) {
+  const supabase = await createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any;
+  const { data } = await sb
+    .from("field_vehicle_files")
+    .select("id, vehicle_id, category, title, storage_path, file_type, is_cover, notes, uploaded_by, created_at, deleted_at")
+    .eq("vehicle_id", vehicleId)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+  return (data ?? []) as import("@/lib/field/types").FieldVehicleFile[];
+}
+
+export async function getVehicleMaintenance(vehicleId: string) {
+  const supabase = await createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any;
+  const { data } = await sb
+    .from("field_vehicle_maintenance")
+    .select("id, vehicle_id, type, performed_at, odometer, cost, currency, workshop, description, next_service_at, created_by, created_at, updated_at, deleted_at")
+    .eq("vehicle_id", vehicleId)
+    .is("deleted_at", null)
+    .order("performed_at", { ascending: false });
+  return (data ?? []) as import("@/lib/field/types").FieldVehicleMaintenance[];
+}
+
+export async function getVehicleFuelLogs(vehicleId: string) {
+  const supabase = await createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any;
+  const { data } = await sb
+    .from("field_vehicle_fuel_logs")
+    .select("id, vehicle_id, filled_at, liters, amount, currency, odometer, station, technician_id, created_by, created_at, deleted_at")
+    .eq("vehicle_id", vehicleId)
+    .is("deleted_at", null)
+    .order("filled_at", { ascending: false });
+  return (data ?? []) as import("@/lib/field/types").FieldVehicleFuelLog[];
+}
+
 // ---------- Sitios ----------
 export async function getSites(includeInactive = false): Promise<FieldSite[]> {
   const supabase = await createClient();

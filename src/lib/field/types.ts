@@ -115,11 +115,78 @@ export interface FieldVehicle {
   assigned_technician_id: string | null;
   is_active: boolean;
   notes: string | null;
+  cover_photo_path: string | null;
+  current_odometer: number | null;
   deleted_at: string | null;
   created_at: string;
   updated_at: string;
   // Joins
   technician?: FieldTechnician;
+}
+
+export type VehicleFileCategory =
+  | "foto"
+  | "presupuesto"
+  | "taller"
+  | "mantenimiento"
+  | "seguro"
+  | "cedula"
+  | "otro";
+
+export interface FieldVehicleFile {
+  id: string;
+  vehicle_id: string;
+  category: VehicleFileCategory | null;
+  title: string | null;
+  storage_path: string;
+  file_type: string | null;
+  is_cover: boolean;
+  notes: string | null;
+  uploaded_by: string | null;
+  deleted_at: string | null;
+  created_at: string;
+}
+
+export type MaintenanceType =
+  | "service"
+  | "reparacion"
+  | "cambio_aceite"
+  | "cambio_filtros"
+  | "taller"
+  | "vtv"
+  | "neumaticos"
+  | "otro";
+
+export interface FieldVehicleMaintenance {
+  id: string;
+  vehicle_id: string;
+  type: MaintenanceType | null;
+  performed_at: string | null;
+  odometer: number | null;
+  cost: number | null;
+  currency: "ARS" | "USD";
+  workshop: string | null;
+  description: string | null;
+  next_service_at: string | null;
+  created_by: string | null;
+  deleted_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FieldVehicleFuelLog {
+  id: string;
+  vehicle_id: string;
+  filled_at: string;
+  liters: number | null;
+  amount: number | null;
+  currency: "ARS" | "USD";
+  odometer: number | null;
+  station: string | null;
+  technician_id: string | null;
+  created_by: string | null;
+  deleted_at: string | null;
+  created_at: string;
 }
 
 export interface FieldSite {

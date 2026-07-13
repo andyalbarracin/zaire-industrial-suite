@@ -199,3 +199,46 @@ export const DOC_ENTITY_LABELS = {
 
 // Umbrales de alerta de vencimiento de documentos (mismo patrón que Zaire Tracking)
 export const DOC_ALERT_THRESHOLDS = { danger: 7, warning: 30 } as const;
+
+// ---------- Unidades: archivos y mantenimiento ----------
+export const VEHICLE_FILE_CATEGORIES = [
+  { value: "foto", label: "Foto" },
+  { value: "presupuesto", label: "Presupuesto" },
+  { value: "taller", label: "Remito de taller" },
+  { value: "mantenimiento", label: "Mantenimiento" },
+  { value: "seguro", label: "Seguro" },
+  { value: "cedula", label: "Cédula" },
+  { value: "otro", label: "Otro" },
+] as const;
+
+export const VEHICLE_FILE_CATEGORY_LABELS: Record<string, string> = {
+  foto: "Foto",
+  presupuesto: "Presupuesto",
+  taller: "Remito de taller",
+  mantenimiento: "Mantenimiento",
+  seguro: "Seguro",
+  cedula: "Cédula",
+  otro: "Otro",
+};
+
+export const MAINTENANCE_TYPES = [
+  { value: "service", label: "Service" },
+  { value: "reparacion", label: "Reparación" },
+  { value: "cambio_aceite", label: "Cambio de aceite" },
+  { value: "cambio_filtros", label: "Cambio de filtros" },
+  { value: "taller", label: "Visita a taller" },
+  { value: "vtv", label: "VTV" },
+  { value: "neumaticos", label: "Neumáticos" },
+  { value: "otro", label: "Otro" },
+] as const;
+
+export const MAINTENANCE_TYPE_LABELS: Record<string, string> = {
+  service: "Service",
+  reparacion: "Reparación",
+  cambio_aceite: "Cambio de aceite",
+  cambio_filtros: "Cambio de filtros",
+  taller: "Visita a taller",
+  vtv: "VTV",
+  neumaticos: "Neumáticos",
+  otro: "Otro",
+};

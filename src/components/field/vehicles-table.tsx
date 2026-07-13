@@ -1,25 +1,20 @@
 "use client";
 // vehicles-table.tsx — src/components/field/vehicles-table.tsx — 2026-07-13
-// Tabla de unidades/vehículos (TanStack Table) + búsqueda + modal crear/editar.
+// Tabla de unidades: filtros en pills, paginación + selector, fila clickeable (→ ficha), export.
 
 import { useState, useMemo } from "react";
-import {
-  useReactTable,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
-  getPaginationRowModel,
-  flexRender,
-  type ColumnDef,
-  type SortingState,
-} from "@tanstack/react-table";
-import { Plus, Search, Pencil, ArrowUpDown } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Plus, Search, Pencil, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BRANCHES } from "@/lib/constants";
-import { VEHICLE_TYPE_LABELS } from "@/lib/field/constants";
+import { VEHICLE_TYPES, VEHICLE_TYPE_LABELS } from "@/lib/field/constants";
 import { VehicleForm } from "./vehicle-form";
+import { cn } from "@/lib/utils";
 import type { FieldVehicle, FieldTechnician, VehicleType } from "@/lib/field/types";
+
+const PAGE_SIZES = [10, 20, 50, 100];
 
 function branchName(id: string | null): string {
   return BRANCHES.find((b) => b.id === id)?.name ?? "—";
@@ -31,143 +26,155 @@ interface VehiclesTableProps {
 }
 
 export function VehiclesTable({ initialVehicles, technicians }: VehiclesTableProps) {
+  const router = useRouter();
   const [vehicles, setVehicles] = useState<FieldVehicle[]>(initialVehicles);
-  const [globalFilter, setGlobalFilter] = useState("");
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string[]>([]);
+  const [branchFilter, setBranchFilter] = useState<string[]>([]);
+  const [activeFilter, setActiveFilter] = useState<string>(""); // "" | "activas" | "inactivas"
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<FieldVehicle | null>(null);
+  const [pageSize, setPageSize] = useState(20);
+  const [page, setPage] = useState(0);
 
   const techName = (id: string | null) => technicians.find((t) => t.id === id)?.full_name ?? "—";
 
-  const columns = useMemo<ColumnDef<FieldVehicle>[]>(
-    () => [
-      {
-        accessorKey: "plate",
-        header: ({ column }) => (
-          <button className="flex items-center gap-1 font-medium" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-            Patente <ArrowUpDown className="w-3.5 h-3.5 opacity-60" />
-          </button>
-        ),
-        cell: ({ getValue }) => <span className="font-mono font-medium text-(--sas-text)">{(getValue() as string) ?? "—"}</span>,
-      },
-      {
-        id: "vehicle",
-        header: "Vehículo",
-        cell: ({ row }) => {
-          const v = row.original;
-          return <span>{[v.brand, v.model].filter(Boolean).join(" ") || "—"}{v.year ? ` (${v.year})` : ""}</span>;
-        },
-      },
-      {
-        accessorKey: "type",
-        header: "Tipo",
-        cell: ({ getValue }) => {
-          const t = getValue() as VehicleType | null;
-          return t ? VEHICLE_TYPE_LABELS[t] : "—";
-        },
-      },
-      { accessorKey: "branch_id", header: "Sucursal", cell: ({ getValue }) => branchName(getValue() as string | null) },
-      { accessorKey: "assigned_technician_id", header: "Técnico", cell: ({ getValue }) => techName(getValue() as string | null) },
-      {
-        accessorKey: "is_active",
-        header: "Estado",
-        cell: ({ getValue }) => (
-          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getValue() ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200"}`}>
-            {getValue() ? "Activo" : "Inactivo"}
-          </span>
-        ),
-      },
-      {
-        id: "actions",
-        header: "",
-        cell: ({ row }) => (
-          <Button variant="ghost" size="sm" onClick={() => { setEditing(row.original); setFormOpen(true); }} title="Editar">
-            <Pencil className="w-3.5 h-3.5" />
-          </Button>
-        ),
-      },
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [technicians]
-  );
+  const filtered = useMemo(() => {
+    const s = search.toLowerCase();
+    return vehicles.filter((v) => {
+      if (typeFilter.length && !typeFilter.includes(v.type ?? "")) return false;
+      if (branchFilter.length && !branchFilter.includes(v.branch_id ?? "")) return false;
+      if (activeFilter === "activas" && !v.is_active) return false;
+      if (activeFilter === "inactivas" && v.is_active) return false;
+      if (s) {
+        const hay = `${v.plate ?? ""} ${v.brand ?? ""} ${v.model ?? ""}`.toLowerCase();
+        if (!hay.includes(s)) return false;
+      }
+      return true;
+    });
+  }, [vehicles, search, typeFilter, branchFilter, activeFilter]);
 
-  const table = useReactTable({
-    data: vehicles,
-    columns,
-    state: { globalFilter, sorting },
-    onGlobalFilterChange: setGlobalFilter,
-    onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: { pagination: { pageSize: 20 } },
-  });
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, pageCount - 1);
+  const pageRows = filtered.slice(safePage * pageSize, safePage * pageSize + pageSize);
+
+  function toggle(list: string[], setList: (v: string[]) => void, value: string) {
+    setPage(0);
+    setList(list.includes(value) ? list.filter((x) => x !== value) : [...list, value]);
+  }
 
   function handleSaved(v: FieldVehicle) {
     setVehicles((prev) => {
       const idx = prev.findIndex((x) => x.id === v.id);
-      if (idx >= 0) { const next = [...prev]; next[idx] = v; return next; }
+      if (idx >= 0) { const next = [...prev]; next[idx] = { ...next[idx], ...v }; return next; }
       return [v, ...prev];
     });
   }
 
+  function exportExcel() {
+    const rows = filtered.map((v) => ({
+      Patente: v.plate ?? "", Marca: v.brand ?? "", Modelo: v.model ?? "", Año: v.year ?? "",
+      Tipo: v.type ? VEHICLE_TYPE_LABELS[v.type as VehicleType] : "", Sucursal: branchName(v.branch_id),
+      Técnico: techName(v.assigned_technician_id), Estado: v.is_active ? "Activa" : "Inactiva",
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Unidades");
+    XLSX.writeFile(wb, `Zaire_Field_Unidades_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  }
+
+  const pill = (active: boolean, extra = "") =>
+    cn("px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
+      active ? "bg-sas-navy text-white border-sas-navy" : "bg-white text-(--sas-text-muted) border-(--sas-border) hover:bg-slate-50", extra);
+
   return (
-    <>
-      <div className="sas-card">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-(--sas-border)">
-          <div className="relative w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--sas-text-muted)" />
-            <Input placeholder="Buscar unidades..." value={globalFilter} onChange={(e) => setGlobalFilter(e.target.value)} className="pl-9 h-9" />
-          </div>
+    <div className="sas-card">
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-(--sas-border)">
+        <div className="relative w-64">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--sas-text-muted)" />
+          <Input placeholder="Buscar unidades..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} className="pl-9 h-9" />
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={exportExcel} className="h-9"><Download className="w-4 h-4 mr-1.5" /> Excel</Button>
           <Button onClick={() => { setEditing(null); setFormOpen(true); }} className="bg-sas-navy-mid hover:bg-sas-navy text-white h-9">
             <Plus className="w-4 h-4 mr-1.5" /> Nueva Unidad
           </Button>
         </div>
+      </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-(--sas-border)">
-              {table.getHeaderGroups().map((hg) => (
-                <tr key={hg.id}>
-                  {hg.headers.map((header) => (
-                    <th key={header.id} className="px-4 py-3 text-left text-xs font-medium text-(--sas-text-muted) uppercase tracking-wide">
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody className="divide-y divide-(--sas-border)">
-              {table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className="hover:bg-slate-50/80 transition-colors duration-100">
-                  {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-4 py-3 text-(--sas-text)">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-              {!table.getRowModel().rows.length && (
-                <tr>
-                  <td colSpan={columns.length} className="px-4 py-12 text-center text-(--sas-text-muted)">No se encontraron unidades</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+      {/* Filtros en pills */}
+      <div className="px-4 py-2.5 border-b border-(--sas-border) flex flex-wrap items-center gap-1.5">
+        {VEHICLE_TYPES.map((t) => (
+          <button key={t.value} onClick={() => toggle(typeFilter, setTypeFilter, t.value)} className={pill(typeFilter.includes(t.value))}>{t.label}</button>
+        ))}
+        <span className="w-px h-4 bg-(--sas-border) mx-1" />
+        {BRANCHES.map((b) => (
+          <button key={b.id} onClick={() => toggle(branchFilter, setBranchFilter, b.id)} className={pill(branchFilter.includes(b.id))}>{b.code}</button>
+        ))}
+        <span className="w-px h-4 bg-(--sas-border) mx-1" />
+        <button onClick={() => { setActiveFilter(activeFilter === "activas" ? "" : "activas"); setPage(0); }} className={pill(activeFilter === "activas", "border-green-200")}>Activas</button>
+        <button onClick={() => { setActiveFilter(activeFilter === "inactivas" ? "" : "inactivas"); setPage(0); }} className={pill(activeFilter === "inactivas", "border-red-200")}>Inactivas</button>
+      </div>
+
+      {/* Tabla */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 border-b border-(--sas-border) text-xs text-(--sas-text-muted) uppercase tracking-wide">
+            <tr>
+              <th className="text-left px-4 py-3">Patente</th>
+              <th className="text-left px-4 py-3">Vehículo</th>
+              <th className="text-left px-4 py-3">Tipo</th>
+              <th className="text-left px-4 py-3">Sucursal</th>
+              <th className="text-left px-4 py-3">Técnico</th>
+              <th className="text-left px-4 py-3">Estado</th>
+              <th className="px-4 py-3"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-(--sas-border)">
+            {pageRows.map((v) => (
+              <tr key={v.id} onClick={() => router.push(`/field/unidades/${v.id}`)} className="hover:bg-slate-50/80 cursor-pointer">
+                <td className="px-4 py-3 font-mono font-medium text-(--sas-text)">{v.plate ?? "—"}</td>
+                <td className="px-4 py-3">{[v.brand, v.model].filter(Boolean).join(" ") || "—"}{v.year ? ` (${v.year})` : ""}</td>
+                <td className="px-4 py-3">{v.type ? VEHICLE_TYPE_LABELS[v.type as VehicleType] : "—"}</td>
+                <td className="px-4 py-3">{branchName(v.branch_id)}</td>
+                <td className="px-4 py-3">{techName(v.assigned_technician_id)}</td>
+                <td className="px-4 py-3">
+                  <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border", v.is_active ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200")}>
+                    {v.is_active ? "Activa" : "Inactiva"}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-right" onClick={(ev) => ev.stopPropagation()}>
+                  <Button variant="ghost" size="sm" onClick={() => { setEditing(v); setFormOpen(true); }} title="Editar"><Pencil className="w-3.5 h-3.5" /></Button>
+                </td>
+              </tr>
+            ))}
+            {!pageRows.length && (
+              <tr><td colSpan={7} className="px-4 py-12 text-center text-(--sas-text-muted)">No se encontraron unidades</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Paginación */}
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-(--sas-border) text-sm text-(--sas-text-muted)">
+        <div className="flex items-center gap-2">
+          <span>{filtered.length} registros</span>
+          <span className="text-(--sas-border)">·</span>
+          <label className="flex items-center gap-1.5">Mostrar
+            <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }} className="h-8 rounded-lg border border-(--sas-border) bg-white px-2 text-sm text-(--sas-text)">
+              {PAGE_SIZES.map((n) => (<option key={n} value={n}>{n}</option>))}
+            </select>
+          </label>
         </div>
-
-        <div className="flex items-center justify-between px-4 py-3 border-t border-(--sas-border) text-sm text-(--sas-text-muted)">
-          <span>{table.getFilteredRowModel().rows.length} registros</span>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>Anterior</Button>
-            <span className="text-xs">Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}</span>
-            <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>Siguiente</Button>
-          </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={safePage === 0}>Anterior</Button>
+          <span className="text-xs">Página {safePage + 1} de {pageCount}</span>
+          <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))} disabled={safePage >= pageCount - 1}>Siguiente</Button>
         </div>
       </div>
 
       <VehicleForm open={formOpen} onOpenChange={setFormOpen} vehicle={editing} technicians={technicians} onSaved={handleSaved} />
-    </>
+    </div>
   );
 }
