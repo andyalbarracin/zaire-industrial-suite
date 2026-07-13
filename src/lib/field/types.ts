@@ -99,9 +99,45 @@ export interface FieldTechnician {
   license_number: string | null;
   is_active: boolean;
   notes: string | null;
+  photo_path: string | null;
   deleted_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export type ContactKind = "telefono" | "email" | "direccion" | "emergencia" | "otro";
+
+export interface FieldTechnicianContact {
+  id: string;
+  technician_id: string;
+  kind: ContactKind | null;
+  label: string | null;
+  value: string;
+  deleted_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type TechnicianFileCategory =
+  | "foto"
+  | "apto_medico"
+  | "certificado_seguridad"
+  | "curso"
+  | "contrato"
+  | "otro";
+
+export interface FieldTechnicianFile {
+  id: string;
+  technician_id: string;
+  category: TechnicianFileCategory | null;
+  title: string | null;
+  storage_path: string;
+  file_type: string | null;
+  expires_at: string | null;
+  notes: string | null;
+  uploaded_by: string | null;
+  deleted_at: string | null;
+  created_at: string;
 }
 
 export interface FieldVehicle {

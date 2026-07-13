@@ -61,13 +61,83 @@ export async function getTechnicians(includeInactive = false): Promise<FieldTech
   let query = sb
     .from("field_technicians")
     .select(
-      "id, user_id, full_name, document_id, phone, email, branch_id, license_number, is_active, notes, created_at, updated_at, deleted_at"
+      "id, user_id, full_name, document_id, phone, email, branch_id, license_number, is_active, notes, photo_path, created_at, updated_at, deleted_at"
     )
     .is("deleted_at", null)
     .order("full_name", { ascending: true });
   if (!includeInactive) query = query.eq("is_active", true);
   const { data } = await query;
   return (data ?? []) as FieldTechnician[];
+}
+
+// ---------- Detalle de técnico + contactos, archivos, documentos, log ----------
+export async function getTechnician(id: string): Promise<FieldTechnician | null> {
+  const supabase = await createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any;
+  const { data } = await sb
+    .from("field_technicians")
+    .select("id, user_id, full_name, document_id, phone, email, branch_id, license_number, is_active, notes, photo_path, created_at, updated_at, deleted_at")
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  return (data ?? null) as FieldTechnician | null;
+}
+
+export async function getTechnicianContacts(technicianId: string) {
+  const supabase = await createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any;
+  const { data } = await sb
+    .from("field_technician_contacts")
+    .select("id, technician_id, kind, label, value, created_at, updated_at, deleted_at")
+    .eq("technician_id", technicianId)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: true });
+  return (data ?? []) as import("@/lib/field/types").FieldTechnicianContact[];
+}
+
+export async function getTechnicianFiles(technicianId: string) {
+  const supabase = await createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any;
+  const { data } = await sb
+    .from("field_technician_files")
+    .select("id, technician_id, category, title, storage_path, file_type, expires_at, notes, uploaded_by, created_at, deleted_at")
+    .eq("technician_id", technicianId)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+  return (data ?? []) as import("@/lib/field/types").FieldTechnicianFile[];
+}
+
+export async function getTechnicianDocuments(technicianId: string): Promise<FieldDocumentWithExpiry[]> {
+  const supabase = await createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any;
+  const { data } = await sb
+    .from("field_documents")
+    .select("id, entity_type, technician_id, vehicle_id, doc_type, doc_number, issued_at, expires_at, file_path, notes, created_at, updated_at, deleted_at")
+    .eq("technician_id", technicianId)
+    .is("deleted_at", null)
+    .order("expires_at", { ascending: true });
+  return ((data ?? []) as FieldDocument[]).map((doc) => {
+    const d = doc.expires_at ? Math.ceil((new Date(doc.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
+    return { ...doc, days_until_expiry: d, expiry_light: expiryLight(d) };
+  });
+}
+
+export async function getTechnicianLog(technicianId: string) {
+  const supabase = await createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any;
+  const { data } = await sb
+    .from("audit_logs")
+    .select("id, action, description, user_name, created_at")
+    .eq("entity_type", "field_technician")
+    .eq("entity_id", technicianId)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  return (data ?? []) as { id: string; action: string; description: string | null; user_name: string | null; created_at: string }[];
 }
 
 // ---------- Vehículos ----------
@@ -157,6 +227,19 @@ export async function getSites(includeInactive = false): Promise<FieldSite[]> {
   if (!includeInactive) query = query.eq("is_active", true);
   const { data } = await query;
   return (data ?? []) as FieldSite[];
+}
+
+export async function getSite(id: string): Promise<FieldSite | null> {
+  const supabase = await createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any;
+  const { data } = await sb
+    .from("field_sites")
+    .select("id, client_id, name, address, city, province, latitude, longitude, geofence_radius_m, contact_name, contact_phone, is_active, notes, created_at, updated_at, deleted_at, client:clients(id, business_name)")
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  return (data ?? null) as FieldSite | null;
 }
 
 // ---------- Gastos ----------

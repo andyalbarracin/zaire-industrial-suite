@@ -242,3 +242,38 @@ export const MAINTENANCE_TYPE_LABELS: Record<string, string> = {
   neumaticos: "Neumáticos",
   otro: "Otro",
 };
+
+// ---------- Técnico: contactos y archivos ----------
+export const CONTACT_KINDS = [
+  { value: "telefono", label: "Teléfono" },
+  { value: "email", label: "Email" },
+  { value: "direccion", label: "Dirección" },
+  { value: "emergencia", label: "Contacto de emergencia" },
+  { value: "otro", label: "Otro" },
+] as const;
+
+export const CONTACT_KIND_LABELS: Record<string, string> = {
+  telefono: "Teléfono",
+  email: "Email",
+  direccion: "Dirección",
+  emergencia: "Contacto de emergencia",
+  otro: "Otro",
+};
+
+export const TECHNICIAN_FILE_CATEGORIES = [
+  { value: "foto", label: "Foto" },
+  { value: "apto_medico", label: "Apto médico" },
+  { value: "certificado_seguridad", label: "Certificado de seguridad" },
+  { value: "curso", label: "Curso / Capacitación" },
+  { value: "contrato", label: "Contrato" },
+  { value: "otro", label: "Otro" },
+] as const;
+
+export const TECHNICIAN_FILE_CATEGORY_LABELS: Record<string, string> = {
+  foto: "Foto",
+  apto_medico: "Apto médico",
+  certificado_seguridad: "Certificado de seguridad",
+  curso: "Curso / Capacitación",
+  contrato: "Contrato",
+  otro: "Otro",
+};

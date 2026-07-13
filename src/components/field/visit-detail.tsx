@@ -22,6 +22,7 @@ import {
   Loader2,
   DollarSign,
   PlayCircle,
+  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -30,6 +31,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FieldMap, type MapMarker } from "@/components/field/field-map";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { VisitReportSection } from "@/components/field/visit-report-section";
 import { VisitExpensesSection } from "@/components/field/visit-expenses-section";
 import { VisitPhotosSection } from "@/components/field/visit-photos-section";
@@ -84,6 +86,7 @@ export function VisitDetail({ visit, events, pings, report, expenses, photos, cl
   const [newStatus, setNewStatus] = useState<string>("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [simulating, setSimulating] = useState(false);
   const [livePings, setLivePings] = useState(pings);
 
@@ -162,7 +165,17 @@ export function VisitDetail({ visit, events, pings, report, expenses, photos, cl
     setNewStatus("");
     setNotes("");
     setSaving(false);
+    setConfirmOpen(false);
     router.refresh();
+  }
+
+  function confirmDescription() {
+    if (!newStatus) return "";
+    const extras: string[] = [];
+    if (newStatus === "en_curso") extras.push("se registrará la salida");
+    if (newStatus === "en_sitio" && !visit.arrived_at) extras.push("se registrará el arribo al sitio");
+    if (newStatus === "finalizada") extras.push("se registrará el fin de la visita");
+    return `Vas a cambiar el estado de "${VISIT_STATUS_LABELS[status]}" a "${VISIT_STATUS_LABELS[newStatus as VisitStatus]}"${extras.length ? ` y ${extras.join(" y ")}` : ""}. Queda registrado en el timeline y la auditoría.`;
   }
 
   async function handleSimulate() {
@@ -220,6 +233,9 @@ export function VisitDetail({ visit, events, pings, report, expenses, photos, cl
               {simulating ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <PlayCircle className="w-4 h-4 mr-1.5" />} Simular recorrido
             </Button>
           )}
+          <Button asChild variant="outline">
+            <a href={`/api/field/visit-pdf/${visit.id}`} target="_blank" rel="noopener noreferrer"><FileText className="w-4 h-4 mr-1.5" /> PDF</a>
+          </Button>
           <Button asChild variant="outline">
             <Link href={`/field/visitas/${visit.id}/editar`}><Pencil className="w-4 h-4 mr-1.5" /> Editar</Link>
           </Button>
@@ -289,8 +305,8 @@ export function VisitDetail({ visit, events, pings, report, expenses, photos, cl
                 </SelectContent>
               </Select>
               <Textarea placeholder="Notas del cambio (opcional)" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
-              <Button onClick={handleStatusChange} disabled={!newStatus || saving} className="w-full bg-sas-navy-mid hover:bg-sas-navy text-white">
-                {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Confirmar cambio
+              <Button onClick={() => setConfirmOpen(true)} disabled={!newStatus || saving} className="w-full bg-sas-navy-mid hover:bg-sas-navy text-white">
+                Cambiar estado
               </Button>
             </div>
           )}
@@ -356,6 +372,17 @@ export function VisitDetail({ visit, events, pings, report, expenses, photos, cl
           <VisitExpensesSection visitId={visit.id} technicianId={visit.technician_id} initialExpenses={expenses} />
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={(o) => { if (!o) setConfirmOpen(false); }}
+        title="Cambiar estado de la visita"
+        description={confirmDescription()}
+        confirmLabel="Confirmar cambio"
+        variant={newStatus === "cancelada" ? "destructive" : "default"}
+        loading={saving}
+        onConfirm={handleStatusChange}
+      />
     </div>
   );
 }
