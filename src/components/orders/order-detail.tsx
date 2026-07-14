@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OrderStatusBadge, OrderTypeBadge } from "./order-status-badge";
 import { ItemStatusChecklist } from "./item-status-checklist";
 import { StatusDot } from "@/components/shared/status-dot";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { formatDate, formatDateTime, formatCurrency, cn, calculateTrafficLight } from "@/lib/utils";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_NEXT, BRANCHES } from "@/lib/constants";
 import type { OrderStatus, OrderType, Currency, Profile, Client, Product } from "@/lib/types/database";
@@ -90,6 +91,7 @@ export function OrderDetail({ order, items: initialItems, history, currentProfil
   const [newStatus, setNewStatus] = useState<OrderStatus | "">("");
   const [statusNotes, setStatusNotes] = useState("");
   const [changingStatus, setChangingStatus] = useState(false);
+  const [confirmStatusOpen, setConfirmStatusOpen] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [localItems, setLocalItems] = useState<ItemDetail[]>(initialItems);
 
@@ -124,6 +126,7 @@ export function OrderDetail({ order, items: initialItems, history, currentProfil
     setCurrentStatus(newStatus);
     setNewStatus("");
     setStatusNotes("");
+    setConfirmStatusOpen(false);
     router.refresh();
     setChangingStatus(false);
   }
@@ -592,12 +595,11 @@ export function OrderDetail({ order, items: initialItems, history, currentProfil
                     />
                   </div>
                   <Button
-                    onClick={handleStatusChange}
+                    onClick={() => setConfirmStatusOpen(true)}
                     disabled={!newStatus || changingStatus}
                     className="bg-sas-navy-mid hover:bg-sas-navy text-white"
                   >
-                    {changingStatus && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                    Confirmar cambio de estado
+                    Cambiar estado
                   </Button>
                 </div>
               ) : (
@@ -607,6 +609,21 @@ export function OrderDetail({ order, items: initialItems, history, currentProfil
           </TabsContent>
         )}
       </Tabs>
+
+      <ConfirmDialog
+        open={confirmStatusOpen}
+        onOpenChange={(o) => { if (!o) setConfirmStatusOpen(false); }}
+        title="¿Confirmar cambio de estado?"
+        description={
+          newStatus
+            ? `Vas a cambiar la orden de "${ORDER_STATUS_LABELS[currentStatus]}" a "${ORDER_STATUS_LABELS[newStatus]}". Esta acción queda registrada en el historial y no puede revertirse.`
+            : ""
+        }
+        confirmLabel={newStatus === "cancelada" ? "Sí, cancelar orden" : "Sí, cambiar estado"}
+        variant={newStatus === "cancelada" ? "destructive" : "default"}
+        loading={changingStatus}
+        onConfirm={handleStatusChange}
+      />
     </div>
   );
 }

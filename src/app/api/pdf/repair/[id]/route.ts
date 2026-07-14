@@ -47,6 +47,7 @@ export async function GET(
     sb.from("work_order_items").select(`
       item_number, quantity, custom_description, serial_number,
       marca, materiales_caras, materiales_orings, repair_required, modelo,
+      medida, unidad_medida,
       products(code, name, brand, model)
     `).eq("work_order_id", id).eq("repair_required", true).order("item_number"),
     sb.from("company_settings").select("id, nombre, cuit, direccion, ciudad, telefono, email, web, logo_url, logo_use_in_pdfs, updated_at").eq("id", 1).single(),

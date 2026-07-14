@@ -3,13 +3,29 @@
 
 import Link from "next/link";
 import { Activity, ArrowLeft } from "lucide-react";
+import { createServiceClient } from "@/lib/supabase/service";
 
 export const metadata = {
   title: "Términos y Condiciones — Zaire Trace",
   description: "Términos de uso y política de privacidad de Zaire Trace",
 };
 
-export default function TerminosPage() {
+export const dynamic = "force-dynamic";
+
+export default async function TerminosPage() {
+  const sb = createServiceClient();
+  let co: { nombre: string | null; cuit: string | null; direccion: string | null; ciudad: string | null; email: string | null } =
+    { nombre: "Empresa", cuit: null, direccion: null, ciudad: null, email: null };
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data } = await (sb as any)
+      .from("company_settings")
+      .select("nombre, cuit, direccion, ciudad, email")
+      .eq("id", 1)
+      .single();
+    if (data) co = { ...co, ...data };
+  } catch {}
+  const nombre = co.nombre ?? "Empresa";
   return (
     <div className="min-h-screen bg-[#F7F7F7]">
       {/* Header */}
@@ -51,7 +67,7 @@ export default function TerminosPage() {
               <h2 className="text-lg font-semibold text-gray-900 mb-2">2. Descripción del servicio</h2>
               <p>
                 Zaire Trace es un sistema web de gestión y trazabilidad de órdenes de trabajo desarrollado
-                exclusivamente para uso interno de <strong>Empresa Demo S.A.</strong> y sus usuarios autorizados.
+                exclusivamente para uso interno de <strong>{nombre}</strong> y sus usuarios autorizados.
                 El Sistema permite registrar, numerar, seguir y auditar órdenes de trabajo (OT y OTS) conforme
                 a los requerimientos del sistema de gestión de calidad ISO 9001:2015.
               </p>
@@ -61,7 +77,7 @@ export default function TerminosPage() {
               <h2 className="text-lg font-semibold text-gray-900 mb-2">3. Acceso y cuentas de usuario</h2>
               <p>
                 El acceso al Sistema está restringido a empleados y personas debidamente autorizadas por
-                Empresa Demo S.A. Cada usuario es responsable de:
+                {nombre} Cada usuario es responsable de:
               </p>
               <ul className="list-disc pl-5 space-y-1 mt-2">
                 <li>Mantener la confidencialidad de sus credenciales de acceso</li>
@@ -70,7 +86,7 @@ export default function TerminosPage() {
                 <li>No compartir sus credenciales con terceros</li>
               </ul>
               <p className="mt-3">
-                Empresa Demo S.A. se reserva el derecho de desactivar cuentas de usuario que incumplan estos
+                {nombre} se reserva el derecho de desactivar cuentas de usuario que incumplan estos
                 términos, sin previo aviso.
               </p>
             </div>
@@ -79,7 +95,7 @@ export default function TerminosPage() {
               <h2 className="text-lg font-semibold text-gray-900 mb-2">4. Uso permitido</h2>
               <p>El Sistema puede utilizarse únicamente para:</p>
               <ul className="list-disc pl-5 space-y-1 mt-2">
-                <li>Registrar y gestionar órdenes de trabajo relacionadas con las actividades de Empresa Demo S.A.</li>
+                <li>Registrar y gestionar órdenes de trabajo relacionadas con las actividades de {nombre}</li>
                 <li>Consultar el historial de órdenes y estados</li>
                 <li>Generar documentación oficial (remitos, órdenes de trabajo, reportes)</li>
                 <li>Administrar el catálogo de clientes y productos de la empresa</li>
@@ -95,7 +111,7 @@ export default function TerminosPage() {
                 <li>Modificar, copiar o distribuir el código fuente del Sistema</li>
                 <li>Introducir virus, malware u otro código malicioso</li>
                 <li>Realizar ingeniería inversa sobre el Sistema</li>
-                <li>Exportar datos del Sistema para uso fuera de Empresa Demo S.A. sin autorización expresa</li>
+                <li>Exportar datos del Sistema para uso fuera de {nombre} sin autorización expresa</li>
               </ul>
             </div>
 
@@ -103,7 +119,7 @@ export default function TerminosPage() {
               <h2 className="text-lg font-semibold text-gray-900 mb-2">6. Propiedad intelectual</h2>
               <p>
                 El Sistema, incluyendo su código fuente, diseño, estructura de base de datos y documentación,
-                es propiedad de Empresa Demo S.A. Todos los derechos reservados. El Software fue desarrollado
+                es propiedad de {nombre} Todos los derechos reservados. El Software fue desarrollado
                 a medida para uso interno exclusivo.
               </p>
             </div>
@@ -112,7 +128,7 @@ export default function TerminosPage() {
               <h2 className="text-lg font-semibold text-gray-900 mb-2">7. Responsabilidad por datos</h2>
               <p>
                 Los usuarios son responsables de la exactitud y veracidad de la información que ingresan al Sistema.
-                Empresa Demo S.A. no se responsabiliza por errores derivados de datos incorrectos ingresados por
+                {nombre} no se responsabiliza por errores derivados de datos incorrectos ingresados por
                 los usuarios. El Sistema proporciona trazabilidad pero no sustituye el juicio profesional del
                 personal autorizado.
               </p>
@@ -121,7 +137,7 @@ export default function TerminosPage() {
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-2">8. Disponibilidad del servicio</h2>
               <p>
-                Empresa Demo S.A. realizará sus mejores esfuerzos para mantener el Sistema disponible de forma
+                {nombre} realizará sus mejores esfuerzos para mantener el Sistema disponible de forma
                 continua, pero no garantiza disponibilidad ininterrumpida. Se realizarán mantenimientos
                 programados con previo aviso cuando sea posible.
               </p>
@@ -130,7 +146,7 @@ export default function TerminosPage() {
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-2">9. Modificaciones</h2>
               <p>
-                Empresa Demo S.A. se reserva el derecho de modificar estos Términos en cualquier momento.
+                {nombre} se reserva el derecho de modificar estos Términos en cualquier momento.
                 Los cambios serán notificados a los usuarios con al menos 7 días de anticipación mediante
                 comunicación interna.
               </p>
@@ -155,10 +171,10 @@ export default function TerminosPage() {
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-2">1. Responsable del tratamiento</h2>
               <p>
-                <strong>Empresa Demo S.A.</strong><br />
-                CUIT: 30-00000000-0<br />
-                Dirección 1234, Buenos Aires, Argentina<br />
-                Email: demo@empresa.com
+                <strong>{nombre}</strong><br />
+                {co.cuit && <>CUIT: {co.cuit}<br /></>}
+                {(co.direccion || co.ciudad) && <>{[co.direccion, co.ciudad].filter(Boolean).join(", ")}<br /></>}
+                {co.email && <>Email: {co.email}</>}
               </p>
             </div>
 
@@ -177,7 +193,7 @@ export default function TerminosPage() {
               <p>Los datos se utilizan exclusivamente para:</p>
               <ul className="list-disc pl-5 space-y-1 mt-2">
                 <li>Autenticar y autorizar el acceso al Sistema</li>
-                <li>Gestionar las operaciones de Empresa Demo S.A.</li>
+                <li>Gestionar las operaciones de {nombre}</li>
                 <li>Cumplir con los requerimientos de trazabilidad ISO 9001:2015</li>
                 <li>Auditoría interna y detección de accesos no autorizados</li>
               </ul>
@@ -205,7 +221,7 @@ export default function TerminosPage() {
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-2">6. No compartimos datos con terceros</h2>
               <p>
-                Empresa Demo S.A. no vende, alquila ni comparte datos personales con terceros, excepto cuando
+                {nombre} no vende, alquila ni comparte datos personales con terceros, excepto cuando
                 sea requerido por ley o autoridad competente, o cuando sea necesario para el funcionamiento
                 técnico del Sistema (proveedores de infraestructura bajo acuerdos de confidencialidad).
               </p>
@@ -216,7 +232,7 @@ export default function TerminosPage() {
               <p>
                 En cumplimiento de la Ley 25.326 de Protección de Datos Personales (Argentina), los usuarios
                 tienen derecho a acceder, rectificar y suprimir sus datos personales. Para ejercer estos
-                derechos, contactar a: <strong>demo@empresa.com</strong>
+                derechos, contactar a: <strong>{co.email ?? "—"}</strong>
               </p>
               <p className="mt-2 text-sm text-gray-500">
                 La DIRECCIÓN NACIONAL DE PROTECCIÓN DE DATOS PERSONALES (Órgano de Control de la Ley N° 25.326)

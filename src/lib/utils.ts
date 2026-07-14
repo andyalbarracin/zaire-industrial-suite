@@ -26,9 +26,17 @@ export function formatCurrency(amount: number, currency: Currency): string {
   }).format(amount);
 }
 
+// Convierte un string de fecha (YYYY-MM-DD o timestamp) en un Date a medianoche LOCAL.
+// Evita el corrimiento de un día por zona horaria (UTC) en fechas de calendario.
+function parseLocalDate(date: string): Date {
+  const [y, m, d] = date.slice(0, 10).split("-").map(Number);
+  if (y && m && d) return new Date(y, m - 1, d);
+  return new Date(date);
+}
+
 export function formatDate(date: string | null | undefined): string {
   if (!date) return "—";
-  return format(new Date(date), "dd/MM/yyyy", { locale: es });
+  return format(parseLocalDate(date), "dd/MM/yyyy", { locale: es });
 }
 
 export function formatDateTime(date: string | null | undefined): string {
@@ -42,15 +50,18 @@ export function formatRelativeTime(date: string): string {
 
 export function isOverdue(date_due: string | null): boolean {
   if (!date_due) return false;
-  return new Date(date_due) < new Date();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return parseLocalDate(date_due) < today;
 }
 
 export function getDueDaysLabel(date_due: string | null): string {
   if (!date_due) return "";
-  const now = new Date();
-  const due = new Date(date_due);
-  const diffMs = due.getTime() - now.getTime();
-  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = parseLocalDate(date_due);
+  const diffMs = due.getTime() - today.getTime();
+  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
   if (diffDays < 0) return `Vencida hace ${Math.abs(diffDays)} días`;
   if (diffDays === 0) return "Vence hoy";
   if (diffDays === 1) return "Vence mañana";

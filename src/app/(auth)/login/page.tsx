@@ -84,11 +84,20 @@ export default function LoginPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [companyName, setCompanyName] = useState("Empresa");
 
   // Auto-advance slides
   useEffect(() => {
     const t = setInterval(() => setSlide((s) => (s + 1) % SLIDES.length), 5000);
     return () => clearInterval(t);
+  }, []);
+
+  // Nombre de la empresa dinámico (para slider + footer)
+  useEffect(() => {
+    fetch("/api/company-public")
+      .then((r) => r.json())
+      .then((d) => { if (d?.nombre) setCompanyName(d.nombre); })
+      .catch(() => {});
   }, []);
 
   // Login form
@@ -163,7 +172,7 @@ export default function LoginPage() {
           </div>
           <div>
             <span className="text-white font-bold text-xl tracking-tight">Zaire Trace</span>
-            <span className="block text-white/40 text-xs">Empresa Demo S.A.</span>
+            <span className="block text-white/40 text-xs">{companyName}</span>
           </div>
         </div>
 
@@ -454,7 +463,7 @@ export default function LoginPage() {
         {/* Footer con links legales */}
         <div className="px-8 xl:px-14 py-6 border-t border-gray-200">
           <p className="text-xs text-gray-400 text-center">
-            © 2026 Empresa Demo S.A. · ISO 9001:2015 ·{" "}
+            © 2026 {companyName} · ISO 9001:2015 ·{" "}
             <Link href="/terminos" className="hover:text-gray-600 underline underline-offset-2">
               Términos y Condiciones
             </Link>

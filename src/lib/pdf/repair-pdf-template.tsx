@@ -105,6 +105,8 @@ export interface RepairItem {
   serial_number: string | null;
   modelo: string | null;
   marca: string | null;
+  medida: string | null;
+  unidad_medida: "MM" | "PULG" | null;
   materiales_caras: string | null;
   materiales_orings: string | null;
   products: { code: string | null; name: string; brand: string | null; model: string | null; } | null;
@@ -130,6 +132,7 @@ function ItemPage({ order, item, co }: { order: RepairPdfProps["order"]; item: R
   const nombre = item.products?.name ?? item.custom_description ?? "Sin descripción";
   const marca = item.marca ?? item.products?.brand ?? "—";
   const modelo = item.modelo ?? item.products?.model ?? "—";
+  const medida = item.medida ? `${item.medida} ${item.unidad_medida ?? ""}`.trim() : "—";
   const materiales = [item.materiales_caras, item.materiales_orings].filter(Boolean).join(" / ") || "—";
   const today = format(new Date(), "dd/MM/yyyy", { locale: es });
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -186,6 +189,10 @@ function ItemPage({ order, item, co }: { order: RepairPdfProps["order"]; item: R
         <View style={S.dataCell}>
           <Text style={S.dataLabel}>Modelo</Text>
           <Text style={S.dataValue}>{modelo}</Text>
+        </View>
+        <View style={S.dataCell}>
+          <Text style={S.dataLabel}>Medida</Text>
+          <Text style={S.dataValue}>{medida}</Text>
         </View>
         <View style={S.dataCellWide}>
           <Text style={S.dataLabel}>Combinación de Materiales</Text>
