@@ -369,7 +369,7 @@ export function VisitDetail({ visit, events, pings, report, expenses, photos, cl
           <VisitPhotosSection visitId={visit.id} initialPhotos={photos} />
 
           {/* Gastos de la visita */}
-          <VisitExpensesSection visitId={visit.id} technicianId={visit.technician_id} initialExpenses={expenses} />
+          <VisitExpensesSection visitId={visit.id} technicianId={visit.technician_id} initialExpenses={expenses} currentUser={currentUser} />
         </div>
       </div>
 

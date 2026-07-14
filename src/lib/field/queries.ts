@@ -36,7 +36,8 @@ export async function getVisits(): Promise<FieldVisit[]> {
     .from("field_visits")
     .select(VISIT_SELECT)
     .is("deleted_at", null)
-    .order("scheduled_at", { ascending: false });
+    .order("scheduled_at", { ascending: false })
+    .limit(1000);
   return (data ?? []) as FieldVisit[];
 }
 
@@ -253,7 +254,8 @@ export async function getExpenses(): Promise<FieldExpense[]> {
       "id, visit_id, technician_id, category, amount, currency, description, incurred_at, receipt_path, status, is_billable, approved_by, created_at, updated_at, deleted_at, technician:field_technicians(id, full_name, branch_id), visit:field_visits(id, visit_number, branch_id)"
     )
     .is("deleted_at", null)
-    .order("incurred_at", { ascending: false });
+    .order("incurred_at", { ascending: false })
+    .limit(2000);
   return (data ?? []) as FieldExpense[];
 }
 
@@ -287,7 +289,8 @@ export async function getFieldDocuments(): Promise<FieldDocumentWithExpiry[]> {
       "id, entity_type, technician_id, vehicle_id, doc_type, doc_number, issued_at, expires_at, file_path, notes, created_at, updated_at, deleted_at, technician:field_technicians(id, full_name), vehicle:field_vehicles(id, plate, brand, model)"
     )
     .is("deleted_at", null)
-    .order("expires_at", { ascending: true });
+    .order("expires_at", { ascending: true })
+    .limit(2000);
   return ((data ?? []) as FieldDocument[]).map((doc) => {
     const d = daysUntil(doc.expires_at);
     return { ...doc, days_until_expiry: d, expiry_light: expiryLight(d) };
@@ -359,7 +362,8 @@ export async function getVisitExpenses(visitId: string) {
     )
     .eq("visit_id", visitId)
     .is("deleted_at", null)
-    .order("incurred_at", { ascending: false });
+    .order("incurred_at", { ascending: false })
+    .limit(2000);
   return (data ?? []) as FieldExpense[];
 }
 

@@ -40,9 +40,10 @@ interface VisitExpensesSectionProps {
   visitId: string;
   technicianId: string | null;
   initialExpenses: FieldExpense[];
+  currentUser: { id: string; full_name: string } | null;
 }
 
-export function VisitExpensesSection({ visitId, technicianId, initialExpenses }: VisitExpensesSectionProps) {
+export function VisitExpensesSection({ visitId, technicianId, initialExpenses, currentUser }: VisitExpensesSectionProps) {
   const [expenses, setExpenses] = useState<FieldExpense[]>(initialExpenses);
   const [open, setOpen] = useState(false);
 
@@ -84,6 +85,15 @@ export function VisitExpensesSection({ visitId, technicianId, initialExpenses }:
     };
     const { data: created, error } = await sb.from("field_expenses").insert(payload).select().single();
     if (error) { toast.error("Error al cargar el gasto"); return; }
+    // Auditoría: mismo registro que la sección Gastos (vinculado por visit_id), con evento "creado"
+    await sb.from("field_expense_events").insert({
+      expense_id: created.id, event_type: "creado", new_status: "pendiente", created_by: currentUser?.id ?? null,
+    });
+    await sb.from("audit_logs").insert({
+      entity_type: "field_expense", entity_id: created.id, action: "create",
+      description: "Gasto cargado desde la visita",
+      user_id: currentUser?.id ?? null, user_name: currentUser?.full_name ?? null,
+    });
     toast.success("Gasto cargado");
     setExpenses((prev) => [created as FieldExpense, ...prev]);
     setOpen(false);

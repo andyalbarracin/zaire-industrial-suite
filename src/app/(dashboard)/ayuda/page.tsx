@@ -398,20 +398,25 @@ const SECTIONS: Section[] = [
     ],
   },
   {
-    id: "field-circulo",
+    id: "field-reporte",
     icon: GitBranchPlus,
-    title: "Zaire Field — De la visita a la OT",
+    title: "Zaire Field — Reporte de visita y solicitud de OT/OTS",
     color: "text-indigo-600",
-    keywords: "field círculo virtuoso generar ítem orden de trabajo OT work order item reporte técnico integración zaire tracking",
+    keywords: "field reporte de visita hallazgos medida marca materiales diagnóstico requiere reparación solicitar OT OTS orden de trabajo admin vincular integración zaire tracking",
     steps: [
       {
-        title: "Generar ítem de OT desde el reporte",
-        body: "En el reporte de una visita (con los datos técnicos cargados), el botón 'Generar ítem de OT' crea un ítem en una orden de trabajo de Zaire Tracking con esos datos ya volcados: equipo, serie, medida, marca, materiales, diagnóstico y si requiere reparación.",
+        title: "Cargar el reporte de la visita",
+        body: "En el detalle de la visita, sección 'Reporte de visita', se cargan los datos técnicos del relevamiento: equipo/TAG, número de serie, medida y unidad, marca, modelo, materiales de caras y o'rings, hallazgos, recomendaciones y si requiere reparación. Se guarda con el botón 'Guardar reporte'. También se pueden subir fotos.",
       },
       {
-        title: "OT destino",
-        body: "Si la visita ya está vinculada a una OT, el ítem se agrega a esa OT. Si no, podés elegir una OT existente del cliente o crear una OT nueva mínima (OTS, estado Ingresada) para ese cliente y sucursal.",
-        alert: { type: "success", text: "Este es el diferencial de Zaire Field: el trabajo de campo se conecta directo con la administración, sin recargar datos." },
+        title: "Solicitar una OT/OTS (no la crea el técnico)",
+        body: "Desde el reporte, el botón 'Solicitar OT/OTS' deja una solicitud para el administrador con los datos ya cargados. IMPORTANTE: esto NO crea la orden. Las OT/OTS tienen número correlativo e irrepetible y las crea el administrador en Zaire Tracking, de forma controlada.",
+        alert: { type: "warning", text: "El usuario de Field solicita; el número de OT/OTS lo genera siempre el administrador en Zaire Tracking." },
+      },
+      {
+        title: "El administrador crea y vincula",
+        body: "El estado de la solicitud pasa por: No solicitada → Solicitada → Vinculada (o Rechazada). El admin crea la OT/OTS en Zaire Tracking y luego, desde el reporte, la vincula a la visita con 'Vincular OT'. Así el trabajo de campo queda conectado con la administración sin recargar datos.",
+        alert: { type: "success", text: "Diferencial de Zaire Field: del campo a la administración con trazabilidad, respetando la numeración de órdenes." },
       },
     ],
   },

@@ -24,6 +24,9 @@ import {
   Factory,
   Receipt,
   FileCheck,
+  LayoutGrid,
+  Map as MapIcon,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -61,6 +64,18 @@ const NAV_FIELD: NavItem[] = [
   { href: "/field/reportes", label: "Reportes Field", icon: BarChart3 },
 ];
 
+// Módulos "padre" colapsables. Sumar acá cuando haya nuevos módulos (ej. futuros).
+interface NavModule {
+  key: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  items: NavItem[];
+}
+const MODULES: NavModule[] = [
+  { key: "tracking", label: "Zaire Tracking", icon: LayoutGrid, items: [...NAV_MAIN, ...NAV_GESTION] },
+  { key: "field", label: "Zaire Field", icon: MapIcon, items: NAV_FIELD },
+];
+
 interface SidebarProps {
   profile: Profile | null;
 }
@@ -69,6 +84,11 @@ export function Sidebar({ profile }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
+  // Solo el módulo de la ruta actual arranca abierto (evita el scroll largo).
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({
+    tracking: !pathname.startsWith("/field"),
+    field: pathname.startsWith("/field"),
+  });
 
   async function handleLogout() {
     const supabase = createClient();
@@ -82,6 +102,25 @@ export function Sidebar({ profile }: SidebarProps) {
     if (href === "/" || href === "/field") return pathname === href;
     return pathname.startsWith(href);
   };
+
+  const renderItem = (item: NavItem) => (
+    <li key={item.href}>
+      <Link
+        href={item.href}
+        className={cn(
+          "relative flex items-center gap-3 px-3 py-2.5 rounded-[9px] text-[13.5px] font-medium transition-colors duration-140",
+          isActive(item.href)
+            ? "bg-linear-to-r from-sas-blue/30 to-sas-blue/15 text-white before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:rounded-r-[3px] before:bg-sas-light"
+            : "text-[#B7C5E0] hover:text-white hover:bg-white/6",
+          collapsed && "justify-center px-2"
+        )}
+        title={collapsed ? item.label : undefined}
+      >
+        <item.icon className="w-4.5 h-4.5 shrink-0" />
+        {!collapsed && <span className="truncate">{item.label}</span>}
+      </Link>
+    </li>
+  );
 
   return (
     <aside
@@ -118,81 +157,37 @@ export function Sidebar({ profile }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 py-2 overflow-y-auto scrollbar-none">
-        {/* Sección principal */}
-        <ul className="space-y-0.5 px-3.5">
-          {NAV_MAIN.map((item) => (
-            <li key={item.href}>
-              <Link
-                href={item.href}
-                className={cn(
-                  "relative flex items-center gap-3 px-3 py-2.5 rounded-[9px] text-[13.5px] font-medium transition-colors duration-140",
-                  isActive(item.href)
-                    ? "bg-linear-to-r from-sas-blue/30 to-sas-blue/15 text-white before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:rounded-r-[3px] before:bg-sas-light"
-                    : "text-[#B7C5E0] hover:text-white hover:bg-white/6",
-                  collapsed && "justify-center px-2"
-                )}
-                title={collapsed ? item.label : undefined}
-              >
-                <item.icon className="w-4.5 h-4.5 shrink-0" />
-                {!collapsed && <span className="truncate">{item.label}</span>}
-              </Link>
-            </li>
-          ))}
-        </ul>
-
-        {/* Divider + label Gestión */}
-        <div className="h-px bg-white/[0.07] mx-3 my-2.5" />
-        {!collapsed && (
-          <div className="text-[10px] font-semibold tracking-widest uppercase text-[#5C719B] px-6 pb-1.5">Gestión</div>
+        {collapsed ? (
+          // Colapsado: todos los ítems como iconos (sin agrupar)
+          <ul className="space-y-0.5 px-3.5">
+            {MODULES.flatMap((m) => m.items)
+              .filter((item) => !item.adminOnly || profile?.role === "admin")
+              .map((item) => renderItem(item))}
+          </ul>
+        ) : (
+          MODULES.map((mod, i) => {
+            const items = mod.items.filter((item) => !item.adminOnly || profile?.role === "admin");
+            const open = expanded[mod.key];
+            const moduleActive = items.some((it) => isActive(it.href));
+            return (
+              <div key={mod.key}>
+                {i > 0 && <div className="h-px bg-white/[0.07] mx-3 my-2" />}
+                <button
+                  onClick={() => setExpanded((e) => ({ ...e, [mod.key]: !e[mod.key] }))}
+                  className={cn(
+                    "w-full flex items-center gap-2.5 px-4 py-2 text-[11px] font-semibold tracking-widest uppercase transition-colors",
+                    moduleActive ? "text-sas-light" : "text-[#5C719B] hover:text-[#8ea3cf]"
+                  )}
+                >
+                  <mod.icon className="w-4 h-4 shrink-0" />
+                  <span className="flex-1 text-left">{mod.label}</span>
+                  <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-200", open && "rotate-180")} />
+                </button>
+                {open && <ul className="space-y-0.5 px-3.5 pb-1">{items.map((item) => renderItem(item))}</ul>}
+              </div>
+            );
+          })
         )}
-        <ul className="space-y-0.5 px-3.5">
-          {NAV_GESTION.filter(
-            (item) => !item.adminOnly || profile?.role === "admin"
-          ).map((item) => (
-            <li key={item.href}>
-              <Link
-                href={item.href}
-                className={cn(
-                  "relative flex items-center gap-3 px-3 py-2.5 rounded-[9px] text-[13.5px] font-medium transition-colors duration-140",
-                  isActive(item.href)
-                    ? "bg-linear-to-r from-sas-blue/30 to-sas-blue/15 text-white before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:rounded-r-[3px] before:bg-sas-light"
-                    : "text-[#B7C5E0] hover:text-white hover:bg-white/6",
-                  collapsed && "justify-center px-2"
-                )}
-                title={collapsed ? item.label : undefined}
-              >
-                <item.icon className="w-4.5 h-4.5 shrink-0" />
-                {!collapsed && <span className="truncate">{item.label}</span>}
-              </Link>
-            </li>
-          ))}
-        </ul>
-
-        {/* Divider + label Zaire Field */}
-        <div className="h-px bg-white/[0.07] mx-3 my-2.5" />
-        {!collapsed && (
-          <div className="text-[10px] font-semibold tracking-widest uppercase text-[#5C719B] px-6 pb-1.5">Zaire Field</div>
-        )}
-        <ul className="space-y-0.5 px-3.5">
-          {NAV_FIELD.map((item) => (
-            <li key={item.href}>
-              <Link
-                href={item.href}
-                className={cn(
-                  "relative flex items-center gap-3 px-3 py-2.5 rounded-[9px] text-[13.5px] font-medium transition-colors duration-140",
-                  isActive(item.href)
-                    ? "bg-linear-to-r from-sas-blue/30 to-sas-blue/15 text-white before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:rounded-r-[3px] before:bg-sas-light"
-                    : "text-[#B7C5E0] hover:text-white hover:bg-white/6",
-                  collapsed && "justify-center px-2"
-                )}
-                title={collapsed ? item.label : undefined}
-              >
-                <item.icon className="w-4.5 h-4.5 shrink-0" />
-                {!collapsed && <span className="truncate">{item.label}</span>}
-              </Link>
-            </li>
-          ))}
-        </ul>
       </nav>
 
       {/* Soporte (Ayuda) */}
