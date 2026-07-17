@@ -103,23 +103,23 @@ export function VisitExpensesSection({ visitId, technicianId, initialExpenses, c
   const totalUsd = expenses.filter((e) => e.currency === "USD").reduce((s, e) => s + Number(e.amount), 0);
 
   return (
-    <div className="sas-card p-5">
+    <div className="zaire-card p-5">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-semibold text-(--sas-text) uppercase tracking-wide flex items-center gap-2">
-          <Receipt className="w-4 h-4 text-sas-blue" /> Gastos de la visita
+        <h2 className="text-sm font-semibold text-(--zaire-text) uppercase tracking-wide flex items-center gap-2">
+          <Receipt className="w-4 h-4 text-zaire-blue" /> Gastos de la visita
         </h2>
-        <Button size="sm" onClick={openNew} className="bg-sas-navy-mid hover:bg-sas-navy text-white h-8">
+        <Button size="sm" onClick={openNew} className="bg-zaire-navy-mid hover:bg-zaire-navy text-white h-8">
           <Plus className="w-4 h-4 mr-1" /> Agregar
         </Button>
       </div>
 
       {expenses.length === 0 ? (
-        <p className="text-sm text-(--sas-text-muted) py-4 text-center">Sin gastos cargados.</p>
+        <p className="text-sm text-(--zaire-text-muted) py-4 text-center">Sin gastos cargados.</p>
       ) : (
         <>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-xs text-(--sas-text-muted) uppercase tracking-wide border-b border-(--sas-border)">
+              <thead className="text-xs text-(--zaire-text-muted) uppercase tracking-wide border-b border-(--zaire-border)">
                 <tr>
                   <th className="text-left py-2">Fecha</th>
                   <th className="text-left py-2">Categoría</th>
@@ -128,7 +128,7 @@ export function VisitExpensesSection({ visitId, technicianId, initialExpenses, c
                   <th className="text-center py-2">Fact.</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-(--sas-border)">
+              <tbody className="divide-y divide-(--zaire-border)">
                 {expenses.map((e) => (
                   <tr key={e.id}>
                     <td className="py-2">{formatDate(e.incurred_at)}</td>
@@ -145,9 +145,9 @@ export function VisitExpensesSection({ visitId, technicianId, initialExpenses, c
               </tbody>
             </table>
           </div>
-          <div className="flex justify-end gap-4 mt-3 pt-3 border-t border-(--sas-border) text-sm">
-            {totalArs > 0 && <span className="text-(--sas-text)">Total ARS: <strong>{formatCurrency(totalArs, "ARS")}</strong></span>}
-            {totalUsd > 0 && <span className="text-(--sas-text)">Total USD: <strong>{formatCurrency(totalUsd, "USD")}</strong></span>}
+          <div className="flex justify-end gap-4 mt-3 pt-3 border-t border-(--zaire-border) text-sm">
+            {totalArs > 0 && <span className="text-(--zaire-text)">Total ARS: <strong>{formatCurrency(totalArs, "ARS")}</strong></span>}
+            {totalUsd > 0 && <span className="text-(--zaire-text)">Total USD: <strong>{formatCurrency(totalUsd, "USD")}</strong></span>}
           </div>
         </>
       )}
@@ -196,7 +196,7 @@ export function VisitExpensesSection({ visitId, technicianId, initialExpenses, c
             </div>
             <div className="flex justify-end gap-2 pt-1">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-              <Button type="submit" disabled={isSubmitting} className="bg-sas-navy-mid hover:bg-sas-navy text-white">
+              <Button type="submit" disabled={isSubmitting} className="bg-zaire-navy-mid hover:bg-zaire-navy text-white">
                 {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Cargar gasto
               </Button>
             </div>

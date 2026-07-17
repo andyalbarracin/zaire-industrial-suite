@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
+import { ROUTES } from "@/lib/routes";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -121,7 +122,7 @@ export function VisitForm({ visit, technicians, vehicles, sites, clients, workOr
       const { error } = await sb.from("field_visits").update(base).eq("id", visit.id);
       if (error) { toast.error("Error al actualizar la visita"); return; }
       toast.success("Visita actualizada");
-      router.push(`/field/visitas/${visit.id}`);
+      router.push(ROUTES.field.visita(visit.id));
       router.refresh();
       return;
     }
@@ -160,21 +161,21 @@ export function VisitForm({ visit, technicians, vehicles, sites, clients, workOr
     });
 
     toast.success(`Visita ${visitNumber} creada`);
-    router.push(`/field/visitas/${created.id}`);
+    router.push(ROUTES.field.visita(created.id));
     router.refresh();
   }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 max-w-3xl">
-      <div className="sas-card p-5 space-y-4">
-        <h2 className="text-sm font-semibold text-(--sas-text) uppercase tracking-wide">Datos de la visita</h2>
+      <div className="zaire-card p-5 space-y-4">
+        <h2 className="text-sm font-semibold text-(--zaire-text) uppercase tracking-wide">Datos de la visita</h2>
 
         <div className="grid grid-cols-2 gap-4">
           {/* Sucursal */}
           <div className="space-y-1.5">
             <Label>Sucursal *</Label>
             {isEdit ? (
-              <div className="h-9 flex items-center px-3 rounded-lg border border-(--sas-border) bg-slate-50 text-sm text-(--sas-text-muted)">
+              <div className="h-9 flex items-center px-3 rounded-lg border border-(--zaire-border) bg-slate-50 text-sm text-(--zaire-text-muted)">
                 {BRANCHES.find((b) => b.id === branchId)?.name ?? branchId}
               </div>
             ) : (
@@ -187,7 +188,7 @@ export function VisitForm({ visit, technicians, vehicles, sites, clients, workOr
                 <SelectContent>
                   {BRANCHES.map((b) => (
                     <SelectItem key={b.id} value={b.id}>
-                      <span className="flex items-center gap-2">{b.name}<span className="text-xs text-(--sas-text-muted) font-mono">({b.code})</span></span>
+                      <span className="flex items-center gap-2">{b.name}<span className="text-xs text-(--zaire-text-muted) font-mono">({b.code})</span></span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -270,7 +271,7 @@ export function VisitForm({ visit, technicians, vehicles, sites, clients, workOr
             <Label>Facturable</Label>
             <div className="h-9 flex items-center gap-3">
               <Switch id="is_billable" checked={isBillable} onCheckedChange={(v) => setValue("is_billable", v)} />
-              <span className="text-sm text-(--sas-text-muted)">{isBillable ? "Sí, re-facturable al cliente" : "No facturable"}</span>
+              <span className="text-sm text-(--zaire-text-muted)">{isBillable ? "Sí, re-facturable al cliente" : "No facturable"}</span>
             </div>
           </div>
         </div>
@@ -282,8 +283,8 @@ export function VisitForm({ visit, technicians, vehicles, sites, clients, workOr
       </div>
 
       {/* Link opcional a OT */}
-      <div className="sas-card p-5 space-y-3">
-        <h2 className="text-sm font-semibold text-(--sas-text) uppercase tracking-wide">Orden de trabajo (opcional)</h2>
+      <div className="zaire-card p-5 space-y-3">
+        <h2 className="text-sm font-semibold text-(--zaire-text) uppercase tracking-wide">Orden de trabajo (opcional)</h2>
         <div className="space-y-1.5 max-w-md">
           <Label>Asociar a una OT existente</Label>
           <Select value={woId} onValueChange={(v) => setValue("work_order_id", v ?? NONE)}>
@@ -296,14 +297,14 @@ export function VisitForm({ visit, technicians, vehicles, sites, clients, workOr
             </SelectContent>
           </Select>
           {clientId && ordersForClient.length === 0 && (
-            <p className="text-xs text-(--sas-text-muted)">El cliente seleccionado no tiene OTs.</p>
+            <p className="text-xs text-(--zaire-text-muted)">El cliente seleccionado no tiene OTs.</p>
           )}
         </div>
       </div>
 
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={() => router.back()}>Cancelar</Button>
-        <Button type="submit" disabled={isSubmitting} className="bg-sas-navy-mid hover:bg-sas-navy text-white">
+        <Button type="submit" disabled={isSubmitting} className="bg-zaire-navy-mid hover:bg-zaire-navy text-white">
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {isEdit ? "Guardar cambios" : "Crear visita"}
         </Button>

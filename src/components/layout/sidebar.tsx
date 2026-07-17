@@ -1,6 +1,6 @@
 "use client";
 // sidebar.tsx — src/components/layout/sidebar.tsx — 2026-05-19
-// Sidebar de navegación colapsable con branding Zaire Trace
+// Sidebar de navegación colapsable con branding de la suite Zaire (módulos Trace/Field)
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -25,10 +25,20 @@ import {
   Receipt,
   FileCheck,
   LayoutGrid,
+  Database,
   Map as MapIcon,
   ChevronDown,
+  Briefcase,
+  UserPlus,
+  Target,
+  Contact,
+  CalendarClock,
+  Building2,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ROUTES } from "@/lib/routes";
+import { isModuleEnabled, type ModuleId } from "@/lib/modules";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import type { Profile } from "@/lib/types/database";
@@ -40,28 +50,41 @@ interface NavItem {
   adminOnly?: boolean;
 }
 
-const NAV_MAIN: NavItem[] = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/ordenes", label: "Órdenes de Trabajo", icon: ClipboardList },
-  { href: "/clientes", label: "Clientes", icon: Users },
-  { href: "/productos", label: "Productos", icon: Package },
+// Módulo Trace
+const NAV_TRACE: NavItem[] = [
+  { href: ROUTES.trace.dashboard, label: "Dashboard", icon: LayoutDashboard },
+  { href: ROUTES.trace.ordenes, label: "Órdenes de Trabajo", icon: ClipboardList },
+  { href: ROUTES.productos, label: "Productos", icon: Package },
+  { href: ROUTES.trace.reportes, label: "Reportes", icon: BarChart3 },
 ];
 
-const NAV_GESTION: NavItem[] = [
-  { href: "/historial", label: "Historial", icon: History },
-  { href: "/reportes", label: "Reportes", icon: BarChart3 },
-  { href: "/configuracion", label: "Configuración", icon: Settings, adminOnly: true },
+// Master data compartida de la suite (no pertenece a un módulo)
+const NAV_GENERAL: NavItem[] = [
+  { href: ROUTES.clientes, label: "Clientes", icon: Users },
+  { href: ROUTES.historial, label: "Historial", icon: History },
+  { href: ROUTES.configuracion, label: "Gestión", icon: Settings, adminOnly: true },
+];
+
+const NAV_CRM: NavItem[] = [
+  { href: ROUTES.crm.dashboard, label: "Dashboard", icon: LayoutDashboard },
+  { href: ROUTES.crm.leads, label: "Leads", icon: UserPlus },
+  { href: ROUTES.crm.pipeline, label: "Pipeline", icon: Target },
+  { href: ROUTES.crm.cotizaciones, label: "Cotizaciones", icon: FileText },
+  { href: ROUTES.crm.cuentas, label: "Cuentas", icon: Building2 },
+  { href: ROUTES.crm.contactos, label: "Contactos", icon: Contact },
+  { href: ROUTES.crm.actividades, label: "Actividades", icon: CalendarClock },
+  { href: ROUTES.crm.reportes, label: "Reportes", icon: BarChart3 },
 ];
 
 const NAV_FIELD: NavItem[] = [
-  { href: "/field", label: "Panel Field", icon: LayoutDashboard },
-  { href: "/field/visitas", label: "Visitas", icon: MapPin },
-  { href: "/field/tecnicos", label: "Técnicos", icon: HardHat },
-  { href: "/field/unidades", label: "Unidades", icon: Truck },
-  { href: "/field/plantas", label: "Plantas", icon: Factory },
-  { href: "/field/gastos", label: "Gastos", icon: Receipt },
-  { href: "/field/documentos", label: "Documentos", icon: FileCheck },
-  { href: "/field/reportes", label: "Reportes Field", icon: BarChart3 },
+  { href: ROUTES.field.home, label: "Panel Field", icon: LayoutDashboard },
+  { href: ROUTES.field.visitas, label: "Visitas", icon: MapPin },
+  { href: ROUTES.field.tecnicos, label: "Técnicos", icon: HardHat },
+  { href: ROUTES.field.unidades, label: "Unidades", icon: Truck },
+  { href: ROUTES.field.plantas, label: "Plantas", icon: Factory },
+  { href: ROUTES.field.gastos, label: "Gastos", icon: Receipt },
+  { href: ROUTES.field.documentos, label: "Documentos", icon: FileCheck },
+  { href: ROUTES.field.reportes, label: "Reportes Field", icon: BarChart3 },
 ];
 
 // Módulos "padre" colapsables. Sumar acá cuando haya nuevos módulos (ej. futuros).
@@ -72,8 +95,10 @@ interface NavModule {
   items: NavItem[];
 }
 const MODULES: NavModule[] = [
-  { key: "tracking", label: "Zaire Tracking", icon: LayoutGrid, items: [...NAV_MAIN, ...NAV_GESTION] },
+  { key: "trace", label: "Zaire Trace", icon: LayoutGrid, items: NAV_TRACE },
   { key: "field", label: "Zaire Field", icon: MapIcon, items: NAV_FIELD },
+  { key: "crm", label: "Zaire CRM", icon: Briefcase, items: NAV_CRM },
+  { key: "general", label: "Ajustes", icon: Database, items: NAV_GENERAL },
 ];
 
 interface SidebarProps {
@@ -85,21 +110,26 @@ export function Sidebar({ profile }: SidebarProps) {
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   // Solo el módulo de la ruta actual arranca abierto (evita el scroll largo).
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({
-    tracking: !pathname.startsWith("/field"),
-    field: pathname.startsWith("/field"),
+  const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
+    const onField = pathname.startsWith(ROUTES.field.home);
+    const onCrm = pathname.startsWith(ROUTES.crm.dashboard);
+    const onGeneral = [ROUTES.clientes, ROUTES.historial, ROUTES.configuracion].some((r) => pathname.startsWith(r));
+    return { trace: !onField && !onCrm && !onGeneral, field: onField, crm: onCrm, general: onGeneral };
   });
+
+  // Grupos visibles según módulos habilitados (Administración/general siempre visible).
+  const modules = MODULES.filter((m) => m.key === "general" || isModuleEnabled(m.key as ModuleId));
 
   async function handleLogout() {
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push("/login");
+    router.push(ROUTES.login);
     router.refresh();
   }
 
   const isActive = (href: string) => {
     // Rutas "índice" con match exacto para no activarse en sus subrutas
-    if (href === "/" || href === "/field") return pathname === href;
+    if (href === ROUTES.trace.dashboard || href === ROUTES.field.home || href === ROUTES.crm.dashboard) return pathname === href;
     return pathname.startsWith(href);
   };
 
@@ -110,7 +140,7 @@ export function Sidebar({ profile }: SidebarProps) {
         className={cn(
           "relative flex items-center gap-3 px-3 py-2.5 rounded-[9px] text-[13.5px] font-medium transition-colors duration-140",
           isActive(item.href)
-            ? "bg-linear-to-r from-sas-blue/30 to-sas-blue/15 text-white before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:rounded-r-[3px] before:bg-sas-light"
+            ? "bg-linear-to-r from-zaire-blue/30 to-zaire-blue/15 text-white before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:rounded-r-[3px] before:bg-zaire-light"
             : "text-[#B7C5E0] hover:text-white hover:bg-white/6",
           collapsed && "justify-center px-2"
         )}
@@ -125,18 +155,18 @@ export function Sidebar({ profile }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "flex flex-col h-screen bg-sas-navy text-white transition-all duration-300 shrink-0 relative",
+        "flex flex-col h-screen bg-zaire-navy text-white transition-all duration-300 shrink-0 relative",
         collapsed ? "w-16" : "w-60"
       )}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-sas-navy-mid">
-        <Activity className="w-7 h-7 text-sas-light shrink-0" />
+      <div className="flex items-center gap-3 px-4 py-5 border-b border-zaire-navy-mid">
+        <Activity className="w-7 h-7 text-zaire-light shrink-0" />
         {!collapsed && (
           <div>
-            <span className="font-bold text-lg tracking-tight">Zaire Trace</span>
-            <p className="text-[10px] text-sas-light opacity-70 leading-tight">
-              Sistema de Trazabilidad
+            <span className="font-bold text-lg tracking-tight">Zaire</span>
+            <p className="text-[10px] text-zaire-light opacity-70 leading-tight">
+              Suite Industrial
             </p>
           </div>
         )}
@@ -145,7 +175,7 @@ export function Sidebar({ profile }: SidebarProps) {
       {/* Toggle collapse */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-2.75 top-17.5 w-5.5 h-5.5 bg-white border border-(--sas-border) rounded-[7px] flex items-center justify-center text-(--sas-text-muted) hover:text-sas-blue shadow-sm transition-colors duration-150 z-10"
+        className="absolute -right-2.75 top-17.5 w-5.5 h-5.5 bg-white border border-(--zaire-border) rounded-[7px] flex items-center justify-center text-(--zaire-text-muted) hover:text-zaire-blue shadow-sm transition-colors duration-150 z-10"
         aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
       >
         {collapsed ? (
@@ -160,12 +190,12 @@ export function Sidebar({ profile }: SidebarProps) {
         {collapsed ? (
           // Colapsado: todos los ítems como iconos (sin agrupar)
           <ul className="space-y-0.5 px-3.5">
-            {MODULES.flatMap((m) => m.items)
+            {modules.flatMap((m) => m.items)
               .filter((item) => !item.adminOnly || profile?.role === "admin")
               .map((item) => renderItem(item))}
           </ul>
         ) : (
-          MODULES.map((mod, i) => {
+          modules.map((mod, i) => {
             const items = mod.items.filter((item) => !item.adminOnly || profile?.role === "admin");
             const open = expanded[mod.key];
             const moduleActive = items.some((it) => isActive(it.href));
@@ -176,7 +206,7 @@ export function Sidebar({ profile }: SidebarProps) {
                   onClick={() => setExpanded((e) => ({ ...e, [mod.key]: !e[mod.key] }))}
                   className={cn(
                     "w-full flex items-center gap-2.5 px-4 py-2 text-[11px] font-semibold tracking-widest uppercase transition-colors",
-                    moduleActive ? "text-sas-light" : "text-[#5C719B] hover:text-[#8ea3cf]"
+                    moduleActive ? "text-zaire-light" : "text-[#5C719B] hover:text-[#8ea3cf]"
                   )}
                 >
                   <mod.icon className="w-4 h-4 shrink-0" />
@@ -196,11 +226,11 @@ export function Sidebar({ profile }: SidebarProps) {
           <div className="text-[10px] font-semibold tracking-widest uppercase text-[#5C719B] px-3 pt-1 pb-1.5">Soporte</div>
         )}
         <Link
-          href="/ayuda"
+          href={ROUTES.ayuda}
           className={cn(
             "relative flex items-center gap-3 px-3 py-2.5 rounded-[9px] text-[13.5px] font-medium transition-colors duration-140",
-            isActive("/ayuda")
-              ? "bg-linear-to-r from-sas-blue/30 to-sas-blue/15 text-white before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:rounded-r-[3px] before:bg-sas-light"
+            isActive(ROUTES.ayuda)
+              ? "bg-linear-to-r from-zaire-blue/30 to-zaire-blue/15 text-white before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:rounded-r-[3px] before:bg-zaire-light"
               : "text-[#B7C5E0] hover:text-white hover:bg-white/6",
             collapsed && "justify-center px-2"
           )}
@@ -215,7 +245,7 @@ export function Sidebar({ profile }: SidebarProps) {
       <div className="border-t border-white/[0.07] p-3">
         {!collapsed ? (
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-sas-blue flex items-center justify-center text-xs font-bold shrink-0">
+            <div className="w-8 h-8 rounded-full bg-zaire-blue flex items-center justify-center text-xs font-bold shrink-0">
               {profile?.full_name?.charAt(0).toUpperCase() ?? "U"}
             </div>
             <div className="flex-1 min-w-0">

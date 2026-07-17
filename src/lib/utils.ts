@@ -26,6 +26,17 @@ export function formatCurrency(amount: number, currency: Currency): string {
   }).format(amount);
 }
 
+// Formato compacto para KPIs / montos grandes: $1,2 M en vez de $1.234.567,00.
+export function formatCurrencyCompact(amount: number, currency: Currency): string {
+  const locale = currency === "USD" ? "en-US" : "es-AR";
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency,
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(amount);
+}
+
 // Convierte un string de fecha (YYYY-MM-DD o timestamp) en un Date a medianoche LOCAL.
 // Evita el corrimiento de un día por zona horaria (UTC) en fechas de calendario.
 function parseLocalDate(date: string): Date {
@@ -68,7 +79,7 @@ export function getDueDaysLabel(date_due: string | null): string {
   return `Vence en ${diffDays} días`;
 }
 
-export type TrafficLight = "green" | "yellow" | "red";
+export type TrafficLight = "green" | "yellow" | "orange" | "red";
 
 /**
  * Calcula el color del semáforo para un campo booleano en una lista de ítems.

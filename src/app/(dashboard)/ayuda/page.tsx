@@ -85,7 +85,7 @@ const SECTIONS: Section[] = [
     icon: ClipboardList,
     title: "Órdenes de Trabajo",
     color: "text-blue-600",
-    keywords: "nueva orden OT OTS crear editar ítem duplicar PDF planilla reparación estado cambiar exportar Excel CSV serie TAG marca medida materiales precio ARS USD facturada cancelada checklist semáforo",
+    keywords: "nueva orden OT OTS crear editar ítem duplicar PDF planilla reparación estado cambiar exportar XLS CSV serie TAG marca medida materiales precio ARS USD facturada cancelada checklist semáforo",
     steps: [
       {
         title: "Tipos de orden",
@@ -133,8 +133,8 @@ const SECTIONS: Section[] = [
         body: "En el detalle de una OTS con ítems que requieren reparación, aparece el botón 'Planilla Reparación'. Genera el documento RC 010-00 con datos técnicos del sello y tabla de componentes.",
       },
       {
-        title: "Exportar la tabla a Excel o CSV",
-        body: "Botones 'Excel' y 'CSV' arriba de la tabla de órdenes. La exportación respeta todos los filtros activos. El CSV usa separador punto y coma (;), estándar Argentina.",
+        title: "Exportar la tabla a XLS o CSV",
+        body: "Botones 'XLS' y 'CSV' arriba de la tabla de órdenes. La exportación respeta todos los filtros activos. El CSV usa separador punto y coma (;), estándar Argentina.",
       },
     ],
   },
@@ -220,7 +220,7 @@ const SECTIONS: Section[] = [
     icon: BarChart3,
     title: "Reportes",
     color: "text-indigo-600",
-    keywords: "reporte operativo financiero auditoría período cliente facturación proyección pendiente Excel PDF secuencia integridad trazabilidad",
+    keywords: "reporte operativo financiero auditoría período cliente facturación proyección pendiente XLS PDF secuencia integridad trazabilidad",
     steps: [
       {
         title: "Tab Operativos",
@@ -228,7 +228,7 @@ const SECTIONS: Section[] = [
       },
       {
         title: "Tab Financieros",
-        body: "Dos reportes: Facturación por Período (total facturado con detalle por orden) e Ingresos por Cliente (ranking de clientes por monto facturado). Exportables a Excel.",
+        body: "Dos reportes: Facturación por Período (total facturado con detalle por orden) e Ingresos por Cliente (ranking de clientes por monto facturado). Exportables a XLS.",
       },
       {
         title: "Tab Auditoría — Verificación de Secuencia",
@@ -281,7 +281,7 @@ const SECTIONS: Section[] = [
     icon: Printer,
     title: "Impresión y documentos",
     color: "text-slate-600",
-    keywords: "PDF imprimir planilla reparación formulario RC009 RC010 Excel CSV exportar firma",
+    keywords: "PDF imprimir planilla reparación formulario RC009 RC010 XLS CSV exportar firma",
     steps: [
       {
         title: "PDF de Orden de Trabajo (RC 009-00)",
@@ -292,12 +292,12 @@ const SECTIONS: Section[] = [
         body: "Solo disponible en órdenes OTS que tienen ítems con 'Requiere reparación' activado. Genera una planilla por cada ítem, con datos técnicos del sello, tabla de componentes fija y campos para pruebas neumática e hidráulica.",
       },
       {
-        title: "Exportar a Excel (.xlsx)",
-        body: "Botón 'Excel' sobre la tabla de órdenes. El archivo incluye el encabezado y todos los registros con los filtros aplicados. Columnas: Nro. Orden, Sucursal, Tipo, Cliente, Estado, Fechas, Moneda, Total USD, Total ARS.",
+        title: "Exportar a XLS (.xlsx)",
+        body: "Botón 'XLS' sobre la tabla de órdenes. El archivo incluye el encabezado y todos los registros con los filtros aplicados. Columnas: Nro. Orden, Sucursal, Tipo, Cliente, Estado, Fechas, Moneda, Total USD, Total ARS.",
       },
       {
         title: "Exportar a CSV",
-        body: "Mismo contenido que Excel pero en formato CSV con separador punto y coma (;). Compatible con Excel argentino y herramientas como LibreOffice Calc. La codificación es UTF-8 con BOM para caracteres especiales.",
+        body: "Mismo contenido que el XLS pero en formato CSV con separador punto y coma (;). Compatible con planillas de cálculo (LibreOffice, etc.) y herramientas como LibreOffice Calc. La codificación es UTF-8 con BOM para caracteres especiales.",
       },
     ],
   },
@@ -315,7 +315,7 @@ const SECTIONS: Section[] = [
       {
         title: "Crear una visita",
         body: "Ir a Zaire Field → Visitas → 'Nueva Visita'. Elegí sucursal (no se cambia después), técnico, unidad, cliente, sitio, propósito y fecha agendada. Al guardar, la visita recibe un número correlativo por sucursal (ej: VIS-2026-NQN0001) y queda en estado 'Planificada'.",
-        alert: { type: "info", text: "Podés vincular la visita a una OT existente de Zaire Tracking desde el propio formulario." },
+        alert: { type: "info", text: "Podés vincular la visita a una OT existente de Zaire Trace desde el propio formulario." },
       },
       {
         title: "Estados de la visita",
@@ -393,7 +393,7 @@ const SECTIONS: Section[] = [
       },
       {
         title: "Reportes Field",
-        body: "Zaire Field → Reportes Field. Pestaña Operativos (visitas por estado, técnico, cliente, sucursal; tiempo promedio en sitio) y Financieros (gastos por categoría/técnico, control de cobranza). Exportables a Excel.",
+        body: "Zaire Field → Reportes Field. Pestaña Operativos (visitas por estado, técnico, cliente, sucursal; tiempo promedio en sitio) y Financieros (gastos por categoría/técnico, control de cobranza). Exportables a XLS.",
       },
     ],
   },
@@ -402,7 +402,7 @@ const SECTIONS: Section[] = [
     icon: GitBranchPlus,
     title: "Zaire Field — Reporte de visita y solicitud de OT/OTS",
     color: "text-indigo-600",
-    keywords: "field reporte de visita hallazgos medida marca materiales diagnóstico requiere reparación solicitar OT OTS orden de trabajo admin vincular integración zaire tracking",
+    keywords: "field reporte de visita hallazgos medida marca materiales diagnóstico requiere reparación solicitar OT OTS orden de trabajo admin vincular integración zaire trace",
     steps: [
       {
         title: "Cargar el reporte de la visita",
@@ -410,12 +410,12 @@ const SECTIONS: Section[] = [
       },
       {
         title: "Solicitar una OT/OTS (no la crea el técnico)",
-        body: "Desde el reporte, el botón 'Solicitar OT/OTS' deja una solicitud para el administrador con los datos ya cargados. IMPORTANTE: esto NO crea la orden. Las OT/OTS tienen número correlativo e irrepetible y las crea el administrador en Zaire Tracking, de forma controlada.",
-        alert: { type: "warning", text: "El usuario de Field solicita; el número de OT/OTS lo genera siempre el administrador en Zaire Tracking." },
+        body: "Desde el reporte, el botón 'Solicitar OT/OTS' deja una solicitud para el administrador con los datos ya cargados. IMPORTANTE: esto NO crea la orden. Las OT/OTS tienen número correlativo e irrepetible y las crea el administrador en Zaire Trace, de forma controlada.",
+        alert: { type: "warning", text: "El usuario de Field solicita; el número de OT/OTS lo genera siempre el administrador en Zaire Trace." },
       },
       {
         title: "El administrador crea y vincula",
-        body: "El estado de la solicitud pasa por: No solicitada → Solicitada → Vinculada (o Rechazada). El admin crea la OT/OTS en Zaire Tracking y luego, desde el reporte, la vincula a la visita con 'Vincular OT'. Así el trabajo de campo queda conectado con la administración sin recargar datos.",
+        body: "El estado de la solicitud pasa por: No solicitada → Solicitada → Vinculada (o Rechazada). El admin crea la OT/OTS en Zaire Trace y luego, desde el reporte, la vincula a la visita con 'Vincular OT'. Así el trabajo de campo queda conectado con la administración sin recargar datos.",
         alert: { type: "success", text: "Diferencial de Zaire Field: del campo a la administración con trazabilidad, respetando la numeración de órdenes." },
       },
     ],
@@ -451,7 +451,7 @@ function AccordionSection({ section, defaultOpen = false }: { section: Section; 
   const Icon = section.icon;
 
   return (
-    <div className="sas-card overflow-hidden">
+    <div className="zaire-card overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -460,20 +460,20 @@ function AccordionSection({ section, defaultOpen = false }: { section: Section; 
         <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", "bg-slate-100")}>
           <Icon className={cn("w-5 h-5", section.color)} />
         </div>
-        <span className="flex-1 font-semibold text-(--sas-text) text-[15px]">{section.title}</span>
-        <ChevronDown className={cn("w-4 h-4 text-(--sas-text-muted) transition-transform duration-200", open && "rotate-180")} />
+        <span className="flex-1 font-semibold text-(--zaire-text) text-[15px]">{section.title}</span>
+        <ChevronDown className={cn("w-4 h-4 text-(--zaire-text-muted) transition-transform duration-200", open && "rotate-180")} />
       </button>
 
       {open && (
-        <div className="border-t border-(--sas-border) px-6 pb-6 pt-4 space-y-5">
+        <div className="border-t border-(--zaire-border) px-6 pb-6 pt-4 space-y-5">
           {section.steps.map((step, i) => (
             <div key={i} className="flex gap-4">
-              <div className="w-6 h-6 rounded-full bg-sas-navy text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+              <div className="w-6 h-6 rounded-full bg-zaire-navy text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
                 {i + 1}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-(--sas-text) text-sm mb-1">{step.title}</p>
-                <p className="text-sm text-(--sas-text-muted) leading-relaxed">{step.body}</p>
+                <p className="font-semibold text-(--zaire-text) text-sm mb-1">{step.title}</p>
+                <p className="text-sm text-(--zaire-text-muted) leading-relaxed">{step.body}</p>
                 {step.alert && <AlertBox type={step.alert.type} text={step.alert.text} />}
               </div>
             </div>
@@ -502,13 +502,13 @@ export default function AyudaPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-(--sas-text)">Centro de Ayuda</h1>
-        <p className="text-sm text-(--sas-text-muted) mt-0.5">Guía de uso del sistema</p>
+        <h1 className="text-2xl font-bold text-(--zaire-text)">Centro de Ayuda</h1>
+        <p className="text-sm text-(--zaire-text-muted) mt-0.5">Guía de uso del sistema</p>
       </div>
 
       {/* Búsqueda */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--sas-text-muted)" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--zaire-text-muted)" />
         <Input
           placeholder="Buscar en la ayuda... (ej: PDF, semáforo, duplicar)"
           value={query}
@@ -523,7 +523,7 @@ export default function AyudaPage() {
           <Info className="w-4 h-4 shrink-0 mt-0.5 text-blue-500" />
           <span>
             Hacé clic en cualquier sección para expandirla. Usá la búsqueda para encontrar un tema específico.
-            Términos útiles: <OTBadge /> <OTSBadge /> o palabras como "PDF", "semáforo", "estado", "exportar".
+            Términos útiles: <OTBadge /> <OTSBadge /> o palabras como «PDF», «semáforo», «estado», «exportar».
           </span>
         </div>
       )}
@@ -539,12 +539,12 @@ export default function AyudaPage() {
             />
           ))
         ) : (
-          <div className="sas-card px-6 py-12 text-center">
-            <Search className="w-8 h-8 text-(--sas-text-muted) mx-auto mb-3 opacity-40" />
-            <p className="text-sm font-medium text-(--sas-text-muted)">
+          <div className="zaire-card px-6 py-12 text-center">
+            <Search className="w-8 h-8 text-(--zaire-text-muted) mx-auto mb-3 opacity-40" />
+            <p className="text-sm font-medium text-(--zaire-text-muted)">
               No se encontraron resultados para &quot;{query}&quot;
             </p>
-            <p className="text-xs text-(--sas-text-muted) mt-1">
+            <p className="text-xs text-(--zaire-text-muted) mt-1">
               Intentá con otras palabras clave
             </p>
           </div>

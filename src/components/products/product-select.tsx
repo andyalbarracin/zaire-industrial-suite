@@ -55,7 +55,7 @@ export function ProductSelect({ products, value, onChange, disabled }: ProductSe
         <div className="max-h-64 overflow-y-auto space-y-0.5">
           <button
             type="button"
-            className="w-full text-left px-3 py-2 text-sm rounded hover:bg-slate-100 text-(--sas-text-muted)"
+            className="w-full text-left px-3 py-2 text-sm rounded hover:bg-slate-100 text-(--zaire-text-muted)"
             onClick={() => { onChange(null); setOpen(false); }}
           >
             — Descripción libre —
@@ -67,23 +67,23 @@ export function ProductSelect({ products, value, onChange, disabled }: ProductSe
               className="w-full text-left px-3 py-2 text-sm rounded hover:bg-slate-100 flex items-center gap-2"
               onClick={() => { onChange(product.id); setOpen(false); setSearch(""); }}
             >
-              <Check className={cn("w-4 h-4 shrink-0", value === product.id ? "opacity-100 text-sas-blue" : "opacity-0")} />
+              <Check className={cn("w-4 h-4 shrink-0", value === product.id ? "opacity-100 text-zaire-blue" : "opacity-0")} />
               <div className="flex-1 min-w-0">
                 <span className="font-medium">{product.name}</span>
-                {product.brand && <span className="text-(--sas-text-muted) ml-1">· {product.brand}</span>}
+                {product.brand && <span className="text-(--zaire-text-muted) ml-1">· {product.brand}</span>}
               </div>
               {product.code && (
                 <span className="text-xs font-mono bg-slate-100 px-1.5 py-0.5 rounded">{product.code}</span>
               )}
               {product.category && (
-                <span className="text-xs text-(--sas-text-muted)">
+                <span className="text-xs text-(--zaire-text-muted)">
                   {PRODUCT_CATEGORY_LABELS[product.category as ProductCategory]}
                 </span>
               )}
             </button>
           ))}
           {!filtered.length && (
-            <p className="text-sm text-center py-4 text-(--sas-text-muted)">Sin resultados</p>
+            <p className="text-sm text-center py-4 text-(--zaire-text-muted)">Sin resultados</p>
           )}
         </div>
       </PopoverContent>

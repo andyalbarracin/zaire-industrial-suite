@@ -186,7 +186,7 @@ export function ClientForm({ open, onOpenChange, client, onSaved }: ClientFormPr
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-sas-navy-mid hover:bg-sas-navy text-white"
+              className="bg-zaire-navy-mid hover:bg-zaire-navy text-white"
             >
               {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {isEdit ? "Guardar cambios" : "Crear cliente"}

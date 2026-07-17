@@ -3,6 +3,7 @@
 // Tabla de clientes con TanStack Table, búsqueda, modal crear/editar
 
 import { useState, useMemo } from "react";
+import { ROUTES } from "@/lib/routes";
 import {
   useReactTable,
   getCoreRowModel,
@@ -37,7 +38,7 @@ export function ClientsTable({ initialClients }: ClientsTableProps) {
         accessorKey: "client_code",
         header: "Código",
         cell: ({ getValue }) => (
-          <span className="font-mono text-xs text-(--sas-text-muted)">{(getValue() as string) ?? "—"}</span>
+          <span className="font-mono text-xs text-(--zaire-text-muted)">{(getValue() as string) ?? "—"}</span>
         ),
       },
       {
@@ -51,7 +52,7 @@ export function ClientsTable({ initialClients }: ClientsTableProps) {
           </button>
         ),
         cell: ({ row }) => (
-          <span className="font-medium text-(--sas-text)">
+          <span className="font-medium text-(--zaire-text)">
             {row.original.business_name}
           </span>
         ),
@@ -74,7 +75,7 @@ export function ClientsTable({ initialClients }: ClientsTableProps) {
         cell: ({ getValue }) => {
           const email = getValue() as string | null;
           return email ? (
-            <a href={`mailto:${email}`} className="text-sas-blue hover:underline text-sm">
+            <a href={`mailto:${email}`} className="text-zaire-blue hover:underline text-sm">
               {email}
             </a>
           ) : "—";
@@ -122,7 +123,7 @@ export function ClientsTable({ initialClients }: ClientsTableProps) {
               <Pencil className="w-3.5 h-3.5" />
             </Button>
             <Button variant="ghost" size="sm" asChild title="Ver detalle">
-              <Link href={`/clientes/${row.original.id}`}>
+              <Link href={ROUTES.cliente(row.original.id)}>
                 <Eye className="w-3.5 h-3.5" />
               </Link>
             </Button>
@@ -160,11 +161,11 @@ export function ClientsTable({ initialClients }: ClientsTableProps) {
 
   return (
     <>
-      <div className="sas-card">
+      <div className="zaire-card">
         {/* Toolbar */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-(--sas-border)">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-(--zaire-border)">
           <div className="relative w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--sas-text-muted)" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--zaire-text-muted)" />
             <Input
               placeholder="Buscar clientes..."
               value={globalFilter}
@@ -177,7 +178,7 @@ export function ClientsTable({ initialClients }: ClientsTableProps) {
               setEditingClient(null);
               setFormOpen(true);
             }}
-            className="bg-sas-navy-mid hover:bg-sas-navy text-white h-9"
+            className="bg-zaire-navy-mid hover:bg-zaire-navy text-white h-9"
           >
             <Plus className="w-4 h-4 mr-1.5" />
             Nuevo Cliente
@@ -187,13 +188,13 @@ export function ClientsTable({ initialClients }: ClientsTableProps) {
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-(--sas-border)">
+            <thead className="bg-slate-50 border-b border-(--zaire-border)">
               {table.getHeaderGroups().map((hg) => (
                 <tr key={hg.id}>
                   {hg.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="px-4 py-3 text-left text-xs font-medium text-(--sas-text-muted) uppercase tracking-wide"
+                      className="px-4 py-3 text-left text-xs font-medium text-(--zaire-text-muted) uppercase tracking-wide"
                     >
                       {flexRender(header.column.columnDef.header, header.getContext())}
                     </th>
@@ -201,11 +202,11 @@ export function ClientsTable({ initialClients }: ClientsTableProps) {
                 </tr>
               ))}
             </thead>
-            <tbody className="divide-y divide-(--sas-border)">
+            <tbody className="divide-y divide-(--zaire-border)">
               {table.getRowModel().rows.map((row) => (
                 <tr key={row.id} className="hover:bg-slate-50/80 transition-colors duration-100">
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-4 py-3 text-(--sas-text)">
+                    <td key={cell.id} className="px-4 py-3 text-(--zaire-text)">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}
@@ -213,7 +214,7 @@ export function ClientsTable({ initialClients }: ClientsTableProps) {
               ))}
               {!table.getRowModel().rows.length && (
                 <tr>
-                  <td colSpan={columns.length} className="px-4 py-12 text-center text-(--sas-text-muted)">
+                  <td colSpan={columns.length} className="px-4 py-12 text-center text-(--zaire-text-muted)">
                     No se encontraron clientes
                   </td>
                 </tr>
@@ -223,7 +224,7 @@ export function ClientsTable({ initialClients }: ClientsTableProps) {
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-(--sas-border) text-sm text-(--sas-text-muted)">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-(--zaire-border) text-sm text-(--zaire-text-muted)">
           <span>{table.getFilteredRowModel().rows.length} registros</span>
           <div className="flex items-center gap-2">
             <Button

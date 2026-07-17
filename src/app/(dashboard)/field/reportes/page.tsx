@@ -12,8 +12,8 @@ export default async function ReportesFieldPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-(--sas-text)">Reportes Field</h1>
-        <p className="text-sm text-(--sas-text-muted) mt-0.5">Operativos y financieros</p>
+        <h1 className="text-2xl font-bold text-(--zaire-text)">Reportes Field</h1>
+        <p className="text-sm text-(--zaire-text-muted) mt-0.5">Operativos y financieros</p>
       </div>
       <ReportsView visits={visits} expenses={expenses} />
     </div>

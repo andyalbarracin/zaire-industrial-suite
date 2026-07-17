@@ -55,7 +55,7 @@ const S = StyleSheet.create({
   cItem: { width: 20 },
   cCant: { width: 22 },
   cDesc: { flex: 1 },
-  cCodSas: { width: 48 },
+  cCodigo: { width: 48 },
   cCodCliente: { width: 48 },
   cOrigen: { width: 42 },
   cFechaEnt: { width: 48 },
@@ -203,7 +203,7 @@ export function OrderPdfDocument({ order, items, companyInfo }: OrderPdfProps & 
             <Text style={[S.th, S.cItem]}>ITEM</Text>
             <Text style={[S.th, S.cCant]}>CANT</Text>
             <Text style={[S.th, S.cDesc]}>DESCRIPCION</Text>
-            <Text style={[S.th, S.cCodSas]}>COD. SAS</Text>
+            <Text style={[S.th, S.cCodigo]}>CÓDIGO</Text>
             <Text style={[S.th, S.cCodCliente]}>COD. CLIENTE</Text>
             <Text style={[S.th, S.cOrigen]}>PO/NP/STOCK</Text>
             <Text style={[S.th, S.cFechaEnt]}>F. ENTREGA</Text>
@@ -228,7 +228,7 @@ export function OrderPdfDocument({ order, items, companyInfo }: OrderPdfProps & 
                   {item.equipment_number ? `\nTAG: ${item.equipment_number}` : ""}
                   {item.medida ? `\nMedida: ${item.medida}${item.unidad_medida ? ` ${item.unidad_medida}` : ""}` : ""}
                 </Text>
-                <Text style={[S.td, S.cCodSas]}>{item.products?.code ?? "—"}</Text>
+                <Text style={[S.td, S.cCodigo]}>{item.products?.code ?? "—"}</Text>
                 <Text style={[S.td, S.cCodCliente]}>{order.clients?.client_code ?? "—"}</Text>
                 <Text style={[S.td, S.cOrigen]}>{item.origen_abastecimiento ?? "—"}</Text>
                 <Text style={[S.td, S.cFechaEnt]}>{fmtDate(order.date_due)}</Text>

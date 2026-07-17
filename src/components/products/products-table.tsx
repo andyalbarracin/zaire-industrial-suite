@@ -63,9 +63,9 @@ export function ProductsTable({ initialProducts }: ProductsTableProps) {
         ),
         cell: ({ row }) => (
           <div>
-            <p className="font-medium text-(--sas-text)">{row.original.name}</p>
+            <p className="font-medium text-(--zaire-text)">{row.original.name}</p>
             {row.original.brand && (
-              <p className="text-xs text-(--sas-text-muted)">{row.original.brand}{row.original.model ? ` · ${row.original.model}` : ""}</p>
+              <p className="text-xs text-(--zaire-text-muted)">{row.original.brand}{row.original.model ? ` · ${row.original.model}` : ""}</p>
             )}
           </div>
         ),
@@ -152,10 +152,10 @@ export function ProductsTable({ initialProducts }: ProductsTableProps) {
 
   return (
     <>
-      <div className="sas-card">
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-(--sas-border) flex-wrap">
+      <div className="zaire-card">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-(--zaire-border) flex-wrap">
           <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--sas-text-muted)" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--zaire-text-muted)" />
             <Input placeholder="Buscar productos..." value={globalFilter} onChange={(e) => setGlobalFilter(e.target.value)} className="pl-9 h-9" />
           </div>
           <Select value={categoryFilter} onValueChange={(v) => setCategoryFilter(v ?? "all")}>
@@ -171,7 +171,7 @@ export function ProductsTable({ initialProducts }: ProductsTableProps) {
           </Select>
           <Button
             onClick={() => { setEditingProduct(null); setFormOpen(true); }}
-            className="ml-auto bg-sas-navy-mid hover:bg-sas-navy text-white h-9"
+            className="ml-auto bg-zaire-navy-mid hover:bg-zaire-navy text-white h-9"
           >
             <Plus className="w-4 h-4 mr-1.5" />
             Nuevo Producto
@@ -180,22 +180,22 @@ export function ProductsTable({ initialProducts }: ProductsTableProps) {
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-(--sas-border)">
+            <thead className="bg-slate-50 border-b border-(--zaire-border)">
               {table.getHeaderGroups().map((hg) => (
                 <tr key={hg.id}>
                   {hg.headers.map((header) => (
-                    <th key={header.id} className="px-4 py-3 text-left text-xs font-medium text-(--sas-text-muted) uppercase tracking-wide">
+                    <th key={header.id} className="px-4 py-3 text-left text-xs font-medium text-(--zaire-text-muted) uppercase tracking-wide">
                       {flexRender(header.column.columnDef.header, header.getContext())}
                     </th>
                   ))}
                 </tr>
               ))}
             </thead>
-            <tbody className="divide-y divide-(--sas-border)">
+            <tbody className="divide-y divide-(--zaire-border)">
               {table.getRowModel().rows.map((row) => (
                 <tr key={row.id} className="hover:bg-slate-50/80 transition-colors duration-100">
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-4 py-3 text-(--sas-text)">
+                    <td key={cell.id} className="px-4 py-3 text-(--zaire-text)">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}
@@ -203,7 +203,7 @@ export function ProductsTable({ initialProducts }: ProductsTableProps) {
               ))}
               {!table.getRowModel().rows.length && (
                 <tr>
-                  <td colSpan={columns.length} className="px-4 py-12 text-center text-(--sas-text-muted)">
+                  <td colSpan={columns.length} className="px-4 py-12 text-center text-(--zaire-text-muted)">
                     No se encontraron productos
                   </td>
                 </tr>
@@ -212,7 +212,7 @@ export function ProductsTable({ initialProducts }: ProductsTableProps) {
           </table>
         </div>
 
-        <div className="flex items-center justify-between px-4 py-3 border-t border-(--sas-border) text-sm text-(--sas-text-muted)">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-(--zaire-border) text-sm text-(--zaire-text-muted)">
           <span>{table.getFilteredRowModel().rows.length} registros</span>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>Anterior</Button>

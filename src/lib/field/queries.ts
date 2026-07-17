@@ -16,6 +16,11 @@ import type {
 } from "@/lib/field/types";
 import type { TrafficLight } from "@/lib/utils";
 
+// Límites de carga preventivos (evitan traer todo). El componente LimitNotice avisa si se alcanzan.
+export const VISITS_LIMIT = 1000;
+export const EXPENSES_LIMIT = 2000;
+export const DOCS_LIMIT = 2000;
+
 const VISIT_SELECT = `
   id, visit_number, branch_id, technician_id, vehicle_id, client_id, site_id, work_order_id,
   purpose, status, scheduled_at, started_at, arrived_at, departed_at, ended_at,
@@ -37,7 +42,7 @@ export async function getVisits(): Promise<FieldVisit[]> {
     .select(VISIT_SELECT)
     .is("deleted_at", null)
     .order("scheduled_at", { ascending: false })
-    .limit(1000);
+    .limit(VISITS_LIMIT);
   return (data ?? []) as FieldVisit[];
 }
 
@@ -255,7 +260,7 @@ export async function getExpenses(): Promise<FieldExpense[]> {
     )
     .is("deleted_at", null)
     .order("incurred_at", { ascending: false })
-    .limit(2000);
+    .limit(EXPENSES_LIMIT);
   return (data ?? []) as FieldExpense[];
 }
 
@@ -267,8 +272,9 @@ export interface FieldDocumentWithExpiry extends FieldDocument {
 
 export function expiryLight(daysUntil: number | null): TrafficLight {
   if (daysUntil === null) return "green";
-  if (daysUntil <= 7) return "red"; // vencido o vence en <=7 días
-  if (daysUntil <= 30) return "yellow";
+  if (daysUntil < 0) return "red";      // vencido
+  if (daysUntil <= 7) return "orange";  // vence en <= 7 días
+  if (daysUntil <= 30) return "yellow"; // vence en <= 30 días
   return "green";
 }
 
@@ -290,7 +296,7 @@ export async function getFieldDocuments(): Promise<FieldDocumentWithExpiry[]> {
     )
     .is("deleted_at", null)
     .order("expires_at", { ascending: true })
-    .limit(2000);
+    .limit(DOCS_LIMIT);
   return ((data ?? []) as FieldDocument[]).map((doc) => {
     const d = daysUntil(doc.expires_at);
     return { ...doc, days_until_expiry: d, expiry_light: expiryLight(d) };
@@ -363,7 +369,7 @@ export async function getVisitExpenses(visitId: string) {
     .eq("visit_id", visitId)
     .is("deleted_at", null)
     .order("incurred_at", { ascending: false })
-    .limit(2000);
+    .limit(EXPENSES_LIMIT);
   return (data ?? []) as FieldExpense[];
 }
 
@@ -433,7 +439,7 @@ export async function getVisitFormData(): Promise<VisitFormData> {
 }
 
 // ---------- Usuario actual (para created_by / audit) ----------
-export async function getCurrentUserProfile(): Promise<{ id: string; full_name: string } | null> {
+export async function getCurrentUserProfile(): Promise<{ id: string; full_name: string; role: string | null } | null> {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth?.user) return null;
@@ -441,12 +447,12 @@ export async function getCurrentUserProfile(): Promise<{ id: string; full_name: 
   const sb = supabase as any;
   const { data: profile } = await sb
     .from("profiles")
-    .select("id, full_name")
+    .select("id, full_name, role")
     .eq("id", auth.user.id)
     .maybeSingle();
   return profile
-    ? { id: profile.id as string, full_name: (profile.full_name as string) ?? "" }
-    : { id: auth.user.id, full_name: "" };
+    ? { id: profile.id as string, full_name: (profile.full_name as string) ?? "", role: (profile.role as string) ?? null }
+    : { id: auth.user.id, full_name: "", role: null };
 }
 
 // ---------- Posiciones de técnicos con visita activa (para el mapa general) ----------
@@ -505,6 +511,7 @@ export interface DashboardFieldStats {
   techniciansOnRoute: number;
   docsExpiringSoon: number;
   monthExpensesArs: number;
+  monthExpensesUsd: number;
 }
 
 export async function getDashboardFieldStats(): Promise<DashboardFieldStats> {
@@ -537,14 +544,15 @@ export async function getDashboardFieldStats(): Promise<DashboardFieldStats> {
 
   const active = (activeRaw ?? []) as { technician_id: string | null }[];
   const techs = new Set(active.map((v) => v.technician_id).filter(Boolean));
-  const monthExpensesArs = ((expensesRaw ?? []) as { amount: number; currency: string }[])
-    .filter((e) => e.currency === "ARS")
-    .reduce((sum, e) => sum + Number(e.amount ?? 0), 0);
+  const expenses = (expensesRaw ?? []) as { amount: number; currency: string }[];
+  const sumBy = (cur: string) =>
+    expenses.filter((e) => e.currency === cur).reduce((sum, e) => sum + Number(e.amount ?? 0), 0);
 
   return {
     activeVisits: active.length,
     techniciansOnRoute: techs.size,
     docsExpiringSoon: (docsRaw ?? []).length,
-    monthExpensesArs,
+    monthExpensesArs: sumBy("ARS"),
+    monthExpensesUsd: sumBy("USD"),
   };
 }

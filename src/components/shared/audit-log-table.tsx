@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatDateTime } from "@/lib/utils";
 import { AUDIT_ACTION_LABELS } from "@/lib/constants";
+import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import type { AuditLog, AuditAction } from "@/lib/types/database";
 
@@ -31,9 +32,9 @@ interface AuditLogTableProps {
 }
 
 const ENTITY_ROUTES: Record<string, string | null> = {
-  work_order: "/ordenes",
-  client: "/clientes",
-  product: "/productos",
+  work_order: ROUTES.trace.ordenes,
+  client: ROUTES.clientes,
+  product: ROUTES.productos,
   work_order_item: null,
 };
 
@@ -70,11 +71,11 @@ export function AuditLogTable({ logs }: AuditLogTableProps) {
   }
 
   return (
-    <div className="sas-card">
+    <div className="zaire-card">
       {/* Filters */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-(--sas-border) flex-wrap">
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-(--zaire-border) flex-wrap">
         <div className="relative w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--sas-text-muted)" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--zaire-text-muted)" />
           <Input placeholder="Buscar en historial..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9" />
         </div>
         <Select value={entityFilter} onValueChange={(v) => setEntityFilter(v ?? "all")}>
@@ -95,20 +96,20 @@ export function AuditLogTable({ logs }: AuditLogTableProps) {
             ))}
           </SelectContent>
         </Select>
-        <span className="ml-auto text-sm text-(--sas-text-muted)">{filtered.length} registros</span>
+        <span className="ml-auto text-sm text-(--zaire-text-muted)">{filtered.length} registros</span>
       </div>
 
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-(--sas-border)">
+          <thead className="bg-slate-50 border-b border-(--zaire-border)">
             <tr>
               {["Fecha y hora", "Usuario", "Acción", "Entidad", "Descripción", ""].map((h) => (
-                <th key={h} className="px-4 py-3 text-left text-xs font-medium text-(--sas-text-muted) uppercase tracking-wide whitespace-nowrap">{h}</th>
+                <th key={h} className="px-4 py-3 text-left text-xs font-medium text-(--zaire-text-muted) uppercase tracking-wide whitespace-nowrap">{h}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-(--sas-border)">
+          <tbody className="divide-y divide-(--zaire-border)">
             {filtered.map((log) => {
               const hasData = log.old_data || log.new_data;
               const expanded = expandedRows.has(log.id);
@@ -125,7 +126,7 @@ export function AuditLogTable({ logs }: AuditLogTableProps) {
                       isNavigable && "cursor-pointer"
                     )}
                   >
-                    <td className="px-4 py-3 whitespace-nowrap text-(--sas-text-muted) text-xs">
+                    <td className="px-4 py-3 whitespace-nowrap text-(--zaire-text-muted) text-xs">
                       {formatDateTime(log.created_at)}
                     </td>
                     <td className="px-4 py-3 text-sm">{log.user_name ?? "Sistema"}</td>
@@ -134,20 +135,20 @@ export function AuditLogTable({ logs }: AuditLogTableProps) {
                         {AUDIT_ACTION_LABELS[log.action]}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-(--sas-text-muted)">
+                    <td className="px-4 py-3 text-xs text-(--zaire-text-muted)">
                       {ENTITY_LABELS[log.entity_type] ?? log.entity_type}
                     </td>
                     <td className="px-4 py-3 max-w-sm truncate">{log.description ?? "—"}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-2">
                         {isNavigable && (
-                          <ArrowRight className="w-3.5 h-3.5 text-(--sas-text-muted)" />
+                          <ArrowRight className="w-3.5 h-3.5 text-(--zaire-text-muted)" />
                         )}
                         {hasData && (
                           <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); toggleRow(log.id); }}
-                            className="text-(--sas-text-muted) hover:text-(--sas-text)"
+                            className="text-(--zaire-text-muted) hover:text-(--zaire-text)"
                           >
                             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                           </button>
@@ -161,7 +162,7 @@ export function AuditLogTable({ logs }: AuditLogTableProps) {
                         <div className="grid grid-cols-2 gap-4">
                           {log.old_data && (
                             <div>
-                              <p className="text-xs font-semibold text-(--sas-text-muted) mb-1 uppercase">Datos anteriores</p>
+                              <p className="text-xs font-semibold text-(--zaire-text-muted) mb-1 uppercase">Datos anteriores</p>
                               <pre className="text-xs bg-red-50 border border-red-100 rounded p-2 overflow-x-auto max-h-32">
                                 {JSON.stringify(log.old_data, null, 2)}
                               </pre>
@@ -169,7 +170,7 @@ export function AuditLogTable({ logs }: AuditLogTableProps) {
                           )}
                           {log.new_data && (
                             <div>
-                              <p className="text-xs font-semibold text-(--sas-text-muted) mb-1 uppercase">Datos nuevos</p>
+                              <p className="text-xs font-semibold text-(--zaire-text-muted) mb-1 uppercase">Datos nuevos</p>
                               <pre className="text-xs bg-green-50 border border-green-100 rounded p-2 overflow-x-auto max-h-32">
                                 {JSON.stringify(log.new_data, null, 2)}
                               </pre>
@@ -184,7 +185,7 @@ export function AuditLogTable({ logs }: AuditLogTableProps) {
             })}
             {!filtered.length && (
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-(--sas-text-muted)">
+                <td colSpan={6} className="px-4 py-12 text-center text-(--zaire-text-muted)">
                   Sin registros de auditoría
                 </td>
               </tr>

@@ -197,7 +197,7 @@ export const DOC_ENTITY_LABELS = {
   vehicle: "Vehículo",
 } as const;
 
-// Umbrales de alerta de vencimiento de documentos (mismo patrón que Zaire Tracking)
+// Umbrales de alerta de vencimiento de documentos (mismo patrón que Zaire Trace)
 export const DOC_ALERT_THRESHOLDS = { danger: 7, warning: 30 } as const;
 
 // ---------- Unidades: archivos y mantenimiento ----------

@@ -15,6 +15,7 @@ interface StatusDotProps {
 const DOT_CLASSES: Record<TrafficLight, string> = {
   green:  "bg-green-500",
   yellow: "bg-yellow-500",
+  orange: "bg-orange-500",
   red:    "bg-red-400",
 };
 
@@ -34,7 +35,7 @@ export function StatusDot({ status, label, size = "md", pulse = false, className
         )}
       </span>
       {label && (
-        <span className="text-xs text-(--sas-text-muted)">{label}</span>
+        <span className="text-xs text-(--zaire-text-muted)">{label}</span>
       )}
     </span>
   );

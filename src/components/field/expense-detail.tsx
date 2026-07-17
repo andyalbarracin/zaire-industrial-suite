@@ -6,6 +6,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ROUTES } from "@/lib/routes";
 import {
   ChevronLeft, Check, X, RotateCcw, MessageSquarePlus, Loader2,
   CircleDollarSign, Pencil, PlusCircle, RefreshCw,
@@ -30,7 +31,7 @@ const EVENT_ICON: Record<string, React.ComponentType<{ className?: string }>> = 
 interface ExpenseDetailProps {
   expense: FieldExpense;
   events: FieldExpenseEvent[];
-  currentUser: { id: string; full_name: string } | null;
+  currentUser: { id: string; full_name: string; role?: string | null } | null;
 }
 
 export function ExpenseDetail({ expense, events, currentUser }: ExpenseDetailProps) {
@@ -91,28 +92,31 @@ export function ExpenseDetail({ expense, events, currentUser }: ExpenseDetailPro
     router.refresh();
   }
 
-  // Acciones disponibles según estado
+  // Acciones disponibles según estado (aprobar/rechazar/revertir es solo de administradores)
+  const isAdmin = currentUser?.role === "admin";
   const actions: { type: ExpenseEventType; newStatus: ExpenseStatus; label: string; icon: React.ComponentType<{ className?: string }>; destructive?: boolean; cls?: string }[] = [];
-  if (status === "pendiente") {
-    actions.push({ type: "aprobado", newStatus: "aprobado", label: "Aprobar", icon: Check, cls: "bg-green-600 hover:bg-green-700 text-white" });
-    actions.push({ type: "rechazado", newStatus: "rechazado", label: "Rechazar", icon: X, destructive: true });
-  }
-  if (status === "aprobado") {
-    actions.push({ type: "reintegrado", newStatus: "reintegrado", label: "Marcar reintegrado", icon: CircleDollarSign, cls: "bg-sas-navy-mid hover:bg-sas-navy text-white" });
-    actions.push({ type: "revertido", newStatus: "pendiente", label: "Revertir a pendiente", icon: RotateCcw });
-  }
-  if (status === "rechazado" || status === "reintegrado") {
-    actions.push({ type: "revertido", newStatus: "pendiente", label: "Revertir a pendiente", icon: RotateCcw });
+  if (isAdmin) {
+    if (status === "pendiente") {
+      actions.push({ type: "aprobado", newStatus: "aprobado", label: "Aprobar", icon: Check, cls: "bg-green-600 hover:bg-green-700 text-white" });
+      actions.push({ type: "rechazado", newStatus: "rechazado", label: "Rechazar", icon: X, destructive: true });
+    }
+    if (status === "aprobado") {
+      actions.push({ type: "reintegrado", newStatus: "reintegrado", label: "Marcar reintegrado", icon: CircleDollarSign, cls: "bg-zaire-navy-mid hover:bg-zaire-navy text-white" });
+      actions.push({ type: "revertido", newStatus: "pendiente", label: "Revertir a pendiente", icon: RotateCcw });
+    }
+    if (status === "rechazado" || status === "reintegrado") {
+      actions.push({ type: "revertido", newStatus: "pendiente", label: "Revertir a pendiente", icon: RotateCcw });
+    }
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/field/gastos" className="inline-flex items-center gap-1 text-sm text-(--sas-text-muted) hover:text-sas-blue mb-2">
+        <Link href={ROUTES.field.gastos} className="inline-flex items-center gap-1 text-sm text-(--zaire-text-muted) hover:text-zaire-blue mb-2">
           <ChevronLeft className="w-4 h-4" /> Volver a gastos
         </Link>
         <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-2xl font-bold text-(--sas-text)">{formatCurrency(Number(expense.amount), expense.currency)}</h1>
+          <h1 className="text-2xl font-bold text-(--zaire-text)">{formatCurrency(Number(expense.amount), expense.currency)}</h1>
           <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border", EXPENSE_STATUS_COLORS[status])}>
             {EXPENSE_STATUS_LABELS[status]}
           </span>
@@ -122,22 +126,26 @@ export function ExpenseDetail({ expense, events, currentUser }: ExpenseDetailPro
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Datos + acciones */}
         <div className="space-y-6">
-          <div className="sas-card p-5 space-y-2.5 text-sm">
-            <h2 className="text-sm font-semibold text-(--sas-text) uppercase tracking-wide mb-1">Datos del gasto</h2>
+          <div className="zaire-card p-5 space-y-2.5 text-sm">
+            <h2 className="text-sm font-semibold text-(--zaire-text) uppercase tracking-wide mb-1">Datos del gasto</h2>
             <Row label="Técnico" value={expense.technician?.full_name ?? "—"} />
             <div className="flex items-center gap-2">
-              <span className="text-(--sas-text-muted) w-24 shrink-0">Visita</span>
-              {expense.visit ? <Link href={`/field/visitas/${expense.visit.id}`} className="text-sas-blue hover:underline font-mono">{expense.visit.visit_number}</Link> : <span>—</span>}
+              <span className="text-(--zaire-text-muted) w-24 shrink-0">Visita</span>
+              {expense.visit ? <Link href={ROUTES.field.visita(expense.visit.id)} className="text-zaire-blue hover:underline font-mono">{expense.visit.visit_number}</Link> : <span>—</span>}
             </div>
             <Row label="Categoría" value={expense.category ? EXPENSE_CATEGORY_LABELS[expense.category as ExpenseCategory] : "—"} />
             <Row label="Fecha" value={formatDate(expense.incurred_at)} />
             <Row label="Facturable" value={expense.is_billable ? "Sí" : "No"} />
-            {expense.description && <div className="pt-1"><p className="text-(--sas-text-muted)">Descripción</p><p className="text-(--sas-text)">{expense.description}</p></div>}
+            {expense.description && <div className="pt-1"><p className="text-(--zaire-text-muted)">Descripción</p><p className="text-(--zaire-text)">{expense.description}</p></div>}
           </div>
 
-          <div className="sas-card p-5 space-y-3">
-            <h2 className="text-sm font-semibold text-(--sas-text) uppercase tracking-wide">Acciones</h2>
-            {actions.length === 0 && <p className="text-sm text-(--sas-text-muted)">Sin acciones disponibles para este estado.</p>}
+          <div className="zaire-card p-5 space-y-3">
+            <h2 className="text-sm font-semibold text-(--zaire-text) uppercase tracking-wide">Acciones</h2>
+            {actions.length === 0 && (
+              <p className="text-sm text-(--zaire-text-muted)">
+                {isAdmin ? "Sin acciones disponibles para este estado." : "Solo un administrador puede aprobar o rechazar gastos."}
+              </p>
+            )}
             {actions.map((a) => (
               <Button
                 key={a.type + a.newStatus}
@@ -153,41 +161,41 @@ export function ExpenseDetail({ expense, events, currentUser }: ExpenseDetailPro
 
         {/* Comentario + timeline */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="sas-card p-5 space-y-3">
-            <h2 className="text-sm font-semibold text-(--sas-text) uppercase tracking-wide">Agregar constancia / comentario</h2>
-            <p className="text-xs text-(--sas-text-muted)">Dejá constancia de un pedido de más información, una observación o una queja. Queda registrado en la auditoría.</p>
+          <div className="zaire-card p-5 space-y-3">
+            <h2 className="text-sm font-semibold text-(--zaire-text) uppercase tracking-wide">Agregar constancia / comentario</h2>
+            <p className="text-xs text-(--zaire-text-muted)">Dejá constancia de un pedido de más información, una observación o una queja. Queda registrado en la auditoría.</p>
             <Textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={2} placeholder="Escribí una observación..." />
             <div className="flex justify-end">
-              <Button onClick={addComment} disabled={busy || !comment.trim()} className="bg-sas-navy-mid hover:bg-sas-navy text-white">
+              <Button onClick={addComment} disabled={busy || !comment.trim()} className="bg-zaire-navy-mid hover:bg-zaire-navy text-white">
                 {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <MessageSquarePlus className="w-4 h-4 mr-2" />} Registrar
               </Button>
             </div>
           </div>
 
-          <div className="sas-card p-5">
-            <h2 className="text-sm font-semibold text-(--sas-text) uppercase tracking-wide mb-4 flex items-center gap-2">
-              <RefreshCw className="w-4 h-4 text-sas-blue" /> Historial de auditoría
+          <div className="zaire-card p-5">
+            <h2 className="text-sm font-semibold text-(--zaire-text) uppercase tracking-wide mb-4 flex items-center gap-2">
+              <RefreshCw className="w-4 h-4 text-zaire-blue" /> Historial de auditoría
             </h2>
             {events.length === 0 ? (
-              <p className="text-sm text-(--sas-text-muted) py-4 text-center">Sin eventos registrados. (Los gastos creados antes de la Fase 2 pueden no tener historial.)</p>
+              <p className="text-sm text-(--zaire-text-muted) py-4 text-center">Sin eventos registrados. (Los gastos creados antes de la Fase 2 pueden no tener historial.)</p>
             ) : (
               <div className="relative">
-                <div className="absolute left-4 top-0 bottom-0 w-px bg-(--sas-border)" />
+                <div className="absolute left-4 top-0 bottom-0 w-px bg-(--zaire-border)" />
                 <div className="space-y-4">
                   {events.map((ev) => {
                     const Icon = EVENT_ICON[ev.event_type] ?? MessageSquarePlus;
                     return (
                       <div key={ev.id} className="relative flex gap-4 pl-10">
-                        <div className="absolute left-0 top-0.5 w-8 h-8 rounded-full flex items-center justify-center border-2 bg-white border-(--sas-border) text-sas-blue">
+                        <div className="absolute left-0 top-0.5 w-8 h-8 rounded-full flex items-center justify-center border-2 bg-white border-(--zaire-border) text-zaire-blue">
                           <Icon className="w-4 h-4" />
                         </div>
                         <div className="flex-1 pb-1">
-                          <p className="text-sm text-(--sas-text)">
+                          <p className="text-sm text-(--zaire-text)">
                             <span className="font-medium capitalize">{ev.event_type}</span>
-                            {ev.old_status && ev.new_status && <span className="text-(--sas-text-muted)"> · {ev.old_status} → {ev.new_status}</span>}
+                            {ev.old_status && ev.new_status && <span className="text-(--zaire-text-muted)"> · {ev.old_status} → {ev.new_status}</span>}
                           </p>
-                          {ev.comment && <p className="text-sm text-(--sas-text-muted) mt-0.5">“{ev.comment}”</p>}
-                          <p className="text-xs text-(--sas-text-muted) mt-0.5">{ev.profile?.full_name ?? "Sistema"} · {formatDateTime(ev.created_at)}</p>
+                          {ev.comment && <p className="text-sm text-(--zaire-text-muted) mt-0.5">“{ev.comment}”</p>}
+                          <p className="text-xs text-(--zaire-text-muted) mt-0.5">{ev.profile?.full_name ?? "Sistema"} · {formatDateTime(ev.created_at)}</p>
                         </div>
                       </div>
                     );
@@ -216,8 +224,8 @@ export function ExpenseDetail({ expense, events, currentUser }: ExpenseDetailPro
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-(--sas-text-muted) w-24 shrink-0">{label}</span>
-      <span className="text-(--sas-text) font-medium">{value}</span>
+      <span className="text-(--zaire-text-muted) w-24 shrink-0">{label}</span>
+      <span className="text-(--zaire-text) font-medium">{value}</span>
     </div>
   );
 }

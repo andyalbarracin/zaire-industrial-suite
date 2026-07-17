@@ -10,7 +10,7 @@ const FieldMapInner = dynamic(() => import("./field-map-inner"), {
   ssr: false,
   loading: () => (
     <div
-      className="w-full rounded-xl bg-slate-100 animate-pulse flex items-center justify-center text-sm text-(--sas-text-muted)"
+      className="w-full rounded-xl bg-slate-100 animate-pulse flex items-center justify-center text-sm text-(--zaire-text-muted)"
       style={{ height: 360 }}
     >
       Cargando mapa…

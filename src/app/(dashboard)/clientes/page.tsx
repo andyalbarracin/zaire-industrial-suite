@@ -16,8 +16,8 @@ export default async function ClientesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-(--sas-text)">Clientes</h1>
-        <p className="text-sm text-(--sas-text-muted) mt-0.5">
+        <h1 className="text-2xl font-bold text-(--zaire-text)">Clientes</h1>
+        <p className="text-sm text-(--zaire-text-muted) mt-0.5">
           {clients?.length ?? 0} clientes registrados
         </p>
       </div>

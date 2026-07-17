@@ -4,6 +4,8 @@
 
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { ROUTES } from "@/lib/routes";
+import { getEnabledModules } from "@/lib/modules";
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -41,14 +43,28 @@ export async function proxy(request: NextRequest) {
 
   if (!user && !isPublicPath) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = ROUTES.login;
     return NextResponse.redirect(url);
   }
 
   if (user && pathname.startsWith("/login")) {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = ROUTES.home; // la raíz redirige al primer módulo habilitado (module-aware)
     return NextResponse.redirect(url);
+  }
+
+  // Guard de módulo: si el usuario entra por URL a un módulo deshabilitado, a la raíz.
+  if (user) {
+    const enabled = getEnabledModules();
+    if (
+      (pathname.startsWith("/trace") && !enabled.includes("trace")) ||
+      (pathname.startsWith("/field") && !enabled.includes("field")) ||
+      (pathname.startsWith("/crm") && !enabled.includes("crm"))
+    ) {
+      const url = request.nextUrl.clone();
+      url.pathname = ROUTES.home;
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;

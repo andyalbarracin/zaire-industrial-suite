@@ -5,6 +5,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ROUTES } from "@/lib/routes";
 import {
   ChevronLeft, Pencil, Upload, Trash2, FileText, Star, Loader2, Plus, Wrench, Fuel,
 } from "lucide-react";
@@ -135,12 +136,12 @@ export function VehicleDetail({ vehicle: initialVehicle, technicians, files: ini
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <Link href="/field/unidades" className="inline-flex items-center gap-1 text-sm text-(--sas-text-muted) hover:text-sas-blue mb-2">
+          <Link href={ROUTES.field.unidades} className="inline-flex items-center gap-1 text-sm text-(--zaire-text-muted) hover:text-zaire-blue mb-2">
             <ChevronLeft className="w-4 h-4" /> Volver a unidades
           </Link>
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-bold text-(--sas-text) font-mono">{vehicle.plate ?? "Unidad"}</h1>
-            <span className="text-(--sas-text-muted)">{[vehicle.brand, vehicle.model].filter(Boolean).join(" ")}</span>
+            <h1 className="text-2xl font-bold text-(--zaire-text) font-mono">{vehicle.plate ?? "Unidad"}</h1>
+            <span className="text-(--zaire-text-muted)">{[vehicle.brand, vehicle.model].filter(Boolean).join(" ")}</span>
             <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border", vehicle.is_active ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200")}>
               {vehicle.is_active ? "Activa" : "Inactiva"}
             </span>
@@ -152,12 +153,12 @@ export function VehicleDetail({ vehicle: initialVehicle, technicians, files: ini
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Info + portada */}
         <div className="space-y-6">
-          <div className="sas-card overflow-hidden">
+          <div className="zaire-card overflow-hidden">
             {coverUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={coverUrl} alt="Portada" className="w-full h-44 object-cover" />
             ) : (
-              <div className="w-full h-44 bg-slate-100 flex items-center justify-center text-sm text-(--sas-text-muted)">Sin foto de portada</div>
+              <div className="w-full h-44 bg-slate-100 flex items-center justify-center text-sm text-(--zaire-text-muted)">Sin foto de portada</div>
             )}
             <div className="p-5 space-y-2.5 text-sm">
               <Row label="Tipo" value={vehicle.type ? VEHICLE_TYPE_LABELS[vehicle.type as VehicleType] : "—"} />
@@ -165,7 +166,7 @@ export function VehicleDetail({ vehicle: initialVehicle, technicians, files: ini
               <Row label="Sucursal" value={branch?.name ?? "—"} />
               <Row label="Técnico" value={vehicle.technician?.full_name ?? "—"} />
               <Row label="Odómetro" value={vehicle.current_odometer != null ? `${vehicle.current_odometer.toLocaleString("es-AR")} km` : "—"} />
-              {vehicle.notes && <div className="pt-1"><p className="text-(--sas-text-muted)">Notas</p><p className="text-(--sas-text)">{vehicle.notes}</p></div>}
+              {vehicle.notes && <div className="pt-1"><p className="text-(--zaire-text-muted)">Notas</p><p className="text-(--zaire-text)">{vehicle.notes}</p></div>}
             </div>
           </div>
         </div>
@@ -181,7 +182,7 @@ export function VehicleDetail({ vehicle: initialVehicle, technicians, files: ini
 
             {/* ARCHIVOS */}
             <TabsContent value="archivos" className="mt-4 space-y-4">
-              <div className="sas-card p-4 flex flex-wrap items-center gap-3">
+              <div className="zaire-card p-4 flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-2">
                   <Label className="text-xs">Categoría</Label>
                   <Select value={uploadCategory} onValueChange={(v) => setUploadCategory(v ?? "foto")}>
@@ -193,18 +194,18 @@ export function VehicleDetail({ vehicle: initialVehicle, technicians, files: ini
                 </div>
                 <label className="inline-flex">
                   <input type="file" multiple accept="image/*,application/pdf" className="hidden" onChange={(e) => handleUpload(e.target.files)} />
-                  <span className={cn("inline-flex items-center h-9 px-3 rounded-lg text-sm font-medium cursor-pointer bg-sas-navy-mid hover:bg-sas-navy text-white", uploading && "opacity-60 pointer-events-none")}>
+                  <span className={cn("inline-flex items-center h-9 px-3 rounded-lg text-sm font-medium cursor-pointer bg-zaire-navy-mid hover:bg-zaire-navy text-white", uploading && "opacity-60 pointer-events-none")}>
                     {uploading ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Upload className="w-4 h-4 mr-1.5" />} Subir archivo(s)
                   </span>
                 </label>
               </div>
 
               {photos.length > 0 && (
-                <div className="sas-card p-4">
-                  <h3 className="text-sm font-semibold text-(--sas-text) mb-3">Fotos</h3>
+                <div className="zaire-card p-4">
+                  <h3 className="text-sm font-semibold text-(--zaire-text) mb-3">Fotos</h3>
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                     {photos.map((f) => (
-                      <div key={f.id} className="relative group aspect-square rounded-lg overflow-hidden border border-(--sas-border) bg-slate-100">
+                      <div key={f.id} className="relative group aspect-square rounded-lg overflow-hidden border border-(--zaire-border) bg-slate-100">
                         {urls[f.id] ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={urls[f.id]} alt={f.title ?? "Foto"} className="w-full h-full object-cover" />
@@ -223,17 +224,17 @@ export function VehicleDetail({ vehicle: initialVehicle, technicians, files: ini
                 </div>
               )}
 
-              <div className="sas-card p-4">
-                <h3 className="text-sm font-semibold text-(--sas-text) mb-3">Documentos ({docs.length})</h3>
+              <div className="zaire-card p-4">
+                <h3 className="text-sm font-semibold text-(--zaire-text) mb-3">Documentos ({docs.length})</h3>
                 {docs.length === 0 ? (
-                  <p className="text-sm text-(--sas-text-muted) py-2">Sin documentos (presupuestos, remitos de taller, seguros…).</p>
+                  <p className="text-sm text-(--zaire-text-muted) py-2">Sin documentos (presupuestos, remitos de taller, seguros…).</p>
                 ) : (
-                  <ul className="divide-y divide-(--sas-border)">
+                  <ul className="divide-y divide-(--zaire-border)">
                     {docs.map((f) => (
                       <li key={f.id} className="flex items-center gap-3 py-2.5">
-                        <FileText className="w-4 h-4 text-sas-blue shrink-0" />
-                        <button onClick={() => openFile(f.storage_path)} className="flex-1 text-left text-sm text-sas-blue hover:underline truncate">{f.title ?? f.storage_path}</button>
-                        <span className="text-xs text-(--sas-text-muted)">{VEHICLE_FILE_CATEGORY_LABELS[f.category ?? "otro"]}</span>
+                        <FileText className="w-4 h-4 text-zaire-blue shrink-0" />
+                        <button onClick={() => openFile(f.storage_path)} className="flex-1 text-left text-sm text-zaire-blue hover:underline truncate">{f.title ?? f.storage_path}</button>
+                        <span className="text-xs text-(--zaire-text-muted)">{VEHICLE_FILE_CATEGORY_LABELS[f.category ?? "otro"]}</span>
                         <button onClick={() => deleteFile(f)} title="Eliminar" className="text-red-600 hover:text-red-700"><Trash2 className="w-3.5 h-3.5" /></button>
                       </li>
                     ))}
@@ -263,8 +264,8 @@ export function VehicleDetail({ vehicle: initialVehicle, technicians, files: ini
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-(--sas-text-muted) w-24 shrink-0">{label}</span>
-      <span className="text-(--sas-text) font-medium truncate">{value}</span>
+      <span className="text-(--zaire-text-muted) w-24 shrink-0">{label}</span>
+      <span className="text-(--zaire-text) font-medium truncate">{value}</span>
     </div>
   );
 }
@@ -319,20 +320,20 @@ function MaintenanceSection({ vehicleId, technicians, currentUser, items, setIte
   }
 
   return (
-    <div className="sas-card p-5">
+    <div className="zaire-card p-5">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-(--sas-text) flex items-center gap-2"><Wrench className="w-4 h-4 text-sas-blue" /> Historial de mantenimiento</h3>
-        <Button size="sm" onClick={() => setOpen(true)} className="bg-sas-navy-mid hover:bg-sas-navy text-white h-8"><Plus className="w-4 h-4 mr-1" /> Registrar</Button>
+        <h3 className="text-sm font-semibold text-(--zaire-text) flex items-center gap-2"><Wrench className="w-4 h-4 text-zaire-blue" /> Historial de mantenimiento</h3>
+        <Button size="sm" onClick={() => setOpen(true)} className="bg-zaire-navy-mid hover:bg-zaire-navy text-white h-8"><Plus className="w-4 h-4 mr-1" /> Registrar</Button>
       </div>
       {items.length === 0 ? (
-        <p className="text-sm text-(--sas-text-muted) py-3 text-center">Sin registros de mantenimiento.</p>
+        <p className="text-sm text-(--zaire-text-muted) py-3 text-center">Sin registros de mantenimiento.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="text-xs text-(--sas-text-muted) uppercase tracking-wide border-b border-(--sas-border)">
+            <thead className="text-xs text-(--zaire-text-muted) uppercase tracking-wide border-b border-(--zaire-border)">
               <tr><th className="text-left py-2">Fecha</th><th className="text-left py-2">Tipo</th><th className="text-left py-2">Técnico</th><th className="text-right py-2">Odóm.</th><th className="text-right py-2">Costo</th><th className="text-left py-2 pl-3">Taller</th><th className="text-center py-2">Compr.</th></tr>
             </thead>
-            <tbody className="divide-y divide-(--sas-border)">
+            <tbody className="divide-y divide-(--zaire-border)">
               {items.map((m) => (
                 <tr key={m.id}>
                   <td className="py-2">{formatDate(m.performed_at)}</td>
@@ -341,7 +342,7 @@ function MaintenanceSection({ vehicleId, technicians, currentUser, items, setIte
                   <td className="py-2 text-right">{m.odometer != null ? m.odometer.toLocaleString("es-AR") : "—"}</td>
                   <td className="py-2 text-right">{m.cost != null ? formatCurrency(Number(m.cost), m.currency) : "—"}</td>
                   <td className="py-2 pl-3">{m.workshop ?? "—"}</td>
-                  <td className="py-2 text-center">{m.receipt_path ? <button onClick={() => openReceiptUrl(m.receipt_path!)} className="text-sas-blue" title="Ver comprobante"><FileText className="w-4 h-4 inline" /></button> : "—"}</td>
+                  <td className="py-2 text-center">{m.receipt_path ? <button onClick={() => openReceiptUrl(m.receipt_path!)} className="text-zaire-blue" title="Ver comprobante"><FileText className="w-4 h-4 inline" /></button> : "—"}</td>
                 </tr>
               ))}
             </tbody>
@@ -381,7 +382,7 @@ function MaintenanceSection({ vehicleId, technicians, currentUser, items, setIte
             <div className="space-y-1.5"><Label>Comprobante (foto o PDF)</Label><Input type="file" accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-              <Button onClick={add} disabled={busy} className="bg-sas-navy-mid hover:bg-sas-navy text-white">{busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Guardar</Button>
+              <Button onClick={add} disabled={busy} className="bg-zaire-navy-mid hover:bg-zaire-navy text-white">{busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Guardar</Button>
             </div>
           </div>
         </DialogContent>
@@ -423,21 +424,21 @@ function FuelSection({ vehicleId, technicians, currentUser, items, setItems }: {
   const totalArs = items.filter((f) => f.currency === "ARS").reduce((s, f) => s + Number(f.amount ?? 0), 0);
 
   return (
-    <div className="sas-card p-5">
+    <div className="zaire-card p-5">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-(--sas-text) flex items-center gap-2"><Fuel className="w-4 h-4 text-sas-blue" /> Cargas de combustible</h3>
-        <Button size="sm" onClick={() => setOpen(true)} className="bg-sas-navy-mid hover:bg-sas-navy text-white h-8"><Plus className="w-4 h-4 mr-1" /> Registrar</Button>
+        <h3 className="text-sm font-semibold text-(--zaire-text) flex items-center gap-2"><Fuel className="w-4 h-4 text-zaire-blue" /> Cargas de combustible</h3>
+        <Button size="sm" onClick={() => setOpen(true)} className="bg-zaire-navy-mid hover:bg-zaire-navy text-white h-8"><Plus className="w-4 h-4 mr-1" /> Registrar</Button>
       </div>
       {items.length === 0 ? (
-        <p className="text-sm text-(--sas-text-muted) py-3 text-center">Sin cargas registradas.</p>
+        <p className="text-sm text-(--zaire-text-muted) py-3 text-center">Sin cargas registradas.</p>
       ) : (
         <>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-xs text-(--sas-text-muted) uppercase tracking-wide border-b border-(--sas-border)">
+              <thead className="text-xs text-(--zaire-text-muted) uppercase tracking-wide border-b border-(--zaire-border)">
                 <tr><th className="text-left py-2">Fecha</th><th className="text-left py-2">Técnico</th><th className="text-right py-2">Litros</th><th className="text-right py-2">Monto</th><th className="text-right py-2">Odóm.</th><th className="text-left py-2 pl-3">Estación</th><th className="text-center py-2">Compr.</th></tr>
               </thead>
-              <tbody className="divide-y divide-(--sas-border)">
+              <tbody className="divide-y divide-(--zaire-border)">
                 {items.map((f) => (
                   <tr key={f.id}>
                     <td className="py-2">{formatDate(f.filled_at)}</td>
@@ -446,13 +447,13 @@ function FuelSection({ vehicleId, technicians, currentUser, items, setItems }: {
                     <td className="py-2 text-right">{f.amount != null ? formatCurrency(Number(f.amount), f.currency) : "—"}</td>
                     <td className="py-2 text-right">{f.odometer != null ? f.odometer.toLocaleString("es-AR") : "—"}</td>
                     <td className="py-2 pl-3">{f.station ?? "—"}</td>
-                    <td className="py-2 text-center">{f.receipt_path ? <button onClick={() => openReceiptUrl(f.receipt_path!)} className="text-sas-blue" title="Ver comprobante"><FileText className="w-4 h-4 inline" /></button> : "—"}</td>
+                    <td className="py-2 text-center">{f.receipt_path ? <button onClick={() => openReceiptUrl(f.receipt_path!)} className="text-zaire-blue" title="Ver comprobante"><FileText className="w-4 h-4 inline" /></button> : "—"}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <div className="flex justify-end mt-3 pt-3 border-t border-(--sas-border) text-sm">Total ARS: <strong className="ml-1">{formatCurrency(totalArs, "ARS")}</strong></div>
+          <div className="flex justify-end mt-3 pt-3 border-t border-(--zaire-border) text-sm">Total ARS: <strong className="ml-1">{formatCurrency(totalArs, "ARS")}</strong></div>
         </>
       )}
 
@@ -487,7 +488,7 @@ function FuelSection({ vehicleId, technicians, currentUser, items, setItems }: {
             <div className="space-y-1.5"><Label>Comprobante / ticket (foto o PDF)</Label><Input type="file" accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-              <Button onClick={add} disabled={busy} className="bg-sas-navy-mid hover:bg-sas-navy text-white">{busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Guardar</Button>
+              <Button onClick={add} disabled={busy} className="bg-zaire-navy-mid hover:bg-zaire-navy text-white">{busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Guardar</Button>
             </div>
           </div>
         </DialogContent>

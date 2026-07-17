@@ -168,11 +168,11 @@ export function SiteForm({ open, onOpenChange, site, clients, onSaved }: SiteFor
           </div>
 
           {/* Ubicación + geocerca */}
-          <div className="space-y-2 rounded-lg border border-(--sas-border) p-3">
-            <div className="flex items-center gap-2 text-sm font-medium text-(--sas-text)">
-              <MapPin className="w-4 h-4 text-sas-blue" /> Ubicación y geocerca
+          <div className="space-y-2 rounded-lg border border-(--zaire-border) p-3">
+            <div className="flex items-center gap-2 text-sm font-medium text-(--zaire-text)">
+              <MapPin className="w-4 h-4 text-zaire-blue" /> Ubicación y geocerca
             </div>
-            <p className="text-xs text-(--sas-text-muted)">Hacé click en el mapa para fijar la ubicación, o cargá las coordenadas a mano.</p>
+            <p className="text-xs text-(--zaire-text-muted)">Hacé click en el mapa para fijar la ubicación, o cargá las coordenadas a mano.</p>
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="latitude">Latitud</Label>
@@ -194,7 +194,7 @@ export function SiteForm({ open, onOpenChange, site, clients, onSaved }: SiteFor
               step={10}
               value={radius}
               onChange={(e) => setValue("geofence_radius_m", e.target.value)}
-              className="w-full accent-sas-blue"
+              className="w-full accent-zaire-blue"
             />
             <FieldMap
               key={isEdit ? site?.id : "new-site"}
@@ -234,7 +234,7 @@ export function SiteForm({ open, onOpenChange, site, clients, onSaved }: SiteFor
 
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button type="submit" disabled={isSubmitting} className="bg-sas-navy-mid hover:bg-sas-navy text-white">
+            <Button type="submit" disabled={isSubmitting} className="bg-zaire-navy-mid hover:bg-zaire-navy text-white">
               {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {isEdit ? "Guardar cambios" : "Crear planta"}
             </Button>

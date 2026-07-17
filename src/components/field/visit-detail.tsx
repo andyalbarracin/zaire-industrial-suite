@@ -6,6 +6,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ROUTES } from "@/lib/routes";
 import {
   ChevronLeft,
   Pencil,
@@ -31,6 +32,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FieldMap, type MapMarker } from "@/components/field/field-map";
+import { VisitCreateLead } from "@/components/field/visit-create-lead";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { VisitReportSection } from "@/components/field/visit-report-section";
 import { VisitExpensesSection } from "@/components/field/visit-expenses-section";
@@ -76,7 +78,7 @@ interface VisitDetailProps {
   expenses: FieldExpense[];
   photos: FieldVisitPhoto[];
   clientWorkOrders: { id: string; order_number: string }[];
-  currentUser: { id: string; full_name: string } | null;
+  currentUser: { id: string; full_name: string; role?: string | null } | null;
 }
 
 export function VisitDetail({ visit, events, pings, report, expenses, photos, clientWorkOrders, currentUser }: VisitDetailProps) {
@@ -148,7 +150,7 @@ export function VisitDetail({ visit, events, pings, report, expenses, photos, cl
     await sb.from("field_visit_events").insert({
       visit_id: visit.id,
       event_type: "cambio_estado",
-      description: `${VISIT_STATUS_LABELS[status]} → ${VISIT_STATUS_LABELS[newStatus as VisitStatus]}${notes ? ` · ${notes}` : ""}`,
+      description: `${VISIT_STATUS_LABELS[status]} → ${VISIT_STATUS_LABELS[newStatus as VisitStatus]}${newStatus === "en_sitio" && !visit.arrived_at ? " · arribo manual (sin verificación GPS)" : ""}${notes ? ` · ${notes}` : ""}`,
       created_by: currentUser?.id ?? null,
     });
     await sb.from("audit_logs").insert({
@@ -173,7 +175,7 @@ export function VisitDetail({ visit, events, pings, report, expenses, photos, cl
     if (!newStatus) return "";
     const extras: string[] = [];
     if (newStatus === "en_curso") extras.push("se registrará la salida");
-    if (newStatus === "en_sitio" && !visit.arrived_at) extras.push("se registrará el arribo al sitio");
+    if (newStatus === "en_sitio" && !visit.arrived_at) extras.push("se registrará el arribo al sitio como manual (sin verificación GPS)");
     if (newStatus === "finalizada") extras.push("se registrará el fin de la visita");
     return `Vas a cambiar el estado de "${VISIT_STATUS_LABELS[status]}" a "${VISIT_STATUS_LABELS[newStatus as VisitStatus]}"${extras.length ? ` y ${extras.join(" y ")}` : ""}. Queda registrado en el timeline y la auditoría.`;
   }
@@ -212,11 +214,11 @@ export function VisitDetail({ visit, events, pings, report, expenses, photos, cl
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <Link href="/field/visitas" className="inline-flex items-center gap-1 text-sm text-(--sas-text-muted) hover:text-sas-blue mb-2">
+          <Link href={ROUTES.field.visitas} className="inline-flex items-center gap-1 text-sm text-(--zaire-text-muted) hover:text-zaire-blue mb-2">
             <ChevronLeft className="w-4 h-4" /> Volver a visitas
           </Link>
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-bold text-(--sas-text)">{visit.visit_number ?? "Visita"}</h1>
+            <h1 className="text-2xl font-bold text-(--zaire-text)">{visit.visit_number ?? "Visita"}</h1>
             <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border", VISIT_STATUS_COLORS[status])}>
               {VISIT_STATUS_LABELS[status]}
             </span>
@@ -228,16 +230,17 @@ export function VisitDetail({ visit, events, pings, report, expenses, photos, cl
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {hasSite && (
+          {hasSite && process.env.NEXT_PUBLIC_ENABLE_FIELD_SIMULATE === "true" && (
             <Button variant="outline" onClick={handleSimulate} disabled={simulating} title="Solo demo: simula el recorrido del técnico hasta el sitio">
               {simulating ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <PlayCircle className="w-4 h-4 mr-1.5" />} Simular recorrido
             </Button>
           )}
+          <VisitCreateLead visit={visit} />
           <Button asChild variant="outline">
             <a href={`/api/field/visit-pdf/${visit.id}`} target="_blank" rel="noopener noreferrer"><FileText className="w-4 h-4 mr-1.5" /> PDF</a>
           </Button>
           <Button asChild variant="outline">
-            <Link href={`/field/visitas/${visit.id}/editar`}><Pencil className="w-4 h-4 mr-1.5" /> Editar</Link>
+            <Link href={ROUTES.field.visitaEditar(visit.id)}><Pencil className="w-4 h-4 mr-1.5" /> Editar</Link>
           </Button>
         </div>
       </div>
@@ -245,8 +248,8 @@ export function VisitDetail({ visit, events, pings, report, expenses, photos, cl
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Columna izquierda: datos + cambio de estado */}
         <div className="space-y-6">
-          <div className="sas-card p-5 space-y-3">
-            <h2 className="text-sm font-semibold text-(--sas-text) uppercase tracking-wide">Datos generales</h2>
+          <div className="zaire-card p-5 space-y-3">
+            <h2 className="text-sm font-semibold text-(--zaire-text) uppercase tracking-wide">Datos generales</h2>
             <DataRow icon={User} label="Técnico" value={visit.technician?.full_name ?? "—"} />
             <DataRow icon={Truck} label="Unidad" value={visit.vehicle ? [visit.vehicle.plate, visit.vehicle.brand, visit.vehicle.model].filter(Boolean).join(" ") : "—"} />
             <DataRow icon={Building2} label="Cliente" value={visit.client?.business_name ?? "—"} />
@@ -254,14 +257,14 @@ export function VisitDetail({ visit, events, pings, report, expenses, photos, cl
             <DataRow icon={Building2} label="Sucursal" value={branch?.name ?? visit.branch_id} />
             {visit.work_order && (
               <div className="flex items-center gap-2 text-sm">
-                <span className="text-(--sas-text-muted) w-24 shrink-0">OT vinculada</span>
-                <Link href={`/ordenes/${visit.work_order.id}`} className="text-sas-blue hover:underline font-mono">{visit.work_order.order_number}</Link>
+                <span className="text-(--zaire-text-muted) w-24 shrink-0">OT vinculada</span>
+                <Link href={ROUTES.trace.orden(visit.work_order.id)} className="text-zaire-blue hover:underline font-mono">{visit.work_order.order_number}</Link>
               </div>
             )}
           </div>
 
-          <div className="sas-card p-5 space-y-3">
-            <h2 className="text-sm font-semibold text-(--sas-text) uppercase tracking-wide">Fechas</h2>
+          <div className="zaire-card p-5 space-y-3">
+            <h2 className="text-sm font-semibold text-(--zaire-text) uppercase tracking-wide">Fechas</h2>
             <DataRow icon={Calendar} label="Agendada" value={formatDateTime(visit.scheduled_at)} />
             <DataRow icon={Calendar} label="Salida" value={formatDateTime(visit.started_at)} />
             <DataRow icon={Calendar} label="Arribo" value={formatDateTime(visit.arrived_at)} />
@@ -270,9 +273,9 @@ export function VisitDetail({ visit, events, pings, report, expenses, photos, cl
           </div>
 
           {/* Facturable / cobranza */}
-          <div className="sas-card p-5 space-y-3">
-            <h2 className="text-sm font-semibold text-(--sas-text) uppercase tracking-wide">Facturación</h2>
-            <p className="text-sm text-(--sas-text-muted)">
+          <div className="zaire-card p-5 space-y-3">
+            <h2 className="text-sm font-semibold text-(--zaire-text) uppercase tracking-wide">Facturación</h2>
+            <p className="text-sm text-(--zaire-text-muted)">
               {visit.is_billable ? "Visita facturable al cliente." : "Visita no facturable."}
             </p>
             <div className="space-y-1.5">
@@ -294,8 +297,8 @@ export function VisitDetail({ visit, events, pings, report, expenses, photos, cl
 
           {/* Cambiar estado */}
           {nextStates.length > 0 && (
-            <div className="sas-card p-5 space-y-3">
-              <h2 className="text-sm font-semibold text-(--sas-text) uppercase tracking-wide">Cambiar estado</h2>
+            <div className="zaire-card p-5 space-y-3">
+              <h2 className="text-sm font-semibold text-(--zaire-text) uppercase tracking-wide">Cambiar estado</h2>
               <Select value={newStatus} onValueChange={(v) => setNewStatus(v ?? "")}>
                 <SelectTrigger>
                   <SelectValue placeholder="Nuevo estado...">{newStatus ? VISIT_STATUS_LABELS[newStatus as VisitStatus] : null}</SelectValue>
@@ -305,7 +308,7 @@ export function VisitDetail({ visit, events, pings, report, expenses, photos, cl
                 </SelectContent>
               </Select>
               <Textarea placeholder="Notas del cambio (opcional)" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
-              <Button onClick={() => setConfirmOpen(true)} disabled={!newStatus || saving} className="w-full bg-sas-navy-mid hover:bg-sas-navy text-white">
+              <Button onClick={() => setConfirmOpen(true)} disabled={!newStatus || saving} className="w-full bg-zaire-navy-mid hover:bg-zaire-navy text-white">
                 Cambiar estado
               </Button>
             </div>
@@ -314,33 +317,33 @@ export function VisitDetail({ visit, events, pings, report, expenses, photos, cl
 
         {/* Columna derecha: mapa + timeline */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="sas-card p-5 space-y-3">
-            <h2 className="text-sm font-semibold text-(--sas-text) uppercase tracking-wide">Recorrido y geocerca</h2>
+          <div className="zaire-card p-5 space-y-3">
+            <h2 className="text-sm font-semibold text-(--zaire-text) uppercase tracking-wide">Recorrido y geocerca</h2>
             {hasSite || markers.length > 0 ? (
               <FieldMap markers={markers} geofences={geofences} trace={trace} height={340} zoom={12} />
             ) : (
-              <p className="text-sm text-(--sas-text-muted) py-8 text-center">El sitio de esta visita no tiene coordenadas cargadas.</p>
+              <p className="text-sm text-(--zaire-text-muted) py-8 text-center">El sitio de esta visita no tiene coordenadas cargadas.</p>
             )}
           </div>
 
-          <div className="sas-card p-5">
-            <h2 className="text-sm font-semibold text-(--sas-text) uppercase tracking-wide mb-4">Timeline de eventos</h2>
+          <div className="zaire-card p-5">
+            <h2 className="text-sm font-semibold text-(--zaire-text) uppercase tracking-wide mb-4">Timeline de eventos</h2>
             {events.length === 0 ? (
-              <p className="text-sm text-(--sas-text-muted) py-4 text-center">Sin eventos registrados.</p>
+              <p className="text-sm text-(--zaire-text-muted) py-4 text-center">Sin eventos registrados.</p>
             ) : (
               <div className="relative">
-                <div className="absolute left-4 top-0 bottom-0 w-px bg-(--sas-border)" />
+                <div className="absolute left-4 top-0 bottom-0 w-px bg-(--zaire-border)" />
                 <div className="space-y-4">
                   {events.map((ev) => {
                     const Icon = EVENT_ICON[ev.event_type] ?? StickyNote;
                     return (
                       <div key={ev.id} className="relative flex gap-4 pl-10">
-                        <div className="absolute left-0 top-0.5 w-8 h-8 rounded-full flex items-center justify-center border-2 bg-white border-(--sas-border) text-sas-blue">
+                        <div className="absolute left-0 top-0.5 w-8 h-8 rounded-full flex items-center justify-center border-2 bg-white border-(--zaire-border) text-zaire-blue">
                           <Icon className="w-4 h-4" />
                         </div>
                         <div className="flex-1 pb-1">
-                          <p className="text-sm text-(--sas-text)">{ev.description ?? ev.event_type}</p>
-                          <p className="text-xs text-(--sas-text-muted)">{formatDateTime(ev.occurred_at)}</p>
+                          <p className="text-sm text-(--zaire-text)">{ev.description ?? ev.event_type}</p>
+                          <p className="text-xs text-(--zaire-text-muted)">{formatDateTime(ev.occurred_at)}</p>
                         </div>
                       </div>
                     );
@@ -390,9 +393,9 @@ export function VisitDetail({ visit, events, pings, report, expenses, photos, cl
 function DataRow({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string }) {
   return (
     <div className="flex items-center gap-2 text-sm">
-      <Icon className="w-4 h-4 text-(--sas-text-muted) shrink-0" />
-      <span className="text-(--sas-text-muted) w-24 shrink-0">{label}</span>
-      <span className="text-(--sas-text) font-medium truncate">{value}</span>
+      <Icon className="w-4 h-4 text-(--zaire-text-muted) shrink-0" />
+      <span className="text-(--zaire-text-muted) w-24 shrink-0">{label}</span>
+      <span className="text-(--zaire-text) font-medium truncate">{value}</span>
     </div>
   );
 }

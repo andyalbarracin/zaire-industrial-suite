@@ -6,6 +6,7 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Search, Pencil, Download } from "lucide-react";
 import * as XLSX from "xlsx";
+import { ROUTES } from "@/lib/routes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BRANCHES } from "@/lib/constants";
@@ -85,16 +86,16 @@ export function VehiclesTable({ initialVehicles, technicians }: VehiclesTablePro
   }
 
   return (
-    <div className="sas-card">
+    <div className="zaire-card">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-(--sas-border)">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-(--zaire-border)">
         <div className="relative w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--sas-text-muted)" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--zaire-text-muted)" />
           <Input placeholder="Buscar unidades..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} className="pl-9 h-9" />
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={exportExcel} className="h-9"><Download className="w-4 h-4 mr-1.5" /> Excel</Button>
-          <Button onClick={() => { setEditing(null); setFormOpen(true); }} className="bg-sas-navy-mid hover:bg-sas-navy text-white h-9">
+          <Button variant="outline" size="sm" onClick={exportExcel} className="h-9"><Download className="w-4 h-4 mr-1.5" /> XLS</Button>
+          <Button onClick={() => { setEditing(null); setFormOpen(true); }} className="bg-zaire-navy-mid hover:bg-zaire-navy text-white h-9">
             <Plus className="w-4 h-4 mr-1.5" /> Nueva Unidad
           </Button>
         </div>
@@ -113,7 +114,7 @@ export function VehiclesTable({ initialVehicles, technicians }: VehiclesTablePro
       {/* Tabla */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-(--sas-border) text-xs text-(--sas-text-muted) uppercase tracking-wide">
+          <thead className="bg-slate-50 border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
             <tr>
               <th className="text-left px-4 py-3">Patente</th>
               <th className="text-left px-4 py-3">Vehículo</th>
@@ -124,10 +125,10 @@ export function VehiclesTable({ initialVehicles, technicians }: VehiclesTablePro
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-(--sas-border)">
+          <tbody className="divide-y divide-(--zaire-border)">
             {pageRows.map((v) => (
-              <tr key={v.id} onClick={() => router.push(`/field/unidades/${v.id}`)} className="hover:bg-slate-50/80 cursor-pointer">
-                <td className="px-4 py-3 font-mono font-medium text-(--sas-text)">{v.plate ?? "—"}</td>
+              <tr key={v.id} onClick={() => router.push(ROUTES.field.unidad(v.id))} className="hover:bg-slate-50/80 cursor-pointer">
+                <td className="px-4 py-3 font-mono font-medium text-(--zaire-text)">{v.plate ?? "—"}</td>
                 <td className="px-4 py-3">{[v.brand, v.model].filter(Boolean).join(" ") || "—"}{v.year ? ` (${v.year})` : ""}</td>
                 <td className="px-4 py-3">{v.type ? VEHICLE_TYPE_LABELS[v.type as VehicleType] : "—"}</td>
                 <td className="px-4 py-3">{branchName(v.branch_id)}</td>
@@ -143,19 +144,19 @@ export function VehiclesTable({ initialVehicles, technicians }: VehiclesTablePro
               </tr>
             ))}
             {!pageRows.length && (
-              <tr><td colSpan={7} className="px-4 py-12 text-center text-(--sas-text-muted)">No se encontraron unidades</td></tr>
+              <tr><td colSpan={7} className="px-4 py-12 text-center text-(--zaire-text-muted)">No se encontraron unidades</td></tr>
             )}
           </tbody>
         </table>
       </div>
 
       {/* Paginación */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-(--sas-border) text-sm text-(--sas-text-muted)">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-(--zaire-border) text-sm text-(--zaire-text-muted)">
         <div className="flex items-center gap-2">
           <span>{filtered.length} registros</span>
-          <span className="text-(--sas-border)">·</span>
+          <span className="text-(--zaire-border)">·</span>
           <label className="flex items-center gap-1.5">Mostrar
-            <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }} className="h-8 rounded-lg border border-(--sas-border) bg-white px-2 text-sm text-(--sas-text)">
+            <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }} className="h-8 rounded-lg border border-(--zaire-border) bg-white px-2 text-sm text-(--zaire-text)">
               {PAGE_SIZES.map((n) => (<option key={n} value={n}>{n}</option>))}
             </select>
           </label>

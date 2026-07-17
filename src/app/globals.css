@@ -42,15 +42,15 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
 
-  /* SAS Brand colors as theme tokens */
-  --color-sas-navy: var(--sas-navy);
-  --color-sas-navy-mid: var(--sas-navy-mid);
-  --color-sas-blue: var(--sas-blue);
-  --color-sas-light: var(--sas-light);
-  --color-sas-bg: var(--sas-bg);
-  --color-sas-success: var(--sas-success);
-  --color-sas-warning: var(--sas-warning);
-  --color-sas-danger: var(--sas-danger);
+  /* Zaire brand colors as theme tokens */
+  --color-zaire-navy: var(--zaire-navy);
+  --color-zaire-navy-mid: var(--zaire-navy-mid);
+  --color-zaire-blue: var(--zaire-blue);
+  --color-zaire-light: var(--zaire-light);
+  --color-zaire-bg: var(--zaire-bg);
+  --color-zaire-success: var(--zaire-success);
+  --color-zaire-warning: var(--zaire-warning);
+  --color-zaire-danger: var(--zaire-danger);
 }
 
 :root {
@@ -83,19 +83,19 @@
   --sidebar-border: #1a3560;
   --sidebar-ring: #576CBC;
 
-  /* SAS Brand palette */
-  --sas-navy: #0B2447;
-  --sas-navy-mid: #19376D;
-  --sas-blue: #576CBC;
-  --sas-light: #A5D7E8;
-  --sas-bg: #F8FAFC;
-  --sas-surface: #FFFFFF;
-  --sas-text: #0F172A;
-  --sas-text-muted: #64748B;
-  --sas-border: #E2E8F0;
-  --sas-success: #16A34A;
-  --sas-warning: #EAB308;
-  --sas-danger: #DC2626;
+  /* Zaire brand palette */
+  --zaire-navy: #0B2447;
+  --zaire-navy-mid: #19376D;
+  --zaire-blue: #576CBC;
+  --zaire-light: #A5D7E8;
+  --zaire-bg: #F8FAFC;
+  --zaire-surface: #FFFFFF;
+  --zaire-text: #0F172A;
+  --zaire-text-muted: #64748B;
+  --zaire-border: #E2E8F0;
+  --zaire-success: #16A34A;
+  --zaire-warning: #EAB308;
+  --zaire-danger: #DC2626;
 }
 
 @layer base {
@@ -111,9 +111,9 @@
 }
 
 @layer utilities {
-  .sas-card {
+  .zaire-card {
     background: white;
-    border: 1px solid var(--sas-border);
+    border: 1px solid var(--zaire-border);
     border-radius: 14px;
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
   }
@@ -143,25 +143,25 @@ textarea:focus-visible {
 }
 
 /* ===== Entrance animations ===== */
-@keyframes zt-fade-up {
+@keyframes z-fade-up {
   from { opacity: 0; transform: translateY(9px); }
   to   { opacity: 1; transform: none; }
 }
-.animate-fade-up   { animation: zt-fade-up 0.34s cubic-bezier(.2,.8,.2,1) both; }
-.animate-fade-up-1 { animation: zt-fade-up 0.34s cubic-bezier(.2,.8,.2,1) 0.05s both; }
-.animate-fade-up-2 { animation: zt-fade-up 0.34s cubic-bezier(.2,.8,.2,1) 0.10s both; }
-.animate-fade-up-3 { animation: zt-fade-up 0.34s cubic-bezier(.2,.8,.2,1) 0.15s both; }
+.animate-fade-up   { animation: z-fade-up 0.34s cubic-bezier(.2,.8,.2,1) both; }
+.animate-fade-up-1 { animation: z-fade-up 0.34s cubic-bezier(.2,.8,.2,1) 0.05s both; }
+.animate-fade-up-2 { animation: z-fade-up 0.34s cubic-bezier(.2,.8,.2,1) 0.10s both; }
+.animate-fade-up-3 { animation: z-fade-up 0.34s cubic-bezier(.2,.8,.2,1) 0.15s both; }
 
 /* Pop-in para modales / dropdowns */
-@keyframes zt-pop {
+@keyframes z-pop {
   from { opacity: 0; transform: translateY(6px) scale(.98); }
   to   { opacity: 1; transform: none; }
 }
-.animate-zt-pop { animation: zt-pop 0.16s ease both; }
+.animate-z-pop { animation: z-pop 0.16s ease both; }
 
 /* Bar chart grow (left origin) */
-@keyframes zt-grow {
+@keyframes z-grow {
   from { transform: scaleX(0.7); opacity: 0.55; }
   to   { transform: scaleX(1); opacity: 1; }
 }
-.animate-zt-grow { transform-origin: left; animation: zt-grow 0.7s cubic-bezier(.2,.8,.2,1) both; }
+.animate-z-grow { transform-origin: left; animation: z-grow 0.7s cubic-bezier(.2,.8,.2,1) both; }

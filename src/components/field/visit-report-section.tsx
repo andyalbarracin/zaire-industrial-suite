@@ -51,7 +51,7 @@ interface VisitReportSectionProps {
   report: FieldVisitReport | null;
   visit: VisitContext;
   clientWorkOrders: { id: string; order_number: string }[];
-  currentUser: { id: string; full_name: string } | null;
+  currentUser: { id: string; full_name: string; role?: string | null } | null;
 }
 
 export function VisitReportSection({ visitId, report, visit, clientWorkOrders, currentUser }: VisitReportSectionProps) {
@@ -64,6 +64,7 @@ export function VisitReportSection({ visitId, report, visit, clientWorkOrders, c
   const [otBusy, setOtBusy] = useState(false);
 
   const reqStatus = report?.ot_request_status ?? "no_solicitada";
+  const isAdmin = currentUser?.role === "admin";
 
   async function submitOtRequest() {
     if (!report) return;
@@ -83,6 +84,11 @@ export function VisitReportSection({ visitId, report, visit, clientWorkOrders, c
       description: "Solicitud de OT/OTS desde Zaire Field",
       user_id: currentUser?.id ?? null, user_name: currentUser?.full_name ?? null,
     });
+    // Notificación por email (scaffold — todavía no envía; ver /api/notifications/ot-request)
+    fetch("/api/notifications/ot-request", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reportId: report.id, notes: requestNotes || null }),
+    }).catch(() => {});
     toast.success("OT/OTS solicitada al administrador");
     setOtBusy(false); setRequestOpen(false); setRequestNotes("");
     router.refresh();
@@ -94,15 +100,60 @@ export function VisitReportSection({ visitId, report, visit, clientWorkOrders, c
     const supabase = createClient();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = supabase as any;
+
+    // 1) Vincular la OT a la visita
     await sb.from("field_visits").update({ work_order_id: selectedOt }).eq("id", visit.id);
-    const { error } = await sb.from("field_visit_reports").update({ ot_request_status: "vinculada" }).eq("id", report.id);
+
+    // 2) Círculo Visita→OT: si el reporte todavía no generó un ítem, crearlo en la OT con los
+    //    datos técnicos del reporte (el admin luego cotiza/precia). Guarda anti-duplicado.
+    const alreadyHadItem = !!report.created_work_order_item_id;
+    let itemId: string | null = report.created_work_order_item_id ?? null;
+    if (!itemId) {
+      const { data: lastItem } = await sb
+        .from("work_order_items")
+        .select("item_number")
+        .eq("work_order_id", selectedOt)
+        .order("item_number", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const nextNumber = ((lastItem?.item_number as number) ?? 0) + 1;
+      const { data: newItem } = await sb
+        .from("work_order_items")
+        .insert({
+          work_order_id: selectedOt, item_number: nextNumber, product_id: null,
+          custom_description: report.equipment_tag || "Equipo relevado en visita de campo",
+          quantity: 1,
+          serial_number: report.serial_number || null,
+          equipment_number: report.equipment_tag || null,
+          additional_observation: report.findings || null,
+          unit_price: 0, total_price: 0, unit_price_ars: 0, total_price_ars: 0,
+          repair_required: report.requires_repair,
+          notes: report.recommendations || null,
+          status: "pendiente",
+          modelo: report.modelo || null, medida: report.medida || null, unidad_medida: report.unidad_medida || null,
+          marca: report.marca || null, materiales_caras: report.materiales_caras || null,
+          materiales_orings: report.materiales_orings || null, origen_abastecimiento: null, orden_compra_item: null,
+          is_quoted: false, is_remitted: false, qty_remitted: 0,
+          is_delivered: false, qty_delivered: 0, is_invoiced: false, qty_invoiced: 0,
+        })
+        .select("id")
+        .single();
+      itemId = (newItem?.id as string) ?? null;
+    }
+
+    // 3) Marcar el reporte como vinculado + guardar el ítem generado
+    const { error } = await sb
+      .from("field_visit_reports")
+      .update({ ot_request_status: "vinculada", created_work_order_item_id: itemId })
+      .eq("id", report.id);
     if (error) { toast.error("Error al vincular la OT"); setOtBusy(false); return; }
+
     await sb.from("audit_logs").insert({
       entity_type: "field_visit_report", entity_id: report.id, action: "update",
-      description: "OT vinculada a la visita",
+      description: alreadyHadItem ? "OT vinculada a la visita" : "OT vinculada + ítem generado desde el reporte",
       user_id: currentUser?.id ?? null, user_name: currentUser?.full_name ?? null,
     });
-    toast.success("OT vinculada a la visita");
+    toast.success(alreadyHadItem ? "OT vinculada a la visita" : "OT vinculada · ítem generado desde el reporte");
     setOtBusy(false); setLinkOpen(false);
     router.refresh();
   }
@@ -175,10 +226,10 @@ export function VisitReportSection({ visitId, report, visit, clientWorkOrders, c
   }
 
   return (
-    <div className="sas-card p-5">
+    <div className="zaire-card p-5">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-semibold text-(--sas-text) uppercase tracking-wide flex items-center gap-2">
-          <ClipboardList className="w-4 h-4 text-sas-blue" /> Reporte de visita
+        <h2 className="text-sm font-semibold text-(--zaire-text) uppercase tracking-wide flex items-center gap-2">
+          <ClipboardList className="w-4 h-4 text-zaire-blue" /> Reporte de visita
         </h2>
         {report && (
           <div className="flex items-center gap-2">
@@ -190,10 +241,14 @@ export function VisitReportSection({ visitId, report, visit, clientWorkOrders, c
             {reqStatus === "solicitada" && (
               <>
                 <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">OT/OTS solicitada</span>
-                <Button size="sm" variant="outline" className="h-8" onClick={() => setLinkOpen(true)} title="Vincular una OT existente (admin)">
-                  <Link2 className="w-4 h-4 mr-1" /> Vincular OT
-                </Button>
-                <Button size="sm" variant="ghost" className="h-8 text-red-600" onClick={() => setReqStatus("rechazada")} title="Rechazar solicitud (admin)">Rechazar</Button>
+                {isAdmin && (
+                  <>
+                    <Button size="sm" variant="outline" className="h-8" onClick={() => setLinkOpen(true)} title="Vincular una OT existente (admin)">
+                      <Link2 className="w-4 h-4 mr-1" /> Vincular OT
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-8 text-red-600" onClick={() => setReqStatus("rechazada")} title="Rechazar solicitud (admin)">Rechazar</Button>
+                  </>
+                )}
               </>
             )}
             {reqStatus === "vinculada" && (
@@ -204,7 +259,7 @@ export function VisitReportSection({ visitId, report, visit, clientWorkOrders, c
             {reqStatus === "rechazada" && (
               <>
                 <span className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-full px-2 py-0.5">Solicitud rechazada</span>
-                <Button size="sm" variant="ghost" className="h-8" onClick={() => setReqStatus("solicitada")}>Reabrir</Button>
+                {isAdmin && <Button size="sm" variant="ghost" className="h-8" onClick={() => setReqStatus("solicitada")}>Reabrir</Button>}
               </>
             )}
           </div>
@@ -216,9 +271,9 @@ export function VisitReportSection({ visitId, report, visit, clientWorkOrders, c
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>Solicitar OT/OTS</DialogTitle></DialogHeader>
           <div className="space-y-3 mt-2">
-            <p className="text-sm text-(--sas-text-muted)">
+            <p className="text-sm text-(--zaire-text-muted)">
               Esto <strong>no crea</strong> la orden. Deja una solicitud con los datos del reporte para que un
-              administrador cree la OT/OTS en Zaire Tracking (con su número correlativo) y la vincule a esta visita.
+              administrador cree la OT/OTS en Zaire Trace (con su número correlativo) y la vincule a esta visita.
             </p>
             <div className="space-y-1.5">
               <Label>Notas para el administrador</Label>
@@ -226,7 +281,7 @@ export function VisitReportSection({ visitId, report, visit, clientWorkOrders, c
             </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setRequestOpen(false)}>Cancelar</Button>
-              <Button onClick={submitOtRequest} disabled={otBusy} className="bg-sas-navy-mid hover:bg-sas-navy text-white">
+              <Button onClick={submitOtRequest} disabled={otBusy} className="bg-zaire-navy-mid hover:bg-zaire-navy text-white">
                 {otBusy && <Loader className="w-4 h-4 mr-2 animate-spin" />} Enviar solicitud
               </Button>
             </div>
@@ -239,12 +294,13 @@ export function VisitReportSection({ visitId, report, visit, clientWorkOrders, c
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>Vincular OT existente</DialogTitle></DialogHeader>
           <div className="space-y-3 mt-2">
-            <p className="text-sm text-(--sas-text-muted)">
-              Elegí una OT ya creada en Zaire Tracking para vincularla a esta visita. Si todavía no existe,
-              creala primero en Zaire Tracking y volvé acá.
+            <p className="text-sm text-(--zaire-text-muted)">
+              Elegí una OT ya creada en Zaire Trace para vincularla a esta visita. Si todavía no existe,
+              creala primero en Zaire Trace y volvé acá. Al vincular se <strong>genera un ítem</strong> en la OT
+              con los datos técnicos del reporte (medida, marca, materiales…) para no recargarlos.
             </p>
             {clientWorkOrders.length === 0 ? (
-              <p className="text-sm text-amber-600">El cliente de la visita no tiene OTs. Creá una en Zaire Tracking primero.</p>
+              <p className="text-sm text-amber-600">El cliente de la visita no tiene OTs. Creá una en Zaire Trace primero.</p>
             ) : (
               <div className="space-y-1.5">
                 <Label>OT destino</Label>
@@ -258,7 +314,7 @@ export function VisitReportSection({ visitId, report, visit, clientWorkOrders, c
             )}
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setLinkOpen(false)}>Cancelar</Button>
-              <Button onClick={linkOt} disabled={otBusy || !selectedOt} className={cn("bg-sas-navy-mid hover:bg-sas-navy text-white")}>
+              <Button onClick={linkOt} disabled={otBusy || !selectedOt} className={cn("bg-zaire-navy-mid hover:bg-zaire-navy text-white")}>
                 {otBusy && <Loader className="w-4 h-4 mr-2 animate-spin" />} Vincular
               </Button>
             </div>
@@ -322,7 +378,7 @@ export function VisitReportSection({ visitId, report, visit, clientWorkOrders, c
         </div>
 
         <div className="flex justify-end">
-          <Button type="submit" disabled={saving || !isDirty} className="bg-sas-navy-mid hover:bg-sas-navy text-white">
+          <Button type="submit" disabled={saving || !isDirty} className="bg-zaire-navy-mid hover:bg-zaire-navy text-white">
             {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             {report ? "Guardar reporte" : "Crear reporte"}
           </Button>

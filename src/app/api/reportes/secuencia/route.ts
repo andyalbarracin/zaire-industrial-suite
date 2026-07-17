@@ -7,9 +7,15 @@ import { SecuenciaAuditoriaDocument } from "@/lib/pdf/report-auditoria-template"
 import { BRANCHES } from "@/lib/constants";
 import React from "react";
 
-function parseSeq(orderNumber: string): number | null {
-  const m = orderNumber.match(/^(OTS?)-\d{4}-[A-Z]+(\d+)$/);
-  return m ? parseInt(m[2], 10) : null;
+// Sucursal NORMALIZADA + secuencia. OTS usa prefijo "SR"; el contador es por sucursal
+// compartido entre OT y OTS → SRBB y BB son la misma sucursal (BB). Agrupar por sucursal
+// evita reportar huecos falsos entre sucursales independientes.
+function parseOrder(orderNumber: string): { branch: string; seq: number } | null {
+  const m = orderNumber.match(/^OTS?-\d{4}-([A-Z]+?)(\d+)$/);
+  if (!m) return null;
+  const code = m[1];
+  const branch = code.startsWith("SR") ? code.slice(2) : code;
+  return { branch, seq: parseInt(m[2], 10) };
 }
 
 export async function GET(request: NextRequest) {
@@ -37,18 +43,34 @@ export async function GET(request: NextRequest) {
   }
 
   const { data } = await q;
-  const rows = (data ?? [])
-    .map((r: { order_number: string; status: string }) => ({ ...r, seq: parseSeq(r.order_number) ?? 0 }))
-    .filter((r: { seq: number }) => r.seq > 0)
-    .sort((a: { seq: number }, b: { seq: number }) => a.seq - b.seq);
+  type Row = { order_number: string; status: string; branch: string; seq: number };
+  const parsed: Row[] = (data ?? [])
+    .map((r: { order_number: string; status: string }) => {
+      const p = parseOrder(r.order_number);
+      return p ? { order_number: r.order_number, status: r.status, branch: p.branch, seq: p.seq } : null;
+    })
+    .filter((r: Row | null): r is Row => r !== null);
+
+  // Agrupar por sucursal y detectar huecos DENTRO de cada una
+  const byBranch = new Map<string, Row[]>();
+  for (const r of parsed) {
+    const list = byBranch.get(r.branch) ?? [];
+    list.push(r);
+    byBranch.set(r.branch, list);
+  }
 
   const gaps: { missing: number; around: string }[] = [];
-  for (let i = 1; i < rows.length; i++) {
-    if (rows[i].seq - rows[i - 1].seq > 1) {
-      for (let g = rows[i - 1].seq + 1; g < rows[i].seq; g++) {
-        gaps.push({ missing: g, around: `entre ${rows[i - 1].order_number} y ${rows[i].order_number}` });
+  const rows: Row[] = [];
+  for (const [br, list] of Array.from(byBranch.entries()).sort((a, b) => a[0].localeCompare(b[0]))) {
+    list.sort((a, b) => a.seq - b.seq);
+    for (let i = 1; i < list.length; i++) {
+      if (list[i].seq - list[i - 1].seq > 1) {
+        for (let g = list[i - 1].seq + 1; g < list[i].seq; g++) {
+          gaps.push({ missing: g, around: `${br}: entre ${list[i - 1].order_number} y ${list[i].order_number}` });
+        }
       }
     }
+    rows.push(...list);
   }
 
   const buffer = await renderToBuffer(

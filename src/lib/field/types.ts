@@ -323,7 +323,7 @@ export interface FieldVisitReport {
   recommendations: string | null;
   requires_repair: boolean;
   created_work_order_item_id: string | null;
-  // Solicitud de OT/OTS (la crea el admin en Zaire Tracking; Field solo solicita)
+  // Solicitud de OT/OTS (la crea el admin en Zaire Trace; Field solo solicita)
   ot_requested: boolean;
   ot_request_status: "no_solicitada" | "solicitada" | "vinculada" | "rechazada";
   ot_request_notes: string | null;

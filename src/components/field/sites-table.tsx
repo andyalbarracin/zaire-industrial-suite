@@ -6,6 +6,7 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Search, Pencil, Download, Map as MapIcon } from "lucide-react";
 import * as XLSX from "xlsx";
+import { ROUTES } from "@/lib/routes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FieldMap, type MapMarker } from "@/components/field/field-map";
@@ -79,21 +80,21 @@ export function SitesTable({ initialSites, clients }: SitesTableProps) {
   return (
     <div className="space-y-4">
       {showMap && mapMarkers.length > 0 && (
-        <div className="sas-card p-4">
+        <div className="zaire-card p-4">
           <FieldMap markers={mapMarkers} center={[-38.5, -66.0]} zoom={4} height={340} />
         </div>
       )}
 
-      <div className="sas-card">
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-(--sas-border)">
+      <div className="zaire-card">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-(--zaire-border)">
           <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--sas-text-muted)" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--zaire-text-muted)" />
             <Input placeholder="Buscar plantas..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} className="pl-9 h-9" />
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => setShowMap((m) => !m)} className="h-9"><MapIcon className="w-4 h-4 mr-1.5" /> {showMap ? "Ocultar mapa" : "Ver mapa"}</Button>
-            <Button variant="outline" size="sm" onClick={exportExcel} className="h-9"><Download className="w-4 h-4 mr-1.5" /> Excel</Button>
-            <Button onClick={() => setFormOpen(true)} className="bg-sas-navy-mid hover:bg-sas-navy text-white h-9"><Plus className="w-4 h-4 mr-1.5" /> Nueva Planta</Button>
+            <Button variant="outline" size="sm" onClick={exportExcel} className="h-9"><Download className="w-4 h-4 mr-1.5" /> XLS</Button>
+            <Button onClick={() => setFormOpen(true)} className="bg-zaire-navy-mid hover:bg-zaire-navy text-white h-9"><Plus className="w-4 h-4 mr-1.5" /> Nueva Planta</Button>
           </div>
         </div>
 
@@ -107,7 +108,7 @@ export function SitesTable({ initialSites, clients }: SitesTableProps) {
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-(--sas-border) text-xs text-(--sas-text-muted) uppercase tracking-wide">
+            <thead className="bg-slate-50 border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
               <tr>
                 <th className="text-left px-4 py-3">Planta</th>
                 <th className="text-left px-4 py-3">Cliente</th>
@@ -118,12 +119,12 @@ export function SitesTable({ initialSites, clients }: SitesTableProps) {
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-(--sas-border)">
+            <tbody className="divide-y divide-(--zaire-border)">
               {pageRows.map((s) => {
                 const hasCoords = s.latitude != null && s.longitude != null;
                 return (
-                  <tr key={s.id} onClick={() => router.push(`/field/plantas/${s.id}`)} className="hover:bg-slate-50/80 cursor-pointer">
-                    <td className="px-4 py-3 font-medium text-(--sas-text)">{s.name}</td>
+                  <tr key={s.id} onClick={() => router.push(ROUTES.field.planta(s.id))} className="hover:bg-slate-50/80 cursor-pointer">
+                    <td className="px-4 py-3 font-medium text-(--zaire-text)">{s.name}</td>
                     <td className="px-4 py-3">{s.client?.business_name ?? "—"}</td>
                     <td className="px-4 py-3">{s.city ?? "—"}</td>
                     <td className="px-4 py-3">{s.province ?? "—"}</td>
@@ -132,24 +133,24 @@ export function SitesTable({ initialSites, clients }: SitesTableProps) {
                       <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border", s.is_active ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200")}>{s.is_active ? "Activa" : "Inactiva"}</span>
                     </td>
                     <td className="px-4 py-3 text-right" onClick={(ev) => ev.stopPropagation()}>
-                      <Button variant="ghost" size="sm" onClick={() => router.push(`/field/plantas/${s.id}`)} title="Ver ficha"><Pencil className="w-3.5 h-3.5" /></Button>
+                      <Button variant="ghost" size="sm" onClick={() => router.push(ROUTES.field.planta(s.id))} title="Ver ficha"><Pencil className="w-3.5 h-3.5" /></Button>
                     </td>
                   </tr>
                 );
               })}
               {!pageRows.length && (
-                <tr><td colSpan={7} className="px-4 py-12 text-center text-(--sas-text-muted)">No se encontraron plantas</td></tr>
+                <tr><td colSpan={7} className="px-4 py-12 text-center text-(--zaire-text-muted)">No se encontraron plantas</td></tr>
               )}
             </tbody>
           </table>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-(--sas-border) text-sm text-(--sas-text-muted)">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-(--zaire-border) text-sm text-(--zaire-text-muted)">
           <div className="flex items-center gap-2">
             <span>{filtered.length} registros</span>
-            <span className="text-(--sas-border)">·</span>
+            <span className="text-(--zaire-border)">·</span>
             <label className="flex items-center gap-1.5">Mostrar
-              <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }} className="h-8 rounded-lg border border-(--sas-border) bg-white px-2 text-sm text-(--sas-text)">
+              <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }} className="h-8 rounded-lg border border-(--zaire-border) bg-white px-2 text-sm text-(--zaire-text)">
                 {PAGE_SIZES.map((n) => (<option key={n} value={n}>{n}</option>))}
               </select>
             </label>

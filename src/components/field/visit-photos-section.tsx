@@ -61,10 +61,10 @@ export function VisitPhotosSection({ visitId, initialPhotos }: VisitPhotosSectio
   }
 
   return (
-    <div className="sas-card p-5">
+    <div className="zaire-card p-5">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-semibold text-(--sas-text) uppercase tracking-wide flex items-center gap-2">
-          <Camera className="w-4 h-4 text-sas-blue" /> Fotos
+        <h2 className="text-sm font-semibold text-(--zaire-text) uppercase tracking-wide flex items-center gap-2">
+          <Camera className="w-4 h-4 text-zaire-blue" /> Fotos
         </h2>
         <>
           <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
@@ -75,11 +75,11 @@ export function VisitPhotosSection({ visitId, initialPhotos }: VisitPhotosSectio
       </div>
 
       {photos.length === 0 ? (
-        <p className="text-sm text-(--sas-text-muted) py-4 text-center">Sin fotos cargadas.</p>
+        <p className="text-sm text-(--zaire-text-muted) py-4 text-center">Sin fotos cargadas.</p>
       ) : (
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
           {photos.map((p) => (
-            <div key={p.id} className="relative group aspect-square rounded-lg overflow-hidden border border-(--sas-border)">
+            <div key={p.id} className="relative group aspect-square rounded-lg overflow-hidden border border-(--zaire-border)">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={publicUrl(p.storage_path)} alt={p.caption ?? "Foto"} className="w-full h-full object-cover" />
               <button

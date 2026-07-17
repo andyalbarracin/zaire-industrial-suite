@@ -170,7 +170,7 @@ export function VehicleForm({ open, onOpenChange, vehicle, technicians, onSaved 
               <SelectContent>
                 {BRANCHES.map((b) => (
                   <SelectItem key={b.id} value={b.id}>
-                    <span className="flex items-center gap-2">{b.name}<span className="text-xs text-(--sas-text-muted) font-mono">({b.code})</span></span>
+                    <span className="flex items-center gap-2">{b.name}<span className="text-xs text-(--zaire-text-muted) font-mono">({b.code})</span></span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -206,7 +206,7 @@ export function VehicleForm({ open, onOpenChange, vehicle, technicians, onSaved 
 
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button type="submit" disabled={isSubmitting} className="bg-sas-navy-mid hover:bg-sas-navy text-white">
+            <Button type="submit" disabled={isSubmitting} className="bg-zaire-navy-mid hover:bg-zaire-navy text-white">
               {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {isEdit ? "Guardar cambios" : "Crear unidad"}
             </Button>

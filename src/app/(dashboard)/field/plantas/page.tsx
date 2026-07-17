@@ -22,8 +22,8 @@ export default async function PlantasPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-(--sas-text)">Plantas</h1>
-        <p className="text-sm text-(--sas-text-muted) mt-0.5">
+        <h1 className="text-2xl font-bold text-(--zaire-text)">Plantas</h1>
+        <p className="text-sm text-(--zaire-text-muted) mt-0.5">
           {sites.length} plantas / sitios registrados
         </p>
       </div>

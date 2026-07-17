@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
+import { ROUTES } from "@/lib/routes";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -81,14 +82,14 @@ export function TechnicianFormPage({ technician, currentUser }: TechnicianFormPa
       user_id: currentUser?.id ?? null, user_name: currentUser?.full_name ?? null,
     });
     toast.success(isEdit ? "Técnico actualizado" : "Técnico creado");
-    router.push(`/field/tecnicos/${id}`);
+    router.push(ROUTES.field.tecnico(id!));
     router.refresh();
   }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 max-w-3xl">
-      <div className="sas-card p-5 space-y-4">
-        <h2 className="text-sm font-semibold text-(--sas-text) uppercase tracking-wide">Datos del técnico</h2>
+      <div className="zaire-card p-5 space-y-4">
+        <h2 className="text-sm font-semibold text-(--zaire-text) uppercase tracking-wide">Datos del técnico</h2>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5 col-span-2">
             <Label htmlFor="full_name">Nombre completo *</Label>
@@ -126,7 +127,7 @@ export function TechnicianFormPage({ technician, currentUser }: TechnicianFormPa
 
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={() => router.back()}>Cancelar</Button>
-        <Button type="submit" disabled={saving} className="bg-sas-navy-mid hover:bg-sas-navy text-white">
+        <Button type="submit" disabled={saving} className="bg-zaire-navy-mid hover:bg-zaire-navy text-white">
           {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {isEdit ? "Guardar cambios" : "Crear técnico"}
         </Button>

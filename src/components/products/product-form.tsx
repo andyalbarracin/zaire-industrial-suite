@@ -221,7 +221,7 @@ export function ProductForm({ open, onOpenChange, product, onSaved }: ProductFor
 
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button type="submit" disabled={isSubmitting} className="bg-sas-navy-mid hover:bg-sas-navy text-white">
+            <Button type="submit" disabled={isSubmitting} className="bg-zaire-navy-mid hover:bg-zaire-navy text-white">
               {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {isEdit ? "Guardar cambios" : "Crear producto"}
             </Button>

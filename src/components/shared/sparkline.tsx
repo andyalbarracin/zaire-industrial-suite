@@ -25,7 +25,7 @@ export function Sparkline({ data, color, id }: SparklineProps) {
 
   return (
     <svg
-      className="absolute right-[-2px] bottom-[-2px] w-24 h-[46px] opacity-50 pointer-events-none"
+      className="absolute -right-0.5 -bottom-0.5 w-24 h-11.5 opacity-50 pointer-events-none"
       viewBox={`0 0 ${w} ${h}`}
       preserveAspectRatio="none"
       aria-hidden="true"

@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Link from "next/link";
+import { ROUTES } from "@/lib/routes";
 import {
   Activity,
   Loader2,
@@ -48,7 +49,7 @@ const SLIDES = [
     icon: BarChart3,
     tag: "Dashboard operativo",
     title: "Visibilidad del taller en tiempo real",
-    body: "Métricas clave, vencimientos próximos, órdenes por estado. Exportá a Excel o PDF con un clic. Tu taller, siempre ordenado.",
+    body: "Métricas clave, vencimientos próximos, órdenes por estado. Exportá a XLS o PDF con un clic. Tu taller, siempre ordenado.",
     gradient: "from-[#071a38] via-[#0B2447] to-[#19376D]",
     accent: "#576CBC",
   },
@@ -124,7 +125,7 @@ export default function LoginPage() {
       setAuthError(`[${error.status}] ${error.message}`);
       return;
     }
-    router.push("/");
+    router.push(ROUTES.home);
     router.refresh();
   }
 
@@ -171,7 +172,7 @@ export default function LoginPage() {
             <Activity className="w-6 h-6 text-white" />
           </div>
           <div>
-            <span className="text-white font-bold text-xl tracking-tight">Zaire Trace</span>
+            <span className="text-white font-bold text-xl tracking-tight">Zaire</span>
             <span className="block text-white/40 text-xs">{companyName}</span>
           </div>
         </div>
@@ -202,7 +203,7 @@ export default function LoginPage() {
             {[
               "Numeración automática OT/OTS",
               "Historial de estados completo",
-              "Export Excel y PDF",
+              "Export XLS y PDF",
               "Log de auditoría ISO 9001",
             ].map((f) => (
               <div key={f} className="flex items-center gap-2 text-sm text-white/50">
@@ -249,9 +250,9 @@ export default function LoginPage() {
       {/* ── Panel derecho 40% — Formulario ────────────────────────────── */}
       <div className="flex-1 lg:w-[40%] flex flex-col min-h-screen bg-[#F7F7F7]">
         {/* Mobile logo */}
-        <div className="lg:hidden flex items-center gap-2 p-6 border-b border-gray-200 bg-sas-navy">
+        <div className="lg:hidden flex items-center gap-2 p-6 border-b border-gray-200 bg-zaire-navy">
           <Activity className="w-5 h-5 text-white" />
-          <span className="text-white font-bold">Zaire Trace</span>
+          <span className="text-white font-bold">Zaire</span>
         </div>
 
         {/* Form area */}
@@ -264,7 +265,7 @@ export default function LoginPage() {
             <p className="text-sm text-gray-500">
               {isRegister
                 ? "Completá tus datos para registrarte"
-                : "Ingresá a tu cuenta de Zaire Trace"}
+                : "Ingresá a tu cuenta de Zaire"}
             </p>
           </div>
 
@@ -280,7 +281,7 @@ export default function LoginPage() {
                   type="email"
                   placeholder="usuario@empresa.com"
                   autoComplete="email"
-                  className="h-11 bg-white border-gray-200 focus:border-sas-blue focus:ring-sas-blue/20 text-gray-900"
+                  className="h-11 bg-white border-gray-200 focus:border-zaire-blue focus:ring-zaire-blue/20 text-gray-900"
                   {...loginForm.register("email")}
                 />
                 {loginForm.formState.errors.email && (
@@ -300,7 +301,7 @@ export default function LoginPage() {
                     type={showPass ? "text" : "password"}
                     placeholder="••••••••"
                     autoComplete="current-password"
-                    className="h-11 bg-white border-gray-200 pr-10 focus:border-sas-blue focus:ring-sas-blue/20 text-gray-900"
+                    className="h-11 bg-white border-gray-200 pr-10 focus:border-zaire-blue focus:ring-zaire-blue/20 text-gray-900"
                     {...loginForm.register("password")}
                   />
                   <button
@@ -326,7 +327,7 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 disabled={loginForm.formState.isSubmitting}
-                className="w-full h-11 bg-sas-navy hover:bg-sas-navy-mid text-white font-semibold transition-colors"
+                className="w-full h-11 bg-zaire-navy hover:bg-zaire-navy-mid text-white font-semibold transition-colors"
               >
                 {loginForm.formState.isSubmitting ? (
                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Ingresando...</>
@@ -422,11 +423,11 @@ export default function LoginPage() {
               {/* Aceptar términos */}
               <p className="text-xs text-gray-500 leading-relaxed">
                 Al registrarte aceptás nuestros{" "}
-                <Link href="/terminos" target="_blank" className="text-sas-blue underline hover:text-sas-navy">
+                <Link href={ROUTES.terminos} target="_blank" className="text-zaire-blue underline hover:text-zaire-navy">
                   Términos y Condiciones
                 </Link>{" "}
                 y la{" "}
-                <Link href="/terminos#privacidad" target="_blank" className="text-sas-blue underline hover:text-sas-navy">
+                <Link href={`${ROUTES.terminos}#privacidad`} target="_blank" className="text-zaire-blue underline hover:text-zaire-navy">
                   Política de Privacidad
                 </Link>.
               </p>
@@ -441,7 +442,7 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 disabled={registerForm.formState.isSubmitting}
-                className="w-full h-11 bg-sas-navy hover:bg-sas-navy-mid text-white font-semibold"
+                className="w-full h-11 bg-zaire-navy hover:bg-zaire-navy-mid text-white font-semibold"
               >
                 {registerForm.formState.isSubmitting ? (
                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Creando cuenta...</>
@@ -464,11 +465,11 @@ export default function LoginPage() {
         <div className="px-8 xl:px-14 py-6 border-t border-gray-200">
           <p className="text-xs text-gray-400 text-center">
             © 2026 {companyName} · ISO 9001:2015 ·{" "}
-            <Link href="/terminos" className="hover:text-gray-600 underline underline-offset-2">
+            <Link href={ROUTES.terminos} className="hover:text-gray-600 underline underline-offset-2">
               Términos y Condiciones
             </Link>
             {" · "}
-            <Link href="/terminos#privacidad" className="hover:text-gray-600 underline underline-offset-2">
+            <Link href={`${ROUTES.terminos}#privacidad`} className="hover:text-gray-600 underline underline-offset-2">
               Política de Privacidad
             </Link>
           </p>

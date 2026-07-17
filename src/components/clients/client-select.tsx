@@ -46,7 +46,7 @@ export function ClientSelect({ clients, value, onChange, disabled }: ClientSelec
         </span>
         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-2" align="start">
+      <PopoverContent className="w-100 p-2" align="start">
         <Input
           placeholder="Buscar por razón social o CUIT..."
           value={search}
@@ -57,7 +57,7 @@ export function ClientSelect({ clients, value, onChange, disabled }: ClientSelec
         <div className="max-h-60 overflow-y-auto space-y-0.5">
           <button
             type="button"
-            className="w-full text-left px-3 py-2 text-sm rounded hover:bg-slate-100 text-(--sas-text-muted)"
+            className="w-full text-left px-3 py-2 text-sm rounded hover:bg-slate-100 text-(--zaire-text-muted)"
             onClick={() => { onChange(null); setOpen(false); }}
           >
             — Sin cliente —
@@ -70,16 +70,16 @@ export function ClientSelect({ clients, value, onChange, disabled }: ClientSelec
               onClick={() => { onChange(client.id); setOpen(false); setSearch(""); }}
             >
               <Check
-                className={cn("w-4 h-4 shrink-0", value === client.id ? "opacity-100 text-sas-blue" : "opacity-0")}
+                className={cn("w-4 h-4 shrink-0", value === client.id ? "opacity-100 text-zaire-blue" : "opacity-0")}
               />
               <span className="flex-1 truncate">{client.business_name}</span>
               {client.tax_id && (
-                <span className="text-xs text-(--sas-text-muted) font-mono">{client.tax_id}</span>
+                <span className="text-xs text-(--zaire-text-muted) font-mono">{client.tax_id}</span>
               )}
             </button>
           ))}
           {!filtered.length && (
-            <p className="text-sm text-center py-4 text-(--sas-text-muted)">Sin resultados</p>
+            <p className="text-sm text-center py-4 text-(--zaire-text-muted)">Sin resultados</p>
           )}
         </div>
       </PopoverContent>

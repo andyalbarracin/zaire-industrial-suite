@@ -1,13 +1,14 @@
 // page.tsx — src/app/(auth)/terminos/page.tsx — 2026-05-20
-// Página de Términos y Condiciones y Política de Privacidad de Zaire Trace
+// Página de Términos y Condiciones y Política de Privacidad de Zaire
 
 import Link from "next/link";
 import { Activity, ArrowLeft } from "lucide-react";
 import { createServiceClient } from "@/lib/supabase/service";
+import { ROUTES } from "@/lib/routes";
 
 export const metadata = {
-  title: "Términos y Condiciones — Zaire Trace",
-  description: "Términos de uso y política de privacidad de Zaire Trace",
+  title: "Términos y Condiciones — Zaire",
+  description: "Términos de uso y política de privacidad de Zaire",
 };
 
 export const dynamic = "force-dynamic";
@@ -29,14 +30,14 @@ export default async function TerminosPage() {
   return (
     <div className="min-h-screen bg-[#F7F7F7]">
       {/* Header */}
-      <header className="bg-sas-navy sticky top-0 z-10">
+      <header className="bg-zaire-navy sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Activity className="w-5 h-5 text-white" />
-            <span className="text-white font-bold tracking-tight">Zaire Trace</span>
+            <span className="text-white font-bold tracking-tight">Zaire</span>
           </div>
           <Link
-            href="/login"
+            href={ROUTES.login}
             className="flex items-center gap-1.5 text-white/70 hover:text-white text-sm transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -56,7 +57,7 @@ export default async function TerminosPage() {
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-2">1. Aceptación de los términos</h2>
               <p>
-                Al acceder y utilizar Zaire Trace ("el Sistema"), usted acepta quedar vinculado por estos Términos y
+                Al acceder y utilizar Zaire («el Sistema»), usted acepta quedar vinculado por estos Términos y
                 Condiciones de Uso. Si no está de acuerdo con alguna parte de estos términos, no podrá acceder al
                 Sistema. El uso continuo del Sistema después de la publicación de cambios constituye aceptación de
                 los nuevos términos.
@@ -66,7 +67,7 @@ export default async function TerminosPage() {
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-2">2. Descripción del servicio</h2>
               <p>
-                Zaire Trace es un sistema web de gestión y trazabilidad de órdenes de trabajo desarrollado
+                Zaire es un sistema web de gestión y trazabilidad de órdenes de trabajo desarrollado
                 exclusivamente para uso interno de <strong>{nombre}</strong> y sus usuarios autorizados.
                 El Sistema permite registrar, numerar, seguir y auditar órdenes de trabajo (OT y OTS) conforme
                 a los requerimientos del sistema de gestión de calidad ISO 9001:2015.
@@ -254,8 +255,8 @@ export default async function TerminosPage() {
         {/* Footer */}
         <div className="text-center pb-8">
           <Link
-            href="/login"
-            className="inline-flex items-center gap-2 text-sm text-sas-blue hover:text-sas-navy transition-colors"
+            href={ROUTES.login}
+            className="inline-flex items-center gap-2 text-sm text-zaire-blue hover:text-zaire-navy transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Volver al login

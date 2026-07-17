@@ -12,8 +12,8 @@ export default async function TecnicosPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-(--sas-text)">Técnicos</h1>
-        <p className="text-sm text-(--sas-text-muted) mt-0.5">
+        <h1 className="text-2xl font-bold text-(--zaire-text)">Técnicos</h1>
+        <p className="text-sm text-(--zaire-text-muted) mt-0.5">
           {technicians.length} técnicos registrados
         </p>
       </div>

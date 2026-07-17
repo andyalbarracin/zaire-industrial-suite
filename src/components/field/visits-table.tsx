@@ -1,10 +1,11 @@
 "use client";
 // visits-table.tsx — src/components/field/visits-table.tsx — 2026-07-13
-// Lista de visitas (TanStack Table) + filtros (búsqueda, estado, sucursal) + export Excel.
+// Lista de visitas (TanStack Table) + filtros (búsqueda, estado, sucursal) + export XLS.
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ROUTES } from "@/lib/routes";
 import {
   useReactTable,
   getCoreRowModel,
@@ -76,7 +77,7 @@ export function VisitsTable({ initialVisits }: VisitsTableProps) {
             N° Visita <ArrowUpDown className="w-3.5 h-3.5 opacity-60" />
           </button>
         ),
-        cell: ({ row }) => <span className="font-mono text-xs font-medium text-(--sas-text)">{row.original.visit_number ?? "—"}</span>,
+        cell: ({ row }) => <span className="font-mono text-xs font-medium text-(--zaire-text)">{row.original.visit_number ?? "—"}</span>,
       },
       {
         accessorKey: "scheduled_at",
@@ -129,10 +130,10 @@ export function VisitsTable({ initialVisits }: VisitsTableProps) {
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="sm" asChild title="Ver detalle">
-              <Link href={`/field/visitas/${row.original.id}`}><Eye className="w-3.5 h-3.5" /></Link>
+              <Link href={ROUTES.field.visita(row.original.id)}><Eye className="w-3.5 h-3.5" /></Link>
             </Button>
             <Button variant="ghost" size="sm" asChild title="Editar">
-              <Link href={`/field/visitas/${row.original.id}/editar`}><Pencil className="w-3.5 h-3.5" /></Link>
+              <Link href={ROUTES.field.visitaEditar(row.original.id)}><Pencil className="w-3.5 h-3.5" /></Link>
             </Button>
           </div>
         ),
@@ -184,19 +185,19 @@ export function VisitsTable({ initialVisits }: VisitsTableProps) {
   }
 
   return (
-    <div className="sas-card">
+    <div className="zaire-card">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-(--sas-border)">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-(--zaire-border)">
         <div className="relative w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--sas-text-muted)" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--zaire-text-muted)" />
           <Input placeholder="Buscar visitas..." value={globalFilter} onChange={(e) => setGlobalFilter(e.target.value)} className="pl-9 h-9" />
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={exportExcel} className="h-9">
-            <Download className="w-4 h-4 mr-1.5" /> Excel
+            <Download className="w-4 h-4 mr-1.5" /> XLS
           </Button>
-          <Button asChild className="bg-sas-navy-mid hover:bg-sas-navy text-white h-9">
-            <Link href="/field/visitas/nueva"><Plus className="w-4 h-4 mr-1.5" /> Nueva Visita</Link>
+          <Button asChild className="bg-zaire-navy-mid hover:bg-zaire-navy text-white h-9">
+            <Link href={ROUTES.field.visitaNueva}><Plus className="w-4 h-4 mr-1.5" /> Nueva Visita</Link>
           </Button>
         </div>
       </div>
@@ -213,13 +214,13 @@ export function VisitsTable({ initialVisits }: VisitsTableProps) {
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-(--sas-border)">
+          <thead className="bg-slate-50 border-b border-(--zaire-border)">
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
                 {hg.headers.map((header) => {
                   const center = (header.column.columnDef.meta as { center?: boolean })?.center;
                   return (
-                    <th key={header.id} className={cn("px-4 py-3 text-xs font-medium text-(--sas-text-muted) uppercase tracking-wide", center ? "text-center" : "text-left")}>
+                    <th key={header.id} className={cn("px-4 py-3 text-xs font-medium text-(--zaire-text-muted) uppercase tracking-wide", center ? "text-center" : "text-left")}>
                       {flexRender(header.column.columnDef.header, header.getContext())}
                     </th>
                   );
@@ -227,11 +228,11 @@ export function VisitsTable({ initialVisits }: VisitsTableProps) {
               </tr>
             ))}
           </thead>
-          <tbody className="divide-y divide-(--sas-border)">
+          <tbody className="divide-y divide-(--zaire-border)">
             {table.getRowModel().rows.map((row) => (
               <tr
                 key={row.id}
-                onClick={() => router.push(`/field/visitas/${row.original.id}`)}
+                onClick={() => router.push(ROUTES.field.visita(row.original.id))}
                 className={cn(
                   "hover:bg-slate-50/80 transition-colors duration-100 cursor-pointer",
                   row.original.status === "cancelada" && "opacity-55"
@@ -240,7 +241,7 @@ export function VisitsTable({ initialVisits }: VisitsTableProps) {
                 {row.getVisibleCells().map((cell) => {
                   const center = (cell.column.columnDef.meta as { center?: boolean })?.center;
                   return (
-                    <td key={cell.id} className={cn("px-4 py-3 text-(--sas-text)", center && "text-center")} onClick={(e) => { if (cell.column.id === "actions") e.stopPropagation(); }}>
+                    <td key={cell.id} className={cn("px-4 py-3 text-(--zaire-text)", center && "text-center")} onClick={(e) => { if (cell.column.id === "actions") e.stopPropagation(); }}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   );
@@ -249,19 +250,19 @@ export function VisitsTable({ initialVisits }: VisitsTableProps) {
             ))}
             {!table.getRowModel().rows.length && (
               <tr>
-                <td colSpan={columns.length} className="px-4 py-12 text-center text-(--sas-text-muted)">No se encontraron visitas</td>
+                <td colSpan={columns.length} className="px-4 py-12 text-center text-(--zaire-text-muted)">No se encontraron visitas</td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-(--sas-border) text-sm text-(--sas-text-muted)">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-(--zaire-border) text-sm text-(--zaire-text-muted)">
         <div className="flex items-center gap-2">
           <span>{table.getFilteredRowModel().rows.length} registros</span>
-          <span className="text-(--sas-border)">·</span>
+          <span className="text-(--zaire-border)">·</span>
           <label className="flex items-center gap-1.5">Mostrar
-            <select value={table.getState().pagination.pageSize} onChange={(e) => table.setPageSize(Number(e.target.value))} className="h-8 rounded-lg border border-(--sas-border) bg-white px-2 text-sm text-(--sas-text)">
+            <select value={table.getState().pagination.pageSize} onChange={(e) => table.setPageSize(Number(e.target.value))} className="h-8 rounded-lg border border-(--zaire-border) bg-white px-2 text-sm text-(--zaire-text)">
               {[10, 20, 50, 100].map((n) => (<option key={n} value={n}>{n}</option>))}
             </select>
           </label>

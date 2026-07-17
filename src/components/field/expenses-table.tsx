@@ -6,6 +6,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ROUTES } from "@/lib/routes";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -37,7 +38,7 @@ interface VisitOption { id: string; visit_number: string | null; technician_id: 
 interface ExpensesTableProps {
   initialExpenses: FieldExpense[];
   visits: VisitOption[];
-  currentUser: { id: string; full_name: string } | null;
+  currentUser: { id: string; full_name: string; role?: string | null } | null;
 }
 
 // Color por categoría para las mini-cards (hex para la barra + clases suaves para el fondo)
@@ -94,11 +95,13 @@ export function ExpensesTable({ initialExpenses, visits, currentUser }: Expenses
     });
   }, [expenses, search, categoryFilter, statusFilter]);
 
-  // Resumen por categoría (ARS) para las mini-cards
+  // Resumen por categoría (ARS) + total USD aparte, para las mini-cards
   const summary = useMemo(() => {
     const map = new Map<string, number>();
     let total = 0;
+    let totalUsd = 0;
     for (const e of filtered) {
+      if (e.currency === "USD") { totalUsd += Number(e.amount); continue; }
       if (e.currency !== "ARS") continue;
       const k = e.category ?? "otro";
       map.set(k, (map.get(k) ?? 0) + Number(e.amount));
@@ -107,7 +110,7 @@ export function ExpensesTable({ initialExpenses, visits, currentUser }: Expenses
     const cats = Array.from(map.entries())
       .map(([cat, amount]) => ({ cat, amount, share: total > 0 ? amount / total : 0 }))
       .sort((a, b) => b.amount - a.amount);
-    return { cats, total };
+    return { cats, total, totalUsd };
   }, [filtered]);
 
   // Paginación manual (sobre filtered)
@@ -232,22 +235,28 @@ export function ExpensesTable({ initialExpenses, visits, currentUser }: Expenses
     <div className="space-y-4">
       {/* Resumen por categoría (responsive: las cards crecen para llenar el ancho) */}
       <div className="flex flex-wrap gap-3">
-        <div className="flex-1 basis-[160px] min-w-[150px] rounded-xl p-3.5 bg-sas-navy text-white shadow-sm flex flex-col justify-between">
+        <div className="flex-1 basis-40 min-w-37.5 rounded-xl p-3.5 bg-zaire-navy text-white shadow-sm flex flex-col justify-between">
           <span className="text-[11px] font-medium text-white/70">Total ARS (filtrado)</span>
           <span className="text-xl font-bold mt-1">{formatCurrency(summary.total, "ARS")}</span>
         </div>
+        {summary.totalUsd > 0 && (
+          <div className="flex-1 basis-40 min-w-37.5 rounded-xl p-3.5 bg-zaire-navy-mid text-white shadow-sm flex flex-col justify-between">
+            <span className="text-[11px] font-medium text-white/70">Total USD (filtrado)</span>
+            <span className="text-xl font-bold mt-1">{formatCurrency(summary.totalUsd, "USD")}</span>
+          </div>
+        )}
         {summary.cats.map(({ cat, amount, share }) => {
           const c = CATEGORY_COLOR[cat] ?? CATEGORY_COLOR.otro;
           return (
-            <div key={cat} className="flex-1 basis-[160px] min-w-[150px] rounded-xl border border-(--sas-border) bg-white p-3.5 shadow-sm flex flex-col">
+            <div key={cat} className="flex-1 basis-40 min-w-37.5 rounded-xl border border-(--zaire-border) bg-white p-3.5 shadow-sm flex flex-col">
               <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-[11px] font-medium text-(--sas-text)">
+                <span className="flex items-center gap-1.5 text-[11px] font-medium text-(--zaire-text)">
                   <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.hex }} />
                   {EXPENSE_CATEGORY_LABELS[cat as ExpenseCategory]}
                 </span>
-                <span className="text-[10px] text-(--sas-text-muted)">{Math.round(share * 100)}%</span>
+                <span className="text-[10px] text-(--zaire-text-muted)">{Math.round(share * 100)}%</span>
               </div>
-              <span className="text-base font-bold text-(--sas-text) mt-1.5">{formatCurrency(amount, "ARS")}</span>
+              <span className="text-base font-bold text-(--zaire-text) mt-1.5">{formatCurrency(amount, "ARS")}</span>
               <div className="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden">
                 <div className="h-full rounded-full" style={{ width: `${Math.max(share * 100, 4)}%`, backgroundColor: c.hex }} />
               </div>
@@ -257,17 +266,17 @@ export function ExpensesTable({ initialExpenses, visits, currentUser }: Expenses
       </div>
 
       {/* Tabla */}
-      <div className="sas-card">
+      <div className="zaire-card">
         {/* Toolbar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-(--sas-border)">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-(--zaire-border)">
           <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--sas-text-muted)" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--zaire-text-muted)" />
             <Input placeholder="Buscar..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} className="pl-9 h-9" />
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={exportCSV} className="h-9">CSV</Button>
-            <Button variant="outline" size="sm" onClick={exportExcel} className="h-9"><Download className="w-4 h-4 mr-1.5" /> Excel</Button>
-            <Button onClick={openAdd} className="bg-sas-navy-mid hover:bg-sas-navy text-white h-9">
+            <Button variant="outline" size="sm" onClick={exportExcel} className="h-9"><Download className="w-4 h-4 mr-1.5" /> XLS</Button>
+            <Button onClick={openAdd} className="bg-zaire-navy-mid hover:bg-zaire-navy text-white h-9">
               <Plus className="w-4 h-4 mr-1.5" /> Nuevo Gasto
             </Button>
           </div>
@@ -285,7 +294,7 @@ export function ExpensesTable({ initialExpenses, visits, currentUser }: Expenses
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-(--sas-border) text-xs text-(--sas-text-muted) uppercase tracking-wide">
+            <thead className="bg-slate-50 border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
               <tr>
                 <th className="text-left px-4 py-3">Fecha</th>
                 <th className="text-left px-4 py-3">Técnico</th>
@@ -297,17 +306,17 @@ export function ExpensesTable({ initialExpenses, visits, currentUser }: Expenses
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-(--sas-border)">
+            <tbody className="divide-y divide-(--zaire-border)">
               {pageRows.map((e) => (
                 <tr
                   key={e.id}
-                  onClick={() => router.push(`/field/gastos/${e.id}`)}
+                  onClick={() => router.push(ROUTES.field.gasto(e.id))}
                   className="hover:bg-slate-50/80 cursor-pointer"
                 >
                   <td className="px-4 py-3">{formatDate(e.incurred_at)}</td>
                   <td className="px-4 py-3">{e.technician?.full_name ?? "—"}</td>
                   <td className="px-4 py-3">
-                    {e.visit ? <Link href={`/field/visitas/${e.visit.id}`} onClick={(ev) => ev.stopPropagation()} className="font-mono text-xs text-sas-blue hover:underline">{e.visit.visit_number}</Link> : "—"}
+                    {e.visit ? <Link href={ROUTES.field.visita(e.visit.id)} onClick={(ev) => ev.stopPropagation()} className="font-mono text-xs text-zaire-blue hover:underline">{e.visit.visit_number}</Link> : "—"}
                   </td>
                   <td className="px-4 py-3">{e.category ? EXPENSE_CATEGORY_LABELS[e.category as ExpenseCategory] : "—"}</td>
                   <td className="px-4 py-3 text-right font-medium">{formatCurrency(Number(e.amount), e.currency)}</td>
@@ -318,7 +327,7 @@ export function ExpensesTable({ initialExpenses, visits, currentUser }: Expenses
                   </td>
                   <td className="px-4 py-3 text-center">{e.is_billable ? "Sí" : "—"}</td>
                   <td className="px-4 py-3" onClick={(ev) => ev.stopPropagation()}>
-                    {e.status === "pendiente" && (
+                    {e.status === "pendiente" && currentUser?.role === "admin" && (
                       <div className="flex items-center gap-1 justify-end">
                         <Button variant="ghost" size="sm" onClick={() => setConfirm({ expense: e, status: "aprobado" })} title="Aprobar" className="text-green-600">
                           <Check className="w-4 h-4" />
@@ -332,23 +341,23 @@ export function ExpensesTable({ initialExpenses, visits, currentUser }: Expenses
                 </tr>
               ))}
               {!pageRows.length && (
-                <tr><td colSpan={8} className="px-4 py-12 text-center text-(--sas-text-muted)">No se encontraron gastos</td></tr>
+                <tr><td colSpan={8} className="px-4 py-12 text-center text-(--zaire-text-muted)">No se encontraron gastos</td></tr>
               )}
             </tbody>
           </table>
         </div>
 
         {/* Paginación + selector de registros por página */}
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-(--sas-border) text-sm text-(--sas-text-muted)">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-(--zaire-border) text-sm text-(--zaire-text-muted)">
           <div className="flex items-center gap-2">
             <span>{filtered.length} registros</span>
-            <span className="text-(--sas-border)">·</span>
+            <span className="text-(--zaire-border)">·</span>
             <label className="flex items-center gap-1.5">
               Mostrar
               <select
                 value={pageSize}
                 onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }}
-                className="h-8 rounded-lg border border-(--sas-border) bg-white px-2 text-sm text-(--sas-text)"
+                className="h-8 rounded-lg border border-(--zaire-border) bg-white px-2 text-sm text-(--zaire-text)"
               >
                 {PAGE_SIZES.map((n) => (<option key={n} value={n}>{n}</option>))}
               </select>
@@ -433,7 +442,7 @@ export function ExpensesTable({ initialExpenses, visits, currentUser }: Expenses
             </div>
             <div className="flex justify-end gap-2 pt-1">
               <Button type="button" variant="outline" onClick={() => setAddOpen(false)}>Cancelar</Button>
-              <Button type="submit" disabled={isSubmitting} className="bg-sas-navy-mid hover:bg-sas-navy text-white">
+              <Button type="submit" disabled={isSubmitting} className="bg-zaire-navy-mid hover:bg-zaire-navy text-white">
                 {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Cargar gasto
               </Button>
             </div>

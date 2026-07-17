@@ -200,8 +200,8 @@ export function CompanySettingsForm({ settings }: CompanySettingsFormProps) {
       </div>
 
       {/* Separador */}
-      <div className="border-t border-(--sas-border) pt-5">
-        <h3 className="font-medium text-(--sas-text) mb-4">Logo para informes y PDFs</h3>
+      <div className="border-t border-(--zaire-border) pt-5">
+        <h3 className="font-medium text-(--zaire-text) mb-4">Logo para informes y PDFs</h3>
 
         {/* Preview del logo */}
         {logoPreview ? (
@@ -210,7 +210,7 @@ export function CompanySettingsForm({ settings }: CompanySettingsFormProps) {
             <img
               src={logoPreview}
               alt="Logo actual"
-              className="h-20 max-w-60 object-contain border border-(--sas-border) rounded-lg p-2 bg-white"
+              className="h-20 max-w-60 object-contain border border-(--zaire-border) rounded-lg p-2 bg-white"
             />
             <button
               type="button"
@@ -222,10 +222,10 @@ export function CompanySettingsForm({ settings }: CompanySettingsFormProps) {
             </button>
           </div>
         ) : (
-          <div className="w-60 h-20 border-2 border-dashed border-(--sas-border) rounded-lg flex items-center justify-center mb-4 bg-slate-50">
+          <div className="w-60 h-20 border-2 border-dashed border-(--zaire-border) rounded-lg flex items-center justify-center mb-4 bg-slate-50">
             <div className="text-center">
-              <ImageIcon className="w-6 h-6 text-(--sas-text-muted) mx-auto mb-1" />
-              <p className="text-xs text-(--sas-text-muted)">Sin logo</p>
+              <ImageIcon className="w-6 h-6 text-(--zaire-text-muted) mx-auto mb-1" />
+              <p className="text-xs text-(--zaire-text-muted)">Sin logo</p>
             </div>
           </div>
         )}
@@ -252,7 +252,7 @@ export function CompanySettingsForm({ settings }: CompanySettingsFormProps) {
             <><Upload className="w-3.5 h-3.5 mr-1.5" /> {logoPreview ? "Reemplazar logo" : "Subir logo"}</>
           )}
         </Button>
-        <p className="text-xs text-(--sas-text-muted) mb-4">
+        <p className="text-xs text-(--zaire-text-muted) mb-4">
           Formatos: PNG, JPG, SVG, WEBP · Tamaño máximo: 30 MB · Recomendado: fondo transparente, mínimo 300px de ancho
         </p>
 
@@ -264,24 +264,24 @@ export function CompanySettingsForm({ settings }: CompanySettingsFormProps) {
             disabled={!logoPreview}
             onCheckedChange={(v) => handleChange("logo_use_in_pdfs", v)}
           />
-          <Label htmlFor="logo_use_in_pdfs" className={!logoPreview ? "text-(--sas-text-muted)" : ""}>
+          <Label htmlFor="logo_use_in_pdfs" className={!logoPreview ? "text-(--zaire-text-muted)" : ""}>
             Usar este logo en informes y PDFs exportados
           </Label>
         </div>
         {!logoPreview && (
-          <p className="text-xs text-(--sas-text-muted) mt-1 ml-13">
+          <p className="text-xs text-(--zaire-text-muted) mt-1 ml-13">
             Subí un logo para habilitar esta opción
           </p>
         )}
       </div>
 
       {/* Guardar */}
-      <div className="flex justify-end pt-2 border-t border-(--sas-border)">
+      <div className="flex justify-end pt-2 border-t border-(--zaire-border)">
         <Button
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="bg-sas-navy-mid hover:bg-sas-navy text-white"
+          className="bg-zaire-navy-mid hover:bg-zaire-navy text-white"
         >
           {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           Guardar configuración

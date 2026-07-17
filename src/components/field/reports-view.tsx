@@ -1,6 +1,6 @@
 "use client";
 // reports-view.tsx — src/components/field/reports-view.tsx — 2026-07-13
-// Reportes Field: gráficos + tablas, export CSV / Excel / PDF. Tabs Operativos y Financieros.
+// Reportes Field: gráficos + tablas, export CSV / XLS / PDF. Tabs Operativos y Financieros.
 
 import { useMemo } from "react";
 import {
@@ -59,7 +59,7 @@ export function ReportsView({ visits, expenses }: ReportsViewProps) {
     <div className="space-y-4">
       <div className="flex justify-end gap-2">
         <Button variant="outline" onClick={exportCSV}><Download className="w-4 h-4 mr-1.5" /> CSV</Button>
-        <Button variant="outline" onClick={exportExcel}><Download className="w-4 h-4 mr-1.5" /> Excel</Button>
+        <Button variant="outline" onClick={exportExcel}><Download className="w-4 h-4 mr-1.5" /> XLS</Button>
         <Button asChild variant="outline"><a href="/api/field/reportes-pdf" target="_blank" rel="noopener noreferrer"><FileText className="w-4 h-4 mr-1.5" /> PDF</a></Button>
       </div>
 
@@ -130,17 +130,17 @@ export function ReportsView({ visits, expenses }: ReportsViewProps) {
 
 function Kpi({ label, value }: { label: string; value: string }) {
   return (
-    <div className="sas-card p-4">
-      <p className="text-xs text-(--sas-text-muted)">{label}</p>
-      <p className="text-2xl font-bold text-(--sas-text) mt-1">{value}</p>
+    <div className="zaire-card p-4">
+      <p className="text-xs text-(--zaire-text-muted)">{label}</p>
+      <p className="text-2xl font-bold text-(--zaire-text) mt-1">{value}</p>
     </div>
   );
 }
 
 function ChartCard({ title, children }: { title: string; children: React.ReactElement }) {
   return (
-    <div className="sas-card p-5">
-      <h3 className="text-sm font-semibold text-(--sas-text) mb-4">{title}</h3>
+    <div className="zaire-card p-5">
+      <h3 className="text-sm font-semibold text-(--zaire-text) mb-4">{title}</h3>
       <ResponsiveContainer width="100%" height={260}>{children}</ResponsiveContainer>
     </div>
   );
@@ -148,16 +148,16 @@ function ChartCard({ title, children }: { title: string; children: React.ReactEl
 
 function TableCard({ title, rows, col, valueCol, money }: { title: string; rows: NameValue[]; col: string; valueCol: string; money?: boolean }) {
   return (
-    <div className="sas-card p-5">
-      <h3 className="text-sm font-semibold text-(--sas-text) mb-3">{title}</h3>
+    <div className="zaire-card p-5">
+      <h3 className="text-sm font-semibold text-(--zaire-text) mb-3">{title}</h3>
       {rows.length === 0 ? (
-        <p className="text-sm text-(--sas-text-muted) py-2">Sin datos.</p>
+        <p className="text-sm text-(--zaire-text-muted) py-2">Sin datos.</p>
       ) : (
         <table className="w-full text-sm">
-          <thead className="text-xs text-(--sas-text-muted) uppercase tracking-wide border-b border-(--sas-border)">
+          <thead className="text-xs text-(--zaire-text-muted) uppercase tracking-wide border-b border-(--zaire-border)">
             <tr><th className="text-left py-2">{col}</th><th className="text-right py-2">{valueCol}</th></tr>
           </thead>
-          <tbody className="divide-y divide-(--sas-border)">
+          <tbody className="divide-y divide-(--zaire-border)">
             {rows.map((r, i) => (
               <tr key={i}>
                 <td className="py-2">{r.name}</td>

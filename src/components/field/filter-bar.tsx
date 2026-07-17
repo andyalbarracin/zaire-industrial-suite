@@ -25,11 +25,11 @@ export function FilterBar({ groups, onClear }: FilterBarProps) {
   const hasActive = groups.some((g) => g.selected.length > 0);
 
   return (
-    <div className="px-4 py-2.5 border-b border-(--sas-border) flex flex-wrap items-center gap-x-3 gap-y-2">
+    <div className="px-4 py-2.5 border-b border-(--zaire-border) flex flex-wrap items-center gap-x-3 gap-y-2">
       {groups.map((g, i) => (
         <div key={g.key} className="flex items-center gap-1.5">
-          {i > 0 && <span className="w-px h-5 bg-(--sas-border) mr-2" />}
-          <span className="text-[11px] font-semibold text-(--sas-text-muted) uppercase tracking-wide mr-0.5">{g.label}</span>
+          {i > 0 && <span className="w-px h-5 bg-(--zaire-border) mr-2" />}
+          <span className="text-[11px] font-semibold text-(--zaire-text-muted) uppercase tracking-wide mr-0.5">{g.label}</span>
           {g.options.map((o) => {
             const active = g.selected.includes(o.value);
             return (
@@ -39,8 +39,8 @@ export function FilterBar({ groups, onClear }: FilterBarProps) {
                 className={cn(
                   "px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
                   active
-                    ? g.activeClass ?? "bg-sas-navy text-white border-sas-navy"
-                    : "bg-white text-(--sas-text-muted) border-(--sas-border) hover:bg-slate-50"
+                    ? g.activeClass ?? "bg-zaire-navy text-white border-zaire-navy"
+                    : "bg-white text-(--zaire-text-muted) border-(--zaire-border) hover:bg-slate-50"
                 )}
               >
                 {o.label}
@@ -53,7 +53,7 @@ export function FilterBar({ groups, onClear }: FilterBarProps) {
       {hasActive && (
         <button
           onClick={onClear}
-          className="ml-auto inline-flex items-center gap-1.5 text-xs font-medium text-sas-blue hover:underline"
+          className="ml-auto inline-flex items-center gap-1.5 text-xs font-medium text-zaire-blue hover:underline"
         >
           <RotateCcw className="w-3.5 h-3.5" /> Limpiar filtros
         </button>

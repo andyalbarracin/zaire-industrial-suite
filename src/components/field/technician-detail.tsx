@@ -5,6 +5,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ROUTES } from "@/lib/routes";
 import {
   ChevronLeft, Pencil, Upload, Trash2, FileText, Loader2, Plus, UserRound, Phone, IdCard, History,
 } from "lucide-react";
@@ -161,24 +162,24 @@ export function TechnicianDetail({ technician: initial, contacts: initialContact
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <Link href="/field/tecnicos" className="inline-flex items-center gap-1 text-sm text-(--sas-text-muted) hover:text-sas-blue mb-2">
+          <Link href={ROUTES.field.tecnicos} className="inline-flex items-center gap-1 text-sm text-(--zaire-text-muted) hover:text-zaire-blue mb-2">
             <ChevronLeft className="w-4 h-4" /> Volver a técnicos
           </Link>
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-bold text-(--sas-text)">{tech.full_name}</h1>
+            <h1 className="text-2xl font-bold text-(--zaire-text)">{tech.full_name}</h1>
             <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border", tech.is_active ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200")}>
               {tech.is_active ? "Activo" : "Inactivo"}
             </span>
           </div>
         </div>
-        <Button asChild variant="outline"><Link href={`/field/tecnicos/${tech.id}/editar`}><Pencil className="w-4 h-4 mr-1.5" /> Editar</Link></Button>
+        <Button asChild variant="outline"><Link href={ROUTES.field.tecnicoEditar(tech.id)}><Pencil className="w-4 h-4 mr-1.5" /> Editar</Link></Button>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Foto + datos */}
-        <div className="sas-card p-5 space-y-4">
+        <div className="zaire-card p-5 space-y-4">
           <div className="flex flex-col items-center gap-3">
-            <div className="w-28 h-28 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center border border-(--sas-border)">
+            <div className="w-28 h-28 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center border border-(--zaire-border)">
               {photoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={photoUrl} alt={tech.full_name} className="w-full h-full object-cover" />
@@ -186,18 +187,18 @@ export function TechnicianDetail({ technician: initial, contacts: initialContact
             </div>
             <label className="inline-flex">
               <input type="file" accept="image/*" className="hidden" onChange={(e) => uploadPhoto(e.target.files)} />
-              <span className={cn("inline-flex items-center h-8 px-3 rounded-lg text-xs font-medium cursor-pointer border border-(--sas-border) hover:bg-slate-50", uploading && "opacity-60 pointer-events-none")}>
+              <span className={cn("inline-flex items-center h-8 px-3 rounded-lg text-xs font-medium cursor-pointer border border-(--zaire-border) hover:bg-slate-50", uploading && "opacity-60 pointer-events-none")}>
                 <Upload className="w-3.5 h-3.5 mr-1.5" /> Foto
               </span>
             </label>
           </div>
-          <div className="space-y-2.5 text-sm pt-2 border-t border-(--sas-border)">
+          <div className="space-y-2.5 text-sm pt-2 border-t border-(--zaire-border)">
             <Row icon={IdCard} label="DNI" value={tech.document_id ?? "—"} />
             <Row icon={IdCard} label="Licencia" value={tech.license_number ?? "—"} />
             <Row icon={Phone} label="Teléfono" value={tech.phone ?? "—"} />
             <Row icon={Phone} label="Email" value={tech.email ?? "—"} />
             <Row icon={UserRound} label="Sucursal" value={branch?.name ?? "—"} />
-            {tech.notes && <p className="text-(--sas-text-muted) pt-1">{tech.notes}</p>}
+            {tech.notes && <p className="text-(--zaire-text-muted) pt-1">{tech.notes}</p>}
           </div>
         </div>
 
@@ -213,19 +214,19 @@ export function TechnicianDetail({ technician: initial, contacts: initialContact
 
             {/* CONTACTOS */}
             <TabsContent value="contactos" className="mt-4">
-              <div className="sas-card p-5">
+              <div className="zaire-card p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-(--sas-text)">Contactos y teléfonos</h3>
-                  <Button size="sm" onClick={() => setContactOpen(true)} className="bg-sas-navy-mid hover:bg-sas-navy text-white h-8"><Plus className="w-4 h-4 mr-1" /> Agregar</Button>
+                  <h3 className="text-sm font-semibold text-(--zaire-text)">Contactos y teléfonos</h3>
+                  <Button size="sm" onClick={() => setContactOpen(true)} className="bg-zaire-navy-mid hover:bg-zaire-navy text-white h-8"><Plus className="w-4 h-4 mr-1" /> Agregar</Button>
                 </div>
                 {contacts.length === 0 ? (
-                  <p className="text-sm text-(--sas-text-muted) py-2">Sin contactos adicionales.</p>
+                  <p className="text-sm text-(--zaire-text-muted) py-2">Sin contactos adicionales.</p>
                 ) : (
-                  <ul className="divide-y divide-(--sas-border)">
+                  <ul className="divide-y divide-(--zaire-border)">
                     {contacts.map((c) => (
                       <li key={c.id} className="flex items-center gap-3 py-2.5">
-                        <span className="text-xs font-medium text-(--sas-text-muted) w-32 shrink-0">{c.kind ? CONTACT_KIND_LABELS[c.kind] : "Otro"}{c.label ? ` · ${c.label}` : ""}</span>
-                        <span className="flex-1 text-sm text-(--sas-text)">{c.value}</span>
+                        <span className="text-xs font-medium text-(--zaire-text-muted) w-32 shrink-0">{c.kind ? CONTACT_KIND_LABELS[c.kind] : "Otro"}{c.label ? ` · ${c.label}` : ""}</span>
+                        <span className="flex-1 text-sm text-(--zaire-text)">{c.value}</span>
                         <button onClick={() => deleteContact(c)} className="text-red-600 hover:text-red-700"><Trash2 className="w-3.5 h-3.5" /></button>
                       </li>
                     ))}
@@ -236,7 +237,7 @@ export function TechnicianDetail({ technician: initial, contacts: initialContact
 
             {/* ARCHIVOS */}
             <TabsContent value="archivos" className="mt-4 space-y-4">
-              <div className="sas-card p-4 flex flex-wrap items-center gap-3">
+              <div className="zaire-card p-4 flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-2">
                   <Label className="text-xs">Tipo</Label>
                   <Select value={fileCategory} onValueChange={(v) => setFileCategory(v ?? "apto_medico")}>
@@ -246,17 +247,17 @@ export function TechnicianDetail({ technician: initial, contacts: initialContact
                 </div>
                 <label className="inline-flex">
                   <input type="file" multiple accept="image/*,application/pdf" className="hidden" onChange={(e) => uploadFiles(e.target.files)} />
-                  <span className={cn("inline-flex items-center h-9 px-3 rounded-lg text-sm font-medium cursor-pointer bg-sas-navy-mid hover:bg-sas-navy text-white", uploading && "opacity-60 pointer-events-none")}>
+                  <span className={cn("inline-flex items-center h-9 px-3 rounded-lg text-sm font-medium cursor-pointer bg-zaire-navy-mid hover:bg-zaire-navy text-white", uploading && "opacity-60 pointer-events-none")}>
                     {uploading ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Upload className="w-4 h-4 mr-1.5" />} Subir
                   </span>
                 </label>
               </div>
               {photos.length > 0 && (
-                <div className="sas-card p-4">
-                  <h3 className="text-sm font-semibold text-(--sas-text) mb-3">Imágenes</h3>
+                <div className="zaire-card p-4">
+                  <h3 className="text-sm font-semibold text-(--zaire-text) mb-3">Imágenes</h3>
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                     {photos.map((f) => (
-                      <div key={f.id} className="relative group aspect-square rounded-lg overflow-hidden border border-(--sas-border) bg-slate-100">
+                      <div key={f.id} className="relative group aspect-square rounded-lg overflow-hidden border border-(--zaire-border) bg-slate-100">
                         {urls[f.id] ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={urls[f.id]} alt={f.title ?? "img"} className="w-full h-full object-cover" />
@@ -267,17 +268,17 @@ export function TechnicianDetail({ technician: initial, contacts: initialContact
                   </div>
                 </div>
               )}
-              <div className="sas-card p-4">
-                <h3 className="text-sm font-semibold text-(--sas-text) mb-3">Certificados y archivos ({docs.length})</h3>
+              <div className="zaire-card p-4">
+                <h3 className="text-sm font-semibold text-(--zaire-text) mb-3">Certificados y archivos ({docs.length})</h3>
                 {docs.length === 0 ? (
-                  <p className="text-sm text-(--sas-text-muted) py-2">Sin certificados (apto médico, seguridad, cursos…).</p>
+                  <p className="text-sm text-(--zaire-text-muted) py-2">Sin certificados (apto médico, seguridad, cursos…).</p>
                 ) : (
-                  <ul className="divide-y divide-(--sas-border)">
+                  <ul className="divide-y divide-(--zaire-border)">
                     {docs.map((f) => (
                       <li key={f.id} className="flex items-center gap-3 py-2.5">
-                        <FileText className="w-4 h-4 text-sas-blue shrink-0" />
-                        <button onClick={() => openFile(f.storage_path)} className="flex-1 text-left text-sm text-sas-blue hover:underline truncate">{f.title ?? f.storage_path}</button>
-                        <span className="text-xs text-(--sas-text-muted)">{TECHNICIAN_FILE_CATEGORY_LABELS[f.category ?? "otro"]}</span>
+                        <FileText className="w-4 h-4 text-zaire-blue shrink-0" />
+                        <button onClick={() => openFile(f.storage_path)} className="flex-1 text-left text-sm text-zaire-blue hover:underline truncate">{f.title ?? f.storage_path}</button>
+                        <span className="text-xs text-(--zaire-text-muted)">{TECHNICIAN_FILE_CATEGORY_LABELS[f.category ?? "otro"]}</span>
                         <button onClick={() => deleteFile(f)} className="text-red-600 hover:text-red-700"><Trash2 className="w-3.5 h-3.5" /></button>
                       </li>
                     ))}
@@ -288,20 +289,20 @@ export function TechnicianDetail({ technician: initial, contacts: initialContact
 
             {/* DOCUMENTOS (con vencimiento) */}
             <TabsContent value="documentos" className="mt-4">
-              <div className="sas-card p-5">
+              <div className="zaire-card p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-(--sas-text)">Documentos con vencimiento</h3>
-                  <Link href="/field/documentos" className="text-xs text-sas-blue hover:underline">Gestionar en Documentos →</Link>
+                  <h3 className="text-sm font-semibold text-(--zaire-text)">Documentos con vencimiento</h3>
+                  <Link href={ROUTES.field.documentos} className="text-xs text-zaire-blue hover:underline">Gestionar en Documentos →</Link>
                 </div>
                 {documents.length === 0 ? (
-                  <p className="text-sm text-(--sas-text-muted) py-2">Sin documentos cargados. Cargalos desde la sección Documentos.</p>
+                  <p className="text-sm text-(--zaire-text-muted) py-2">Sin documentos cargados. Cargalos desde la sección Documentos.</p>
                 ) : (
-                  <ul className="divide-y divide-(--sas-border)">
+                  <ul className="divide-y divide-(--zaire-border)">
                     {documents.map((d) => (
                       <li key={d.id} className="flex items-center gap-3 py-2.5">
                         <StatusDot status={d.expiry_light} size="sm" pulse={d.expiry_light === "red"} />
-                        <span className="flex-1 text-sm text-(--sas-text)">{d.doc_type ? DOC_TYPE_LABELS[d.doc_type as DocType] : "Documento"}</span>
-                        <span className="text-xs text-(--sas-text-muted)">{formatDate(d.expires_at)}</span>
+                        <span className="flex-1 text-sm text-(--zaire-text)">{d.doc_type ? DOC_TYPE_LABELS[d.doc_type as DocType] : "Documento"}</span>
+                        <span className="text-xs text-(--zaire-text-muted)">{formatDate(d.expires_at)}</span>
                       </li>
                     ))}
                   </ul>
@@ -311,16 +312,16 @@ export function TechnicianDetail({ technician: initial, contacts: initialContact
 
             {/* HISTORIAL */}
             <TabsContent value="historial" className="mt-4">
-              <div className="sas-card p-5">
-                <h3 className="text-sm font-semibold text-(--sas-text) mb-3 flex items-center gap-2"><History className="w-4 h-4 text-sas-blue" /> Historial</h3>
+              <div className="zaire-card p-5">
+                <h3 className="text-sm font-semibold text-(--zaire-text) mb-3 flex items-center gap-2"><History className="w-4 h-4 text-zaire-blue" /> Historial</h3>
                 {log.length === 0 ? (
-                  <p className="text-sm text-(--sas-text-muted) py-2">Sin eventos registrados.</p>
+                  <p className="text-sm text-(--zaire-text-muted) py-2">Sin eventos registrados.</p>
                 ) : (
                   <ul className="space-y-2">
                     {log.map((l) => (
                       <li key={l.id} className="text-sm">
-                        <span className="text-(--sas-text)">{l.description ?? l.action}</span>
-                        <span className="text-xs text-(--sas-text-muted)"> · {l.user_name ?? "Sistema"} · {formatDateTime(l.created_at)}</span>
+                        <span className="text-(--zaire-text)">{l.description ?? l.action}</span>
+                        <span className="text-xs text-(--zaire-text-muted)"> · {l.user_name ?? "Sistema"} · {formatDateTime(l.created_at)}</span>
                       </li>
                     ))}
                   </ul>
@@ -349,7 +350,7 @@ export function TechnicianDetail({ technician: initial, contacts: initialContact
             <div className="space-y-1.5"><Label>Valor *</Label><Input value={contactForm.value} onChange={(e) => setContactForm((f) => ({ ...f, value: e.target.value }))} placeholder="Teléfono / email / dirección" /></div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setContactOpen(false)}>Cancelar</Button>
-              <Button onClick={addContact} className="bg-sas-navy-mid hover:bg-sas-navy text-white">Agregar</Button>
+              <Button onClick={addContact} className="bg-zaire-navy-mid hover:bg-zaire-navy text-white">Agregar</Button>
             </div>
           </div>
         </DialogContent>
@@ -361,9 +362,9 @@ export function TechnicianDetail({ technician: initial, contacts: initialContact
 function Row({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string }) {
   return (
     <div className="flex items-center gap-2">
-      <Icon className="w-4 h-4 text-(--sas-text-muted) shrink-0" />
-      <span className="text-(--sas-text-muted) w-20 shrink-0">{label}</span>
-      <span className="text-(--sas-text) font-medium truncate">{value}</span>
+      <Icon className="w-4 h-4 text-(--zaire-text-muted) shrink-0" />
+      <span className="text-(--zaire-text-muted) w-20 shrink-0">{label}</span>
+      <span className="text-(--zaire-text) font-medium truncate">{value}</span>
     </div>
   );
 }

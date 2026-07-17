@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { MapPin, Users, FileWarning, Wallet, ChevronRight } from "lucide-react";
+import { ROUTES } from "@/lib/routes";
 import {
   getDashboardFieldStats,
   getSites,
@@ -46,58 +47,58 @@ export default async function FieldDashboardPage() {
     { label: "Visitas activas", value: stats.activeVisits, icon: MapPin, color: "text-violet-600", bg: "bg-violet-50" },
     { label: "Técnicos en ruta", value: stats.techniciansOnRoute, icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
     { label: "Docs por vencer (≤30d)", value: stats.docsExpiringSoon, icon: FileWarning, color: "text-amber-600", bg: "bg-amber-50" },
-    { label: "Gastos del mes (ARS)", value: formatCurrency(stats.monthExpensesArs, "ARS"), icon: Wallet, color: "text-green-600", bg: "bg-green-50" },
+    { label: "Gastos del mes", value: stats.monthExpensesUsd > 0 ? `${formatCurrency(stats.monthExpensesArs, "ARS")} · ${formatCurrency(stats.monthExpensesUsd, "USD")}` : formatCurrency(stats.monthExpensesArs, "ARS"), icon: Wallet, color: "text-green-600", bg: "bg-green-50" },
   ];
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-(--sas-text)">Panel Field</h1>
-        <p className="text-sm text-(--sas-text-muted) mt-0.5">Operación de campo en tiempo real</p>
+        <h1 className="text-2xl font-bold text-(--zaire-text)">Panel Field</h1>
+        <p className="text-sm text-(--zaire-text-muted) mt-0.5">Operación de campo en tiempo real</p>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-up">
         {kpis.map((k) => (
-          <div key={k.label} className="sas-card p-4">
+          <div key={k.label} className="zaire-card p-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-(--sas-text-muted) font-medium">{k.label}</span>
+              <span className="text-xs text-(--zaire-text-muted) font-medium">{k.label}</span>
               <span className={cn("w-8 h-8 rounded-lg flex items-center justify-center", k.bg)}>
                 <k.icon className={cn("w-4 h-4", k.color)} />
               </span>
             </div>
-            <p className="text-2xl font-bold text-(--sas-text) mt-2">{k.value}</p>
+            <p className="text-2xl font-bold text-(--zaire-text) mt-2">{k.value}</p>
           </div>
         ))}
       </div>
 
       {/* Mapa general + vencimientos */}
       <div className="grid lg:grid-cols-3 gap-6 animate-fade-up-1">
-        <div className="lg:col-span-2 sas-card p-5">
-          <h2 className="text-sm font-semibold text-(--sas-text) uppercase tracking-wide mb-3">Mapa general</h2>
+        <div className="lg:col-span-2 zaire-card p-5">
+          <h2 className="text-sm font-semibold text-(--zaire-text) uppercase tracking-wide mb-3">Mapa general</h2>
           <FieldMap markers={[...siteMarkers, ...techMarkers]} height={360} center={[-38.5, -66.0]} zoom={5} />
-          <div className="flex items-center gap-4 mt-3 text-xs text-(--sas-text-muted)">
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-sas-navy" /> Plantas</span>
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-sas-blue" /> Técnicos en ruta</span>
+          <div className="flex items-center gap-4 mt-3 text-xs text-(--zaire-text-muted)">
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-zaire-navy" /> Plantas</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-zaire-blue" /> Técnicos en ruta</span>
           </div>
         </div>
 
-        <div className="sas-card p-5">
-          <h2 className="text-sm font-semibold text-(--sas-text) uppercase tracking-wide mb-3">Próximos vencimientos</h2>
+        <div className="zaire-card p-5">
+          <h2 className="text-sm font-semibold text-(--zaire-text) uppercase tracking-wide mb-3">Próximos vencimientos</h2>
           {upcomingDocs.length === 0 ? (
-            <p className="text-sm text-(--sas-text-muted) py-4 text-center">Sin vencimientos próximos.</p>
+            <p className="text-sm text-(--zaire-text-muted) py-4 text-center">Sin vencimientos próximos.</p>
           ) : (
             <ul className="space-y-2.5">
               {upcomingDocs.map((d) => (
                 <li key={d.id} className="flex items-center gap-2.5">
                   <StatusDot status={d.expiry_light} size="sm" pulse={d.expiry_light === "red"} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-(--sas-text) truncate">
+                    <p className="text-sm text-(--zaire-text) truncate">
                       {d.doc_type ? DOC_TYPE_LABELS[d.doc_type as DocType] : "Documento"}
                       {" · "}
-                      <span className="text-(--sas-text-muted)">{d.technician?.full_name ?? d.vehicle?.plate ?? "—"}</span>
+                      <span className="text-(--zaire-text-muted)">{d.technician?.full_name ?? d.vehicle?.plate ?? "—"}</span>
                     </p>
-                    <p className="text-xs text-(--sas-text-muted)">
+                    <p className="text-xs text-(--zaire-text-muted)">
                       {d.days_until_expiry != null && d.days_until_expiry < 0
                         ? `Vencido hace ${Math.abs(d.days_until_expiry)} días`
                         : `Vence en ${d.days_until_expiry} días`}{" "}· {formatDate(d.expires_at)}
@@ -107,26 +108,26 @@ export default async function FieldDashboardPage() {
               ))}
             </ul>
           )}
-          <Link href="/field/documentos" className="inline-flex items-center gap-1 text-xs text-sas-blue hover:underline mt-3">
+          <Link href={ROUTES.field.documentos} className="inline-flex items-center gap-1 text-xs text-zaire-blue hover:underline mt-3">
             Ver todos <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
       </div>
 
       {/* Visitas recientes */}
-      <div className="sas-card p-5 animate-fade-up-2">
+      <div className="zaire-card p-5 animate-fade-up-2">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-(--sas-text) uppercase tracking-wide">Visitas recientes</h2>
-          <Link href="/field/visitas" className="inline-flex items-center gap-1 text-xs text-sas-blue hover:underline">
+          <h2 className="text-sm font-semibold text-(--zaire-text) uppercase tracking-wide">Visitas recientes</h2>
+          <Link href={ROUTES.field.visitas} className="inline-flex items-center gap-1 text-xs text-zaire-blue hover:underline">
             Ver todas <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
         {recentVisits.length === 0 ? (
-          <p className="text-sm text-(--sas-text-muted) py-4 text-center">Sin visitas registradas.</p>
+          <p className="text-sm text-(--zaire-text-muted) py-4 text-center">Sin visitas registradas.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-xs text-(--sas-text-muted) uppercase tracking-wide border-b border-(--sas-border)">
+              <thead className="text-xs text-(--zaire-text-muted) uppercase tracking-wide border-b border-(--zaire-border)">
                 <tr>
                   <th className="text-left py-2">N° Visita</th>
                   <th className="text-left py-2">Agendada</th>
@@ -135,11 +136,11 @@ export default async function FieldDashboardPage() {
                   <th className="text-left py-2">Estado</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-(--sas-border)">
+              <tbody className="divide-y divide-(--zaire-border)">
                 {recentVisits.map((v) => (
                   <tr key={v.id} className="hover:bg-slate-50/80">
                     <td className="py-2">
-                      <Link href={`/field/visitas/${v.id}`} className="font-mono text-xs text-sas-blue hover:underline">{v.visit_number ?? "—"}</Link>
+                      <Link href={ROUTES.field.visita(v.id)} className="font-mono text-xs text-zaire-blue hover:underline">{v.visit_number ?? "—"}</Link>
                     </td>
                     <td className="py-2">{formatDateTime(v.scheduled_at)}</td>
                     <td className="py-2">{v.technician?.full_name ?? "—"}</td>

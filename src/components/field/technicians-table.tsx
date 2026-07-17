@@ -5,6 +5,7 @@
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ROUTES } from "@/lib/routes";
 import { Plus, Search, Pencil, Download } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
@@ -68,16 +69,16 @@ export function TechniciansTable({ initialTechnicians }: TechniciansTableProps) 
   }
 
   return (
-    <div className="sas-card">
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-(--sas-border)">
+    <div className="zaire-card">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-(--zaire-border)">
         <div className="relative w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--sas-text-muted)" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--zaire-text-muted)" />
           <Input placeholder="Buscar técnicos..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} className="pl-9 h-9" />
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={exportExcel} className="h-9"><Download className="w-4 h-4 mr-1.5" /> Excel</Button>
-          <Button asChild className="bg-sas-navy-mid hover:bg-sas-navy text-white h-9">
-            <Link href="/field/tecnicos/nuevo"><Plus className="w-4 h-4 mr-1.5" /> Nuevo Técnico</Link>
+          <Button variant="outline" size="sm" onClick={exportExcel} className="h-9"><Download className="w-4 h-4 mr-1.5" /> XLS</Button>
+          <Button asChild className="bg-zaire-navy-mid hover:bg-zaire-navy text-white h-9">
+            <Link href={ROUTES.field.tecnicoNuevo}><Plus className="w-4 h-4 mr-1.5" /> Nuevo Técnico</Link>
           </Button>
         </div>
       </div>
@@ -92,7 +93,7 @@ export function TechniciansTable({ initialTechnicians }: TechniciansTableProps) 
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-(--sas-border) text-xs text-(--sas-text-muted) uppercase tracking-wide">
+          <thead className="bg-slate-50 border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
             <tr>
               <th className="text-left px-4 py-3">Nombre</th>
               <th className="text-left px-4 py-3">DNI</th>
@@ -103,10 +104,10 @@ export function TechniciansTable({ initialTechnicians }: TechniciansTableProps) 
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-(--sas-border)">
+          <tbody className="divide-y divide-(--zaire-border)">
             {pageRows.map((t) => (
-              <tr key={t.id} onClick={() => router.push(`/field/tecnicos/${t.id}`)} className="hover:bg-slate-50/80 cursor-pointer">
-                <td className="px-4 py-3 font-medium text-(--sas-text)">{t.full_name}</td>
+              <tr key={t.id} onClick={() => router.push(ROUTES.field.tecnico(t.id))} className="hover:bg-slate-50/80 cursor-pointer">
+                <td className="px-4 py-3 font-medium text-(--zaire-text)">{t.full_name}</td>
                 <td className="px-4 py-3">{t.document_id ?? "—"}</td>
                 <td className="px-4 py-3">{branchName(t.branch_id)}</td>
                 <td className="px-4 py-3 font-mono text-xs">{t.license_number ?? "—"}</td>
@@ -117,23 +118,23 @@ export function TechniciansTable({ initialTechnicians }: TechniciansTableProps) 
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right" onClick={(ev) => ev.stopPropagation()}>
-                  <Button variant="ghost" size="sm" asChild title="Editar"><Link href={`/field/tecnicos/${t.id}/editar`}><Pencil className="w-3.5 h-3.5" /></Link></Button>
+                  <Button variant="ghost" size="sm" asChild title="Editar"><Link href={ROUTES.field.tecnicoEditar(t.id)}><Pencil className="w-3.5 h-3.5" /></Link></Button>
                 </td>
               </tr>
             ))}
             {!pageRows.length && (
-              <tr><td colSpan={7} className="px-4 py-12 text-center text-(--sas-text-muted)">No se encontraron técnicos</td></tr>
+              <tr><td colSpan={7} className="px-4 py-12 text-center text-(--zaire-text-muted)">No se encontraron técnicos</td></tr>
             )}
           </tbody>
         </table>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-(--sas-border) text-sm text-(--sas-text-muted)">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-(--zaire-border) text-sm text-(--zaire-text-muted)">
         <div className="flex items-center gap-2">
           <span>{filtered.length} registros</span>
-          <span className="text-(--sas-border)">·</span>
+          <span className="text-(--zaire-border)">·</span>
           <label className="flex items-center gap-1.5">Mostrar
-            <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }} className="h-8 rounded-lg border border-(--sas-border) bg-white px-2 text-sm text-(--sas-text)">
+            <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }} className="h-8 rounded-lg border border-(--zaire-border) bg-white px-2 text-sm text-(--zaire-text)">
               {PAGE_SIZES.map((n) => (<option key={n} value={n}>{n}</option>))}
             </select>
           </label>
