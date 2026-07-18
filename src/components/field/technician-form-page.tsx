@@ -94,7 +94,7 @@ export function TechnicianFormPage({ technician, currentUser }: TechnicianFormPa
           <div className="space-y-1.5 col-span-2">
             <Label htmlFor="full_name">Nombre completo *</Label>
             <Input id="full_name" {...register("full_name")} placeholder="Nombre y apellido" />
-            {errors.full_name && <p className="text-xs text-red-600">{errors.full_name.message}</p>}
+            {errors.full_name && <p className="text-xs text-red-600 dark:text-red-300">{errors.full_name.message}</p>}
           </div>
           <div className="space-y-1.5"><Label htmlFor="document_id">DNI</Label><Input id="document_id" {...register("document_id")} /></div>
           <div className="space-y-1.5"><Label htmlFor="license_number">Licencia</Label><Input id="license_number" {...register("license_number")} /></div>
@@ -102,7 +102,7 @@ export function TechnicianFormPage({ technician, currentUser }: TechnicianFormPa
           <div className="space-y-1.5">
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" {...register("email")} />
-            {errors.email && <p className="text-xs text-red-600">{errors.email.message}</p>}
+            {errors.email && <p className="text-xs text-red-600 dark:text-red-300">{errors.email.message}</p>}
           </div>
           <div className="space-y-1.5 col-span-2">
             <Label>Sucursal base</Label>

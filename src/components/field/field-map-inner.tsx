@@ -51,7 +51,7 @@ const DEFAULT_ZOOM = 5;
 // Iconos con divIcon (evita el bug de paths rotos de L.Icon.Default en bundlers)
 function pinIcon(kind: MapMarker["kind"]): L.DivIcon {
   const color =
-    kind === "technician" ? "#576CBC" : kind === "site" ? "#0B2447" : "#64748B";
+    kind === "technician" ? "var(--brand)" : kind === "site" ? "var(--nav-from)" : "var(--text-muted)";
   return L.divIcon({
     className: "",
     html: `<div style="transform:translate(-50%,-100%)">
@@ -123,12 +123,12 @@ export default function FieldMapInner({
             key={`geo-${i}`}
             center={[g.lat, g.lng]}
             radius={g.radius}
-            pathOptions={{ color: "#576CBC", fillColor: "#576CBC", fillOpacity: 0.12, weight: 1.5 }}
+            pathOptions={{ color: "var(--brand)", fillColor: "var(--brand)", fillOpacity: 0.12, weight: 1.5 }}
           />
         ))}
 
         {trace.length > 1 && (
-          <Polyline positions={trace} pathOptions={{ color: "#19376D", weight: 3, opacity: 0.8 }} />
+          <Polyline positions={trace} pathOptions={{ color: "var(--brand-strong)", weight: 3, opacity: 0.8 }} />
         )}
 
         {markers.map((m) => (

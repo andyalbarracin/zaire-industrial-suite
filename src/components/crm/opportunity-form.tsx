@@ -150,7 +150,7 @@ export function OpportunityForm({ open, onOpenChange, opportunity, stages, clien
           <div className="space-y-1.5">
             <Label htmlFor="title">Título *</Label>
             <Input id="title" {...register("title")} placeholder="Provisión de sellos mecánicos" />
-            {errors.title && <p className="text-xs text-red-600">{errors.title.message}</p>}
+            {errors.title && <p className="text-xs text-red-600 dark:text-red-300">{errors.title.message}</p>}
           </div>
 
           <div className="space-y-1.5">

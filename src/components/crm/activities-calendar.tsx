@@ -14,11 +14,11 @@ const MONTHS = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", 
 const WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
 const TYPE_CHIP: Record<ActivityType, string> = {
-  llamada: "bg-blue-100 text-blue-700",
-  email: "bg-violet-100 text-violet-700",
-  reunion: "bg-cyan-100 text-cyan-700",
-  nota: "bg-slate-100 text-slate-700",
-  tarea: "bg-amber-100 text-amber-800",
+  llamada: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
+  email: "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
+  reunion: "bg-cyan-100 text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-300",
+  nota: "bg-subtle-2 text-slate-700 dark:text-slate-200",
+  tarea: "bg-amber-100 text-amber-800 dark:text-amber-200",
 };
 
 function dateKey(d: Date) {
@@ -69,7 +69,7 @@ export function ActivitiesCalendar({ activities, onSelect }: { activities: CrmAc
 
       <div className="grid grid-cols-7 gap-px bg-(--zaire-border) rounded-lg overflow-hidden border border-(--zaire-border)">
         {WEEKDAYS.map((w) => (
-          <div key={w} className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-(--zaire-text-muted) px-2 py-1.5 text-center">{w}</div>
+          <div key={w} className="bg-subtle text-[11px] font-semibold uppercase tracking-wide text-(--zaire-text-muted) px-2 py-1.5 text-center">{w}</div>
         ))}
         {cells.map((d, i) => {
           const k = dateKey(d);
@@ -77,7 +77,7 @@ export function ActivitiesCalendar({ activities, onSelect }: { activities: CrmAc
           const inMonth = d.getMonth() === cursor.getMonth();
           const isToday = k === todayKey;
           return (
-            <div key={i} className={cn("bg-white min-h-24 p-1.5 flex flex-col gap-1", !inMonth && "bg-slate-50/60")}>
+            <div key={i} className={cn("bg-panel min-h-24 p-1.5 flex flex-col gap-1", !inMonth && "bg-subtle/60")}>
               <span className={cn("text-[11px] font-medium self-end w-5 h-5 flex items-center justify-center rounded-full", isToday ? "bg-zaire-navy text-white" : inMonth ? "text-(--zaire-text)" : "text-(--zaire-text-muted)")}>{d.getDate()}</span>
               <div className="flex flex-col gap-0.5 overflow-hidden">
                 {list.slice(0, 3).map((a) => (

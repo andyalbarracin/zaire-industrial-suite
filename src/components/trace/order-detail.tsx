@@ -179,7 +179,7 @@ export function OrderDetail({ order, items: initialItems, history, currentProfil
             <OrderTypeBadge type={order.order_type as OrderType} />
             <OrderStatusBadge status={currentStatus} />
             {branch && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-subtle-2 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                 {branch.code}
               </span>
             )}
@@ -214,7 +214,7 @@ export function OrderDetail({ order, items: initialItems, history, currentProfil
       </div>
 
       <Tabs defaultValue="detalle">
-        <TabsList className="bg-white border border-(--zaire-border)">
+        <TabsList className="bg-panel border border-(--zaire-border)">
           <TabsTrigger value="detalle">Detalle</TabsTrigger>
           <TabsTrigger value="items">Ítems ({localItems.length})</TabsTrigger>
           <TabsTrigger value="historial">Historial ({history.length})</TabsTrigger>
@@ -258,10 +258,10 @@ export function OrderDetail({ order, items: initialItems, history, currentProfil
                 <div className="border-t border-(--zaire-border) pt-3 space-y-1">
                   <div className="flex justify-between text-base font-bold">
                     <span>Total USD</span>
-                    <span className="text-blue-700">{formatCurrency(order.total, "USD")}</span>
+                    <span className="text-blue-700 dark:text-blue-300">{formatCurrency(order.total, "USD")}</span>
                   </div>
                   {totalArs > 0 && (
-                    <div className="flex justify-between text-sm font-medium text-emerald-700">
+                    <div className="flex justify-between text-sm font-medium text-emerald-700 dark:text-emerald-300">
                       <span>Total ARS</span>
                       <span>{formatCurrency(totalArs, "ARS")}</span>
                     </div>
@@ -374,9 +374,9 @@ export function OrderDetail({ order, items: initialItems, history, currentProfil
                         )}
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-sm font-medium text-blue-700">{formatCurrency(item.total_price, "USD")}</p>
+                        <p className="text-sm font-medium text-blue-700 dark:text-blue-300">{formatCurrency(item.total_price, "USD")}</p>
                         {item.total_price_ars > 0 && (
-                          <p className="text-sm font-medium text-emerald-700">{formatCurrency(item.total_price_ars, "ARS")}</p>
+                          <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">{formatCurrency(item.total_price_ars, "ARS")}</p>
                         )}
                         <p className="text-xs text-(--zaire-text-muted)">{item.quantity} × {formatCurrency(item.unit_price, "USD")}</p>
                       </div>
@@ -387,7 +387,7 @@ export function OrderDetail({ order, items: initialItems, history, currentProfil
                       {item.medida && <span>Medida: <span className="font-mono">{item.medida}{item.unidad_medida ? ` ${item.unidad_medida}` : ""}</span></span>}
                       {item.marca && <span>Marca: <span className="font-medium">{item.marca}</span></span>}
                       {item.repair_required && (
-                        <span className="text-amber-600 font-medium">⚠ Requiere reparación</span>
+                        <span className="text-amber-600 dark:text-amber-300 font-medium">⚠ Requiere reparación</span>
                       )}
                     </div>
                     {/* Semáforo de estado del ítem */}
@@ -408,7 +408,7 @@ export function OrderDetail({ order, items: initialItems, history, currentProfil
                 </div>
 
                 {expanded && (
-                  <div className="border-t border-(--zaire-border) px-4 pb-4 pt-3 space-y-4 bg-slate-50">
+                  <div className="border-t border-(--zaire-border) px-4 pb-4 pt-3 space-y-4 bg-subtle">
                     {/* Campos técnicos */}
                     {(item.materiales_caras || item.materiales_orings || item.origen_abastecimiento) && (
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
@@ -477,7 +477,7 @@ export function OrderDetail({ order, items: initialItems, history, currentProfil
                                 "px-3 py-1.5 rounded-full text-xs font-medium border transition-all",
                                 active
                                   ? "bg-zaire-navy text-white border-zaire-navy"
-                                  : "bg-white text-(--zaire-text-muted) border-(--zaire-border) hover:border-zaire-navy-mid hover:text-(--zaire-text)"
+                                  : "bg-panel text-(--zaire-text-muted) border-(--zaire-border) hover:border-zaire-navy-mid hover:text-(--zaire-text)"
                               )}
                             >
                               {active && "✓ "}{labels[s]}
@@ -510,12 +510,12 @@ export function OrderDetail({ order, items: initialItems, history, currentProfil
             <div className="text-right space-y-1">
               <div>
                 <p className="text-xs text-(--zaire-text-muted) uppercase tracking-wide">Total USD</p>
-                <p className="text-2xl font-bold text-blue-700">{formatCurrency(order.total, "USD")}</p>
+                <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{formatCurrency(order.total, "USD")}</p>
               </div>
               {totalArs > 0 && (
                 <div>
                   <p className="text-xs text-(--zaire-text-muted) uppercase tracking-wide">Total ARS</p>
-                  <p className="text-xl font-bold text-emerald-700">{formatCurrency(totalArs, "ARS")}</p>
+                  <p className="text-xl font-bold text-emerald-700 dark:text-emerald-300">{formatCurrency(totalArs, "ARS")}</p>
                 </div>
               )}
             </div>
@@ -535,9 +535,9 @@ export function OrderDetail({ order, items: initialItems, history, currentProfil
                         "absolute left-0 top-1 w-8 h-8 rounded-full flex items-center justify-center border-2",
                         i === history.length - 1
                           ? "bg-zaire-navy border-zaire-navy text-white"
-                          : "bg-white border-(--zaire-border)"
+                          : "bg-panel border-(--zaire-border)"
                       )}>
-                        <div className={cn("w-2 h-2 rounded-full", i === history.length - 1 ? "bg-white" : "bg-slate-400")} />
+                        <div className={cn("w-2 h-2 rounded-full", i === history.length - 1 ? "bg-panel" : "bg-slate-400")} />
                       </div>
                       <div className="flex-1 pb-2">
                         <div className="flex items-center gap-2 flex-wrap">

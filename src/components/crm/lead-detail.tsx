@@ -46,7 +46,7 @@ export function LeadDetail({ lead, activities, attachments, profiles, currentPro
               {LEAD_STATUS_LABELS[lead.status]}
             </span>
             {lead.score != null && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border bg-amber-50 text-amber-700 border-amber-200">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/30">
                 <Star className="w-3 h-3 fill-amber-400" /> {lead.score}
               </span>
             )}

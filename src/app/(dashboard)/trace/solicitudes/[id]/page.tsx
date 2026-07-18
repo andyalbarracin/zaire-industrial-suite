@@ -60,8 +60,8 @@ export default async function SolicitudPage({ params }: { params: Promise<{ id: 
         <div className="flex items-center gap-3 flex-wrap">
           <h1 className="text-2xl font-bold text-(--zaire-text)">Solicitud de OT/OTS</h1>
           <span className="font-mono text-sm text-zaire-blue">{visit?.visit_number ?? "—"}</span>
-          {status === "vinculada" && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200">Vinculada</span>}
-          {status === "solicitada" && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">Solicitada</span>}
+          {status === "vinculada" && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-50 dark:bg-green-500/15 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-500/30">Vinculada</span>}
+          {status === "solicitada" && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30">Solicitada</span>}
         </div>
       </div>
 

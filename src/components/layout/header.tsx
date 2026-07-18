@@ -8,6 +8,7 @@ import Link from "next/link";
 import { ChevronRight, Search, Bell, AlertCircle, Clock, FileCheck, GitBranchPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROUTES, ROUTE_LABELS } from "@/lib/routes";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import type { Notification } from "@/app/(dashboard)/layout";
 
 // Hint de atajo (⌘K vs Ctrl K) según el SO. Se resuelve en el cliente sin setState-en-effect:
@@ -93,7 +94,7 @@ export function Header({ notifications }: HeaderProps) {
   const hasNotifications = notifications.length > 0;
 
   return (
-    <header className="h-15 shrink-0 sticky top-0 z-20 bg-white/90 backdrop-blur-sm backdrop-saturate-150 border-b border-(--zaire-border) px-6 flex items-center gap-4">
+    <header className="h-15 shrink-0 sticky top-0 z-20 bg-[color-mix(in_srgb,var(--surface)_90%,transparent)] backdrop-blur-sm backdrop-saturate-150 border-b border-(--zaire-border) px-6 flex items-center gap-4">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-1 text-sm" aria-label="Breadcrumb">
         <Link href={ROUTES.trace.dashboard} className="text-(--zaire-text-muted) hover:text-zaire-navy transition-colors">
@@ -118,7 +119,7 @@ export function Header({ notifications }: HeaderProps) {
       {/* Search bar */}
       <form
         onSubmit={handleSearch}
-        className="flex items-center gap-2 w-72 max-w-[34vw] bg-zaire-bg border border-(--zaire-border) rounded-[9px] px-3 py-2 text-(--zaire-text-muted) text-sm transition-colors duration-150 focus-within:border-[#6E82CC] focus-within:shadow-[0_0_0_3px_rgba(87,108,188,0.12)] hover:border-slate-300"
+        className="flex items-center gap-2 w-72 max-w-[34vw] bg-zaire-bg border border-(--zaire-border) rounded-[9px] px-3 py-2 text-(--zaire-text-muted) text-sm transition-colors duration-150 focus-within:border-brand-lift focus-within:shadow-[0_0_0_3px_rgba(87,108,188,0.12)] hover:border-slate-300 dark:border-slate-600"
       >
         <Search className="w-3.5 h-3.5 shrink-0" />
         <input
@@ -131,13 +132,16 @@ export function Header({ notifications }: HeaderProps) {
         {shortcutHint && (
           <button
             type="submit"
-            className="text-[10px] bg-white border border-(--zaire-border) rounded px-1.5 py-0.5 text-(--zaire-text-muted) font-sans shrink-0 hover:bg-slate-100 hover:text-(--zaire-text) transition-colors cursor-pointer"
+            className="text-[10px] bg-surface border border-(--zaire-border) rounded px-1.5 py-0.5 text-(--zaire-text-muted) font-sans shrink-0 hover:bg-(--hover) hover:text-(--zaire-text) transition-colors cursor-pointer"
             title="Buscar"
           >
             {shortcutHint}
           </button>
         )}
       </form>
+
+      {/* Toggle claro/oscuro */}
+      <ThemeToggle />
 
       {/* Bell */}
       <div className="relative" ref={notifRef}>
@@ -147,8 +151,8 @@ export function Header({ notifications }: HeaderProps) {
           className={cn(
             "relative w-9 h-9 rounded-[9px] border grid place-items-center transition-colors duration-140",
             isNotifOpen
-              ? "bg-slate-100 border-(--zaire-border) text-(--zaire-text)"
-              : "border-transparent hover:bg-slate-100 hover:border-(--zaire-border) text-(--zaire-text-muted) hover:text-(--zaire-text)"
+              ? "bg-(--hover) border-(--zaire-border) text-(--zaire-text)"
+              : "border-transparent hover:bg-(--hover) hover:border-(--zaire-border) text-(--zaire-text-muted) hover:text-(--zaire-text)"
           )}
           title="Notificaciones"
         >
@@ -162,12 +166,12 @@ export function Header({ notifications }: HeaderProps) {
         </button>
 
         {isNotifOpen && (
-          <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-(--zaire-border) rounded-[14px] shadow-[0_12px_32px_-8px_rgba(15,23,42,0.22),0_2px_8px_rgba(15,23,42,0.08)] z-50 overflow-hidden animate-z-pop">
+          <div className="absolute right-0 top-full mt-2 w-80 bg-surface border border-(--zaire-border) rounded-[14px] shadow-[0_12px_32px_-8px_rgba(15,23,42,0.22),0_2px_8px_rgba(15,23,42,0.08)] z-50 overflow-hidden animate-z-pop">
             {/* Header dropdown */}
             <div className="px-4 py-3 border-b border-(--zaire-border) flex items-center justify-between">
               <span className="text-sm font-semibold text-(--zaire-text)">Notificaciones</span>
               {hasNotifications && (
-                <span className="text-xs bg-red-50 text-red-600 font-semibold px-2 py-0.5 rounded-full border border-red-100">
+                <span className="text-xs bg-red-50 dark:bg-red-500/15 text-red-600 dark:text-red-300 font-semibold px-2 py-0.5 rounded-full border border-red-100 dark:border-red-500/25">
                   {notifications.length} pendiente{notifications.length !== 1 ? "s" : ""}
                 </span>
               )}
@@ -192,14 +196,14 @@ export function Header({ notifications }: HeaderProps) {
                       key={n.id}
                       href={n.href}
                       onClick={() => setIsNotifOpen(false)}
-                      className="flex items-start gap-3 px-4 py-3 border-b border-(--zaire-border) last:border-0 hover:bg-slate-50 transition-colors duration-100"
+                      className="flex items-start gap-3 px-4 py-3 border-b border-(--zaire-border) last:border-0 hover:bg-(--hover) transition-colors duration-100"
                     >
                       <div className={cn(
                         "mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center shrink-0",
-                        isRequest ? "bg-violet-50" : isOverdue ? "bg-red-50" : isUrgent ? "bg-amber-50" : "bg-slate-50"
+                        isRequest ? "bg-violet-50 dark:bg-violet-500/15" : isOverdue ? "bg-red-50 dark:bg-red-500/15" : isUrgent ? "bg-amber-50 dark:bg-amber-500/15" : "bg-surface-2"
                       )}>
                         {isRequest
-                          ? <GitBranchPlus className="w-3.5 h-3.5 text-violet-600" />
+                          ? <GitBranchPlus className="w-3.5 h-3.5 text-violet-600 dark:text-violet-300" />
                           : isField
                             ? <FileCheck className={cn("w-3.5 h-3.5", isOverdue ? "text-red-500" : "text-amber-500")} />
                             : isOverdue
@@ -210,14 +214,14 @@ export function Header({ notifications }: HeaderProps) {
                       <div className="flex-1 min-w-0">
                         <p className={cn("text-sm font-medium text-(--zaire-text)", !isField && !isRequest && !isCrm && "font-mono")}>
                           {n.title}
-                          {(isField || isRequest) && <span className="ml-1.5 text-[10px] font-semibold text-violet-600 bg-violet-50 border border-violet-100 rounded px-1 py-0.5">FIELD</span>}
-                          {isCrm && <span className="ml-1.5 text-[10px] font-semibold text-zaire-blue bg-blue-50 border border-blue-100 rounded px-1 py-0.5">CRM</span>}
+                          {(isField || isRequest) && <span className="ml-1.5 text-[10px] font-semibold text-violet-600 dark:text-violet-300 bg-violet-50 dark:bg-violet-500/15 border border-violet-100 dark:border-violet-500/25 rounded px-1 py-0.5">FIELD</span>}
+                          {isCrm && <span className="ml-1.5 text-[10px] font-semibold text-zaire-blue bg-blue-50 dark:bg-blue-500/15 border border-blue-100 dark:border-blue-500/25 rounded px-1 py-0.5">CRM</span>}
                         </p>
                         <p className="text-xs text-(--zaire-text-muted) truncate">{n.subtitle}</p>
                       </div>
                       <span className={cn(
                         "text-xs font-semibold shrink-0 mt-0.5",
-                        isRequest ? "text-violet-600" : isOverdue ? "text-red-600" : isUrgent ? "text-amber-600" : "text-slate-500"
+                        isRequest ? "text-violet-600 dark:text-violet-300" : isOverdue ? "text-red-600 dark:text-red-300" : isUrgent ? "text-amber-600 dark:text-amber-300" : "text-slate-500"
                       )}>
                         {isRequest ? "Solicitud" : dueLabelShort(days)}
                       </span>

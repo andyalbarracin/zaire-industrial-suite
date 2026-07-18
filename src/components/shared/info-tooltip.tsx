@@ -6,7 +6,7 @@
 import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function InfoTooltip({ text, className }: { text: string; className?: string }) {
+export function InfoTooltip({ text, className, tone = "muted" }: { text: string; className?: string; tone?: "muted" | "onDark" }) {
   return (
     <span className={cn("relative inline-flex group/tip align-middle", className)}>
       <span
@@ -14,7 +14,12 @@ export function InfoTooltip({ text, className }: { text: string; className?: str
         tabIndex={0}
         aria-label={text}
         onClick={(e) => e.preventDefault()}
-        className="cursor-help text-(--zaire-text-muted) hover:text-zaire-blue focus:outline-none focus-visible:text-zaire-blue"
+        className={cn(
+          "cursor-help focus:outline-none",
+          tone === "onDark"
+            ? "text-white/70 hover:text-white focus-visible:text-white"
+            : "text-(--zaire-text-muted) hover:text-zaire-blue focus-visible:text-zaire-blue"
+        )}
       >
         <Info className="w-3.5 h-3.5" />
       </span>

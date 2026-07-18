@@ -31,21 +31,21 @@ type Section = {
 
 // ─── Badge inline ─────────────────────────────────────────────────────────────
 function OTBadge() {
-  return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-blue-100 text-blue-700 mx-0.5">OT</span>;
+  return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300 mx-0.5">OT</span>;
 }
 function OTSBadge() {
-  return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-orange-100 text-orange-700 mx-0.5">OTS</span>;
+  return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300 mx-0.5">OTS</span>;
 }
 function Code({ children }: { children: string }) {
-  return <code className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px] font-mono mx-0.5">{children}</code>;
+  return <code className="px-1.5 py-0.5 rounded bg-subtle-2 text-slate-700 dark:text-slate-200 text-[11px] font-mono mx-0.5">{children}</code>;
 }
 
 // ─── Alert box ────────────────────────────────────────────────────────────────
 function AlertBox({ type, text }: { type: "warning" | "info" | "success"; text: string }) {
   const styles = {
-    warning: { bg: "bg-amber-50 border-amber-200 text-amber-800", icon: AlertTriangle, iconColor: "text-amber-500" },
-    info:    { bg: "bg-blue-50 border-blue-200 text-blue-800",    icon: Info,          iconColor: "text-blue-500" },
-    success: { bg: "bg-green-50 border-green-200 text-green-800", icon: CheckCircle2,  iconColor: "text-green-500" },
+    warning: { bg: "bg-amber-50 dark:bg-amber-500/15 border-amber-200 dark:border-amber-500/30 text-amber-800 dark:text-amber-200", icon: AlertTriangle, iconColor: "text-amber-500" },
+    info:    { bg: "bg-blue-50 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-800 dark:text-blue-200",    icon: Info,          iconColor: "text-blue-500" },
+    success: { bg: "bg-green-50 dark:bg-green-500/15 border-green-200 dark:border-green-500/30 text-green-800 dark:text-green-200", icon: CheckCircle2,  iconColor: "text-green-500" },
   }[type];
   const Icon = styles.icon;
   return (
@@ -63,7 +63,7 @@ const SECTIONS: Section[] = [
     id: "primeros-pasos",
     icon: Rocket,
     title: "Primeros pasos",
-    color: "text-violet-600",
+    color: "text-violet-600 dark:text-violet-300",
     keywords: "inicio sesión login dashboard stats vencimientos actividad navegación",
     steps: [
       {
@@ -84,7 +84,7 @@ const SECTIONS: Section[] = [
     id: "ordenes",
     icon: ClipboardList,
     title: "Órdenes de Trabajo",
-    color: "text-blue-600",
+    color: "text-blue-600 dark:text-blue-300",
     keywords: "nueva orden OT OTS crear editar ítem duplicar PDF planilla reparación estado cambiar exportar XLS CSV serie TAG marca medida materiales precio ARS USD facturada cancelada checklist semáforo",
     steps: [
       {
@@ -142,7 +142,7 @@ const SECTIONS: Section[] = [
     id: "clientes",
     icon: Users,
     title: "Clientes",
-    color: "text-green-600",
+    color: "text-green-600 dark:text-green-300",
     keywords: "nuevo cliente razón social CUIT contacto email teléfono dirección código buscar",
     steps: [
       {
@@ -163,7 +163,7 @@ const SECTIONS: Section[] = [
     id: "productos",
     icon: Package,
     title: "Productos",
-    color: "text-orange-600",
+    color: "text-orange-600 dark:text-orange-300",
     keywords: "nuevo producto categoría sello mecánico bomba empaquetadura spare part precio base catálogo",
     steps: [
       {
@@ -184,7 +184,7 @@ const SECTIONS: Section[] = [
     id: "filtros",
     icon: Search,
     title: "Filtros y búsqueda",
-    color: "text-cyan-600",
+    color: "text-cyan-600 dark:text-cyan-300",
     keywords: "buscar filtrar búsqueda global número serie estado sucursal cliente fechas combinar tabla header barra observaciones generales adicionales marca materiales caras orings código cliente",
     steps: [
       {
@@ -219,7 +219,7 @@ const SECTIONS: Section[] = [
     id: "reportes",
     icon: BarChart3,
     title: "Reportes",
-    color: "text-indigo-600",
+    color: "text-indigo-600 dark:text-indigo-300",
     keywords: "reporte operativo financiero auditoría período cliente facturación proyección pendiente XLS PDF secuencia integridad trazabilidad",
     steps: [
       {
@@ -249,7 +249,7 @@ const SECTIONS: Section[] = [
     id: "trazabilidad",
     icon: Shield,
     title: "Trazabilidad y auditoría",
-    color: "text-emerald-600",
+    color: "text-emerald-600 dark:text-emerald-300",
     keywords: "historial auditoría log registro cambio estado automático correlativo número cancelada huecos borrar eliminar",
     steps: [
       {
@@ -280,7 +280,7 @@ const SECTIONS: Section[] = [
     id: "impresion",
     icon: Printer,
     title: "Impresión y documentos",
-    color: "text-slate-600",
+    color: "text-slate-600 dark:text-slate-300",
     keywords: "PDF imprimir planilla reparación formulario RC009 RC010 XLS CSV exportar firma",
     steps: [
       {
@@ -305,7 +305,7 @@ const SECTIONS: Section[] = [
     id: "field-visitas",
     icon: MapPin,
     title: "Zaire Field — Visitas",
-    color: "text-violet-600",
+    color: "text-violet-600 dark:text-violet-300",
     keywords: "field campo visita agendar planificada en curso en sitio finalizada cancelada técnico unidad cliente sitio planta propósito relevamiento reparación entrega número correlativo estado facturable cobranza detalle",
     steps: [
       {
@@ -335,7 +335,7 @@ const SECTIONS: Section[] = [
     id: "field-recursos",
     icon: HardHat,
     title: "Zaire Field — Técnicos, Unidades y Plantas",
-    color: "text-blue-600",
+    color: "text-blue-600 dark:text-blue-300",
     keywords: "field técnico operador vehículo unidad camioneta patente planta sitio geocerca radio mapa coordenadas latitud longitud ABM alta baja",
     steps: [
       {
@@ -357,7 +357,7 @@ const SECTIONS: Section[] = [
     id: "field-tracking",
     icon: Satellite,
     title: "Zaire Field — Tracking y geocercas",
-    color: "text-cyan-600",
+    color: "text-cyan-600 dark:text-cyan-300",
     keywords: "field gps tracking ping ubicación geocerca arribo salida automático simulador recorrido demo tiempo real realtime mapa live",
     steps: [
       {
@@ -379,7 +379,7 @@ const SECTIONS: Section[] = [
     id: "field-gastos-docs",
     icon: Receipt,
     title: "Zaire Field — Gastos, Documentos y Reportes",
-    color: "text-green-600",
+    color: "text-green-600 dark:text-green-300",
     keywords: "field gasto viático combustible peaje comida hotel aprobar rechazar reintegrado facturable total documento licencia VTV seguro vencimiento semáforo alerta reporte operativo financiero recharts excel",
     steps: [
       {
@@ -401,7 +401,7 @@ const SECTIONS: Section[] = [
     id: "field-reporte",
     icon: GitBranchPlus,
     title: "Zaire Field — Reporte de visita y solicitud de OT/OTS",
-    color: "text-indigo-600",
+    color: "text-indigo-600 dark:text-indigo-300",
     keywords: "field reporte de visita hallazgos medida marca materiales diagnóstico requiere reparación solicitar OT OTS orden de trabajo admin vincular integración zaire trace",
     steps: [
       {
@@ -424,7 +424,7 @@ const SECTIONS: Section[] = [
     id: "roles",
     icon: Lock,
     title: "Roles y permisos",
-    color: "text-red-600",
+    color: "text-red-600 dark:text-red-300",
     keywords: "rol administrador operador visor auditor permisos acceso configuración usuarios",
     steps: [
       {
@@ -455,9 +455,9 @@ function AccordionSection({ section, defaultOpen = false }: { section: Section; 
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-4 px-6 py-4 text-left hover:bg-slate-50 transition-colors"
+        className="w-full flex items-center gap-4 px-6 py-4 text-left hover:bg-subtle transition-colors"
       >
-        <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", "bg-slate-100")}>
+        <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", "bg-subtle-2")}>
           <Icon className={cn("w-5 h-5", section.color)} />
         </div>
         <span className="flex-1 font-semibold text-(--zaire-text) text-[15px]">{section.title}</span>
@@ -513,13 +513,13 @@ export default function AyudaPage() {
           placeholder="Buscar en la ayuda... (ej: PDF, semáforo, duplicar)"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="pl-9 h-10 bg-white"
+          className="pl-9 h-10 bg-panel"
         />
       </div>
 
       {/* Tip rápido */}
       {!query && (
-        <div className="flex items-start gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+        <div className="flex items-start gap-3 px-4 py-3 bg-blue-50 dark:bg-blue-500/15 border border-blue-200 dark:border-blue-500/30 rounded-lg text-sm text-blue-800 dark:text-blue-200">
           <Info className="w-4 h-4 shrink-0 mt-0.5 text-blue-500" />
           <span>
             Hacé clic en cualquier sección para expandirla. Usá la búsqueda para encontrar un tema específico.

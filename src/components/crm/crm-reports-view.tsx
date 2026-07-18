@@ -15,7 +15,8 @@ import { downloadCSV } from "@/lib/export";
 import { formatCurrency, formatCurrencyCompact } from "@/lib/utils";
 import type { CrmOpportunity, CrmLead, CrmPipelineStage } from "@/lib/crm/types";
 
-const COLORS = ["#0B2447", "#19376D", "#576CBC", "#A5D7E8", "#16A34A", "#EAB308", "#DC2626", "#8B5CF6"];
+// Rampa categórica TONAL por tema (var(--chart-1..6)); ver globals.css. Evita el arcoíris.
+const COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "var(--chart-6)"];
 
 interface CrmReportsViewProps {
   opportunities: CrmOpportunity[];
@@ -63,31 +64,34 @@ export function CrmReportsView({ opportunities, leads, stages, profiles }: CrmRe
       <div className="grid lg:grid-cols-2 gap-6">
         <ChartCard title="Ganado por mes (ARS)">
           <BarChart data={rep.wonByMonth}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+            <defs><linearGradient id="zbar-green" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--success)" stopOpacity="1" /><stop offset="100%" stopColor="var(--success)" stopOpacity="0.14" /></linearGradient></defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
             <XAxis dataKey="name" tick={{ fontSize: 11 }} />
             <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => formatCurrencyCompact(Number(v), "ARS")} width={64} />
             <Tooltip formatter={(v) => formatCurrency(Number(v), "ARS")} />
-            <Bar dataKey="value" fill="#16A34A" radius={[4, 4, 0, 0]} name="Ganado ARS" />
+            <Bar dataKey="value" fill="url(#zbar-green)" radius={[4, 4, 0, 0]} name="Ganado ARS" />
           </BarChart>
         </ChartCard>
 
         <ChartCard title="Oportunidades por etapa">
           <BarChart data={rep.byStageCount}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+            <defs><linearGradient id="zbar" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--chart-from)" /><stop offset="100%" stopColor="var(--chart-to)" /></linearGradient></defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
             <XAxis dataKey="name" tick={{ fontSize: 11 }} />
             <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
             <Tooltip />
-            <Bar dataKey="value" fill="#576CBC" radius={[4, 4, 0, 0]} name="Oportunidades" />
+            <Bar dataKey="value" fill="url(#zbar)" radius={[4, 4, 0, 0]} name="Oportunidades" />
           </BarChart>
         </ChartCard>
 
         <ChartCard title="Leads por estado">
           <BarChart data={rep.leadsByStatus}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+            <defs><linearGradient id="zbar" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--chart-from)" /><stop offset="100%" stopColor="var(--chart-to)" /></linearGradient></defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
             <XAxis dataKey="name" tick={{ fontSize: 11 }} />
             <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
             <Tooltip />
-            <Bar dataKey="value" fill="#19376D" radius={[4, 4, 0, 0]} name="Leads" />
+            <Bar dataKey="value" fill="url(#zbar)" radius={[4, 4, 0, 0]} name="Leads" />
           </BarChart>
         </ChartCard>
 
@@ -110,7 +114,7 @@ export function CrmReportsView({ opportunities, leads, stages, profiles }: CrmRe
         <div className="px-5 py-3 border-b border-(--zaire-border)"><h3 className="text-sm font-semibold text-(--zaire-text)">Rendimiento por responsable</h3></div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
+            <thead className="bg-subtle border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
               <tr>
                 <th className="text-left px-4 py-2.5">Responsable</th>
                 <th className="text-right px-4 py-2.5">Abiertas</th>

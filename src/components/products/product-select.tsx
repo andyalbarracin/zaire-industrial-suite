@@ -55,7 +55,7 @@ export function ProductSelect({ products, value, onChange, disabled }: ProductSe
         <div className="max-h-64 overflow-y-auto space-y-0.5">
           <button
             type="button"
-            className="w-full text-left px-3 py-2 text-sm rounded hover:bg-slate-100 text-(--zaire-text-muted)"
+            className="w-full text-left px-3 py-2 text-sm rounded hover:bg-subtle-2 text-(--zaire-text-muted)"
             onClick={() => { onChange(null); setOpen(false); }}
           >
             — Descripción libre —
@@ -64,7 +64,7 @@ export function ProductSelect({ products, value, onChange, disabled }: ProductSe
             <button
               key={product.id}
               type="button"
-              className="w-full text-left px-3 py-2 text-sm rounded hover:bg-slate-100 flex items-center gap-2"
+              className="w-full text-left px-3 py-2 text-sm rounded hover:bg-subtle-2 flex items-center gap-2"
               onClick={() => { onChange(product.id); setOpen(false); setSearch(""); }}
             >
               <Check className={cn("w-4 h-4 shrink-0", value === product.id ? "opacity-100 text-zaire-blue" : "opacity-0")} />
@@ -73,7 +73,7 @@ export function ProductSelect({ products, value, onChange, disabled }: ProductSe
                 {product.brand && <span className="text-(--zaire-text-muted) ml-1">· {product.brand}</span>}
               </div>
               {product.code && (
-                <span className="text-xs font-mono bg-slate-100 px-1.5 py-0.5 rounded">{product.code}</span>
+                <span className="text-xs font-mono bg-subtle-2 px-1.5 py-0.5 rounded">{product.code}</span>
               )}
               {product.category && (
                 <span className="text-xs text-(--zaire-text-muted)">

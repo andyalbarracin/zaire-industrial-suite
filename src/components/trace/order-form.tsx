@@ -297,7 +297,7 @@ export function OrderForm({ clients, products, defaultClientId, order, orderItem
           <Label className="mb-2 block">Sucursal *</Label>
           {isEdit ? (
             <div className="space-y-1">
-              <div className="h-10 px-3 rounded-md border border-(--zaire-border) bg-slate-100 flex items-center text-sm text-(--zaire-text-muted)">
+              <div className="h-10 px-3 rounded-md border border-(--zaire-border) bg-subtle-2 flex items-center text-sm text-(--zaire-text-muted)">
                 {BRANCHES.find((b) => b.id === branchId)?.name ?? branchId}
               </div>
               <p className="text-xs text-(--zaire-text-muted)">El tipo y la sucursal no pueden modificarse después de la creación</p>
@@ -330,7 +330,7 @@ export function OrderForm({ clients, products, defaultClientId, order, orderItem
               </SelectContent>
             </Select>
           )}
-          {errors.branch_id && <p className="text-xs text-red-600 mt-1">{errors.branch_id.message}</p>}
+          {errors.branch_id && <p className="text-xs text-red-600 dark:text-red-300 mt-1">{errors.branch_id.message}</p>}
         </div>
 
         {/* Tipo de orden */}
@@ -338,7 +338,7 @@ export function OrderForm({ clients, products, defaultClientId, order, orderItem
           <Label className="mb-2 block">Tipo de orden *</Label>
           {isEdit ? (
             <div className="space-y-1">
-              <div className="h-10 px-3 rounded-md border border-(--zaire-border) bg-slate-100 flex items-center text-sm text-(--zaire-text-muted)">
+              <div className="h-10 px-3 rounded-md border border-(--zaire-border) bg-subtle-2 flex items-center text-sm text-(--zaire-text-muted)">
                 {orderType === "OT" ? "OT — Venta / Mercadería nueva" : "OTS — Servicio / Reparación"}
               </div>
             </div>
@@ -352,9 +352,9 @@ export function OrderForm({ clients, products, defaultClientId, order, orderItem
                   className={`flex-1 py-3 px-4 rounded-lg border-2 text-sm font-semibold transition-all ${
                     orderType === type
                       ? type === "OT"
-                        ? "border-blue-500 bg-blue-50 text-blue-700"
-                        : "border-orange-500 bg-orange-50 text-orange-700"
-                      : "border-(--zaire-border) text-(--zaire-text-muted) hover:border-slate-300"
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-300"
+                        : "border-orange-500 bg-orange-50 dark:bg-orange-500/15 text-orange-700 dark:text-orange-300"
+                      : "border-(--zaire-border) text-(--zaire-text-muted) hover:border-slate-300 dark:border-slate-600"
                   }`}
                 >
                   {type === "OT" ? "OT — Venta / Mercadería nueva" : "OTS — Servicio / Reparación"}
@@ -377,7 +377,7 @@ export function OrderForm({ clients, products, defaultClientId, order, orderItem
           <div className="space-y-1.5">
             <Label>Fecha de ingreso *</Label>
             <Input type="date" {...register("date_in")} />
-            {errors.date_in && <p className="text-xs text-red-600">{errors.date_in.message}</p>}
+            {errors.date_in && <p className="text-xs text-red-600 dark:text-red-300">{errors.date_in.message}</p>}
           </div>
 
           <div className="space-y-1.5">
@@ -498,7 +498,7 @@ export function OrderForm({ clients, products, defaultClientId, order, orderItem
         </div>
 
         {errors.items && typeof errors.items === "object" && "message" in errors.items && (
-          <p className="text-sm text-red-600 mb-3">{(errors.items as { message?: string }).message}</p>
+          <p className="text-sm text-red-600 dark:text-red-300 mb-3">{(errors.items as { message?: string }).message}</p>
         )}
 
         <div className="space-y-4">
@@ -510,7 +510,7 @@ export function OrderForm({ clients, products, defaultClientId, order, orderItem
             const isOtroMarca = currentMarcaDisplay === "OTRO";
 
             return (
-              <div key={field.id} className="border border-(--zaire-border) rounded-lg p-4 bg-slate-50/50">
+              <div key={field.id} className="border border-(--zaire-border) rounded-lg p-4 bg-subtle/50">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-(--zaire-text-muted) uppercase tracking-wide">
                     Ítem #{index + 1}
@@ -564,7 +564,7 @@ export function OrderForm({ clients, products, defaultClientId, order, orderItem
                           remove(index);
                           setMarcaDisplay((prev) => prev.filter((_, i) => i !== index));
                         }}
-                        className="text-red-400 hover:text-red-600 transition-colors p-1 rounded"
+                        className="text-red-400 hover:text-red-600 dark:text-red-300 transition-colors p-1 rounded"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -694,7 +694,7 @@ export function OrderForm({ clients, products, defaultClientId, order, orderItem
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <Label className="text-xs text-blue-700">Precio Unit. USD</Label>
+                      <Label className="text-xs text-blue-700 dark:text-blue-300">Precio Unit. USD</Label>
                       <Input
                         type="number"
                         min={0}
@@ -703,15 +703,15 @@ export function OrderForm({ clients, products, defaultClientId, order, orderItem
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs text-blue-700">Total USD</Label>
-                      <div className="h-10 px-3 rounded-md border border-(--zaire-border) bg-slate-100 flex items-center text-sm font-medium text-blue-700">
+                      <Label className="text-xs text-blue-700 dark:text-blue-300">Total USD</Label>
+                      <div className="h-10 px-3 rounded-md border border-(--zaire-border) bg-subtle-2 flex items-center text-sm font-medium text-blue-700 dark:text-blue-300">
                         {formatCurrency(itemTotal, "USD")}
                       </div>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <Label className="text-xs text-emerald-700">Precio Unit. ARS</Label>
+                      <Label className="text-xs text-emerald-700 dark:text-emerald-300">Precio Unit. ARS</Label>
                       <Input
                         type="number"
                         min={0}
@@ -720,8 +720,8 @@ export function OrderForm({ clients, products, defaultClientId, order, orderItem
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs text-emerald-700">Total ARS</Label>
-                      <div className="h-10 px-3 rounded-md border border-(--zaire-border) bg-slate-100 flex items-center text-sm font-medium text-emerald-700">
+                      <Label className="text-xs text-emerald-700 dark:text-emerald-300">Total ARS</Label>
+                      <div className="h-10 px-3 rounded-md border border-(--zaire-border) bg-subtle-2 flex items-center text-sm font-medium text-emerald-700 dark:text-emerald-300">
                         {formatCurrency((watchedItems[index]?.quantity ?? 0) * (watchedItems[index]?.unit_price_ars ?? 0), "ARS")}
                       </div>
                     </div>

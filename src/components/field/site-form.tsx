@@ -142,7 +142,7 @@ export function SiteForm({ open, onOpenChange, site, clients, onSaved }: SiteFor
             <div className="space-y-1.5 col-span-2">
               <Label htmlFor="name">Nombre de la planta *</Label>
               <Input id="name" {...register("name")} placeholder="Planta Fortín de Piedra" />
-              {errors.name && <p className="text-xs text-red-600">{errors.name.message}</p>}
+              {errors.name && <p className="text-xs text-red-600 dark:text-red-300">{errors.name.message}</p>}
             </div>
             <div className="space-y-1.5 col-span-2">
               <Label>Cliente</Label>

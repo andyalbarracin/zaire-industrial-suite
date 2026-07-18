@@ -125,7 +125,7 @@ export function ClientForm({ open, onOpenChange, client, onSaved }: ClientFormPr
             <div className="space-y-1.5 col-span-2">
               <Label htmlFor="business_name">Razón Social *</Label>
               <Input id="business_name" {...register("business_name")} placeholder="Empresa S.A." />
-              {errors.business_name && <p className="text-xs text-red-600">{errors.business_name.message}</p>}
+              {errors.business_name && <p className="text-xs text-red-600 dark:text-red-300">{errors.business_name.message}</p>}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="client_code">Código de Cliente</Label>
@@ -151,7 +151,7 @@ export function ClientForm({ open, onOpenChange, client, onSaved }: ClientFormPr
           <div className="space-y-1.5">
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" {...register("email")} placeholder="contacto@empresa.com" />
-            {errors.email && <p className="text-xs text-red-600">{errors.email.message}</p>}
+            {errors.email && <p className="text-xs text-red-600 dark:text-red-300">{errors.email.message}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-3">

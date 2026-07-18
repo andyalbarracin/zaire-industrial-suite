@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 export function ErrorView({ title = "Algo salió mal", reset }: { title?: string; reset: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
-      <span className="w-14 h-14 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mb-4">
+      <span className="w-14 h-14 rounded-2xl bg-red-50 dark:bg-red-500/15 text-red-600 dark:text-red-300 flex items-center justify-center mb-4">
         <AlertTriangle className="w-7 h-7" />
       </span>
       <h2 className="text-lg font-bold text-(--zaire-text)">{title}</h2>

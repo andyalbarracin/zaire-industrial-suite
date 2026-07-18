@@ -11,11 +11,11 @@ export const ACTIVITY_ICON: Record<ActivityType, React.ComponentType<{ className
 };
 
 export const ACTIVITY_STYLE: Record<ActivityType, string> = {
-  llamada: "bg-blue-50 text-blue-600",
-  email: "bg-violet-50 text-violet-600",
-  reunion: "bg-cyan-50 text-cyan-600",
-  nota: "bg-slate-100 text-slate-600",
-  tarea: "bg-amber-50 text-amber-600",
+  llamada: "bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-300",
+  email: "bg-violet-50 dark:bg-violet-500/15 text-violet-600 dark:text-violet-300",
+  reunion: "bg-cyan-50 dark:bg-cyan-500/15 text-cyan-600 dark:text-cyan-300",
+  nota: "bg-subtle-2 text-slate-600 dark:text-slate-300",
+  tarea: "bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-300",
 };
 
 export function ActivityTimeline({ activities, emptyLabel = "Sin actividades registradas." }: { activities: CrmActivity[]; emptyLabel?: string }) {
@@ -27,7 +27,7 @@ export function ActivityTimeline({ activities, emptyLabel = "Sin actividades reg
       {activities.map((a) => {
         const Icon = ACTIVITY_ICON[a.activity_type];
         return (
-          <li key={a.id} className="flex gap-3 rounded-xl border border-(--zaire-border) bg-white p-3">
+          <li key={a.id} className="flex gap-3 rounded-xl border border-(--zaire-border) bg-panel p-3">
             <span className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", ACTIVITY_STYLE[a.activity_type])}>
               <Icon className="w-4 h-4" />
             </span>

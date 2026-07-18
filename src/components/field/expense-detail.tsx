@@ -186,7 +186,7 @@ export function ExpenseDetail({ expense, events, currentUser }: ExpenseDetailPro
                     const Icon = EVENT_ICON[ev.event_type] ?? MessageSquarePlus;
                     return (
                       <div key={ev.id} className="relative flex gap-4 pl-10">
-                        <div className="absolute left-0 top-0.5 w-8 h-8 rounded-full flex items-center justify-center border-2 bg-white border-(--zaire-border) text-zaire-blue">
+                        <div className="absolute left-0 top-0.5 w-8 h-8 rounded-full flex items-center justify-center border-2 bg-panel border-(--zaire-border) text-zaire-blue">
                           <Icon className="w-4 h-4" />
                         </div>
                         <div className="flex-1 pb-1">

@@ -96,10 +96,10 @@ export default async function DashboardPage() {
   const fieldEnabled = isModuleEnabled("field");
 
   const stats = [
-    { id: "activas",     label: "OTs Activas",               value: activeCount ?? 0,          icon: ClipboardList, color: "text-blue-600",  bg: "bg-blue-50",  spark: [8,10,9,12,11,13,14,15], sparkColor: "#576CBC" },
-    { id: "entregar",    label: "Lista para Entregar",        value: pendingDeliveryCount ?? 0, icon: Truck,         color: "text-amber-600", bg: "bg-amber-50", spark: [3,2,4,3,2,1,2,1],       sparkColor: "#F59E0B" },
-    { id: "facturar",    label: "Pendientes de Facturación",  value: pendingInvoiceCount ?? 0,  icon: Receipt,       color: "text-red-600",   bg: "bg-red-50",   spark: [2,3,2,1,3,2,1,1],       sparkColor: "#EF4444" },
-    { id: "hoy",         label: "Ingresadas Hoy",             value: todayCount ?? 0,           icon: Plus,          color: "text-green-600", bg: "bg-green-50", spark: [1,3,2,4,2,3,5,4],       sparkColor: "#22C55E" },
+    { id: "activas",     label: "OTs Activas",               value: activeCount ?? 0,          icon: ClipboardList, color: "text-blue-600 dark:text-blue-300",  bg: "bg-blue-50 dark:bg-blue-500/15",  spark: [8,10,9,12,11,13,14,15], sparkColor: "#576CBC" },
+    { id: "entregar",    label: "Lista para Entregar",        value: pendingDeliveryCount ?? 0, icon: Truck,         color: "text-amber-600 dark:text-amber-300", bg: "bg-amber-50 dark:bg-amber-500/15", spark: [3,2,4,3,2,1,2,1],       sparkColor: "#F59E0B" },
+    { id: "facturar",    label: "Pendientes de Facturación",  value: pendingInvoiceCount ?? 0,  icon: Receipt,       color: "text-red-600 dark:text-red-300",   bg: "bg-red-50 dark:bg-red-500/15",   spark: [2,3,2,1,3,2,1,1],       sparkColor: "#EF4444" },
+    { id: "hoy",         label: "Ingresadas Hoy",             value: todayCount ?? 0,           icon: Plus,          color: "text-green-600 dark:text-green-300", bg: "bg-green-50 dark:bg-green-500/15", spark: [1,3,2,4,2,3,5,4],       sparkColor: "#22C55E" },
   ];
 
   return (
@@ -111,20 +111,29 @@ export default async function DashboardPage() {
 
       {/* Fila 1: Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-up">
-        {stats.map((stat) => (
-          <div key={stat.id} className="zaire-card p-5 relative overflow-hidden group transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_32px_-8px_rgba(15,23,42,0.14),0_2px_8px_rgba(15,23,42,0.06)] hover:border-slate-200">
-            <Sparkline data={stat.spark} color={stat.sparkColor} id={stat.id} />
+        {stats.map((stat, idx) => {
+          const fc = idx === 0 ? "zaire-card-feature" : idx === 3 ? "zaire-card-feature-2" : null;
+          const feature = !!fc;
+          return (
+          <div key={stat.id} className={cn(
+            "p-5 relative overflow-hidden group transition-all duration-200 hover:-translate-y-0.5",
+            feature
+              ? cn(fc, "hover:shadow-[0_18px_44px_-14px_rgba(0,0,0,0.4)]")
+              : "zaire-card hover:shadow-[0_12px_32px_-8px_rgba(15,23,42,0.14),0_2px_8px_rgba(15,23,42,0.06)] hover:border-slate-200 dark:border-slate-700"
+          )}>
+            <Sparkline data={stat.spark} color={feature ? "var(--feature-fg)" : stat.sparkColor} id={stat.id} />
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-(--zaire-text-muted) font-medium">{stat.label}</p>
-                <p className="text-3xl font-bold text-(--zaire-text) mt-1 tabular-nums">{stat.value}</p>
+                <p className={cn("text-sm font-medium", feature ? "text-(--feature-fg-muted)" : "text-(--zaire-text-muted)")}>{stat.label}</p>
+                <p className={cn("text-3xl font-bold mt-1 tabular-nums", feature ? "text-(--feature-fg)" : "text-(--zaire-text)")}>{stat.value}</p>
               </div>
-              <div className={cn("w-10 h-10 rounded-[11px] flex items-center justify-center transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-3", stat.bg)}>
-                <stat.icon className={cn("w-5 h-5", stat.color)} />
+              <div className={cn("w-10 h-10 rounded-[11px] flex items-center justify-center transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-3", feature ? "bg-white/15 backdrop-blur-sm" : stat.bg)}>
+                <stat.icon className={cn("w-5 h-5", feature ? "text-white" : stat.color)} />
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Fila 2: Recientes + Por estado */}
@@ -145,7 +154,7 @@ export default async function DashboardPage() {
               </thead>
               <tbody className="divide-y divide-(--zaire-border)">
                 {recentOrders?.map((order) => (
-                  <ClickableRow key={order.id} href={ROUTES.trace.orden(order.id)} className="hover:bg-slate-50/80 transition-colors duration-100">
+                  <ClickableRow key={order.id} href={ROUTES.trace.orden(order.id)} className="hover:bg-subtle/80 transition-colors duration-100">
                     <td className="px-5 py-3">
                       <span className="font-mono text-sm font-medium text-zaire-blue">{order.order_number}</span>
                     </td>
@@ -185,7 +194,7 @@ export default async function DashboardPage() {
                     <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: STATUS_DOT_COLORS[item.status as OrderStatus] }} />
                     {ORDER_STATUS_LABELS[item.status as OrderStatus]}
                   </span>
-                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-2 bg-subtle-2 rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full animate-z-grow"
                       style={{
@@ -212,14 +221,14 @@ export default async function DashboardPage() {
             {upcomingDue?.map((order) => {
               const overdue = isOverdue(order.date_due);
               return (
-                <Link key={order.id} href={ROUTES.trace.orden(order.id)} className="flex items-center gap-3 px-5 py-3.5 transition-colors duration-100 hover:bg-slate-50/80 border-b border-(--zaire-border) last:border-0">
+                <Link key={order.id} href={ROUTES.trace.orden(order.id)} className="flex items-center gap-3 px-5 py-3.5 transition-colors duration-100 hover:bg-subtle/80 border-b border-(--zaire-border) last:border-0">
                   {overdue && <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-zaire-blue font-mono">{order.order_number}</p>
                     <p className="text-xs text-(--zaire-text-muted) truncate">{order.clients?.business_name ?? "—"}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className={cn("text-xs font-medium", overdue ? "text-red-600" : "text-amber-600")}>{getDueDaysLabel(order.date_due)}</p>
+                    <p className={cn("text-xs font-medium", overdue ? "text-red-600 dark:text-red-300" : "text-amber-600 dark:text-amber-300")}>{getDueDaysLabel(order.date_due)}</p>
                     <p className="text-xs text-(--zaire-text-muted)">{formatDate(order.date_due)}</p>
                   </div>
                 </Link>
@@ -250,11 +259,11 @@ export default async function DashboardPage() {
                 </>
               );
               return isRequest ? (
-                <Link key={log.id} href={ROUTES.trace.solicitud(log.entity_id!)} className="block px-5 py-3.5 transition-colors duration-100 hover:bg-blue-50/50">
+                <Link key={log.id} href={ROUTES.trace.solicitud(log.entity_id!)} className="block px-5 py-3.5 transition-colors duration-100 hover:bg-blue-50 dark:bg-blue-500/15/50">
                   {inner}
                 </Link>
               ) : (
-                <div key={log.id} className="px-5 py-3.5 transition-colors duration-100 hover:bg-slate-50/80">
+                <div key={log.id} className="px-5 py-3.5 transition-colors duration-100 hover:bg-subtle/80">
                   {inner}
                 </div>
               );

@@ -88,7 +88,7 @@ export function ContactsTable({ initialContacts, clients }: ContactsTableProps) 
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
+            <thead className="bg-subtle border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
               <tr>
                 <th className="text-left px-4 py-3">Nombre</th>
                 <th className="text-left px-4 py-3">Cargo</th>
@@ -100,7 +100,7 @@ export function ContactsTable({ initialContacts, clients }: ContactsTableProps) 
             </thead>
             <tbody className="divide-y divide-(--zaire-border)">
               {pageRows.map((c) => (
-                <tr key={c.id} onClick={() => router.push(ROUTES.crm.contacto(c.id))} className="hover:bg-slate-50/80 cursor-pointer">
+                <tr key={c.id} onClick={() => router.push(ROUTES.crm.contacto(c.id))} className="hover:bg-subtle/80 cursor-pointer">
                   <td className="px-4 py-3 font-medium text-(--zaire-text)">
                     <span className="inline-flex items-center gap-1.5">
                       {c.is_primary && <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />}
@@ -128,7 +128,7 @@ export function ContactsTable({ initialContacts, clients }: ContactsTableProps) 
             <span>{filtered.length} registros</span>
             <span className="text-(--zaire-border)">·</span>
             <label className="flex items-center gap-1.5">Mostrar
-              <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }} className="h-8 rounded-lg border border-(--zaire-border) bg-white px-2 text-sm text-(--zaire-text)">
+              <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }} className="h-8 rounded-lg border border-(--zaire-border) bg-panel px-2 text-sm text-(--zaire-text)">
                 {PAGE_SIZES.map((n) => (<option key={n} value={n}>{n}</option>))}
               </select>
             </label>

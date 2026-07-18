@@ -125,7 +125,7 @@ export function StageManager({ onOpenChange, stages, countByStage, onSaved }: St
           {draft.map((s, i) => {
             const count = countByStage[s.key] ?? 0;
             return (
-              <div key={s.key} className="flex items-center gap-2 rounded-lg border border-(--zaire-border) bg-white p-2">
+              <div key={s.key} className="flex items-center gap-2 rounded-lg border border-(--zaire-border) bg-panel p-2">
                 <GripVertical className="w-4 h-4 text-(--zaire-text-muted) shrink-0" />
 
                 <Input
@@ -170,17 +170,17 @@ export function StageManager({ onOpenChange, stages, countByStage, onSaved }: St
                 </Select>
 
                 <div className="flex items-center gap-0.5 shrink-0">
-                  <button type="button" onClick={() => move(i, -1)} disabled={i === 0} title="Subir" className="p-1 rounded hover:bg-slate-100 text-(--zaire-text-muted) disabled:opacity-30">
+                  <button type="button" onClick={() => move(i, -1)} disabled={i === 0} title="Subir" className="p-1 rounded hover:bg-subtle-2 text-(--zaire-text-muted) disabled:opacity-30">
                     <ArrowUp className="w-3.5 h-3.5" />
                   </button>
-                  <button type="button" onClick={() => move(i, 1)} disabled={i === draft.length - 1} title="Bajar" className="p-1 rounded hover:bg-slate-100 text-(--zaire-text-muted) disabled:opacity-30">
+                  <button type="button" onClick={() => move(i, 1)} disabled={i === draft.length - 1} title="Bajar" className="p-1 rounded hover:bg-subtle-2 text-(--zaire-text-muted) disabled:opacity-30">
                     <ArrowDown className="w-3.5 h-3.5" />
                   </button>
                   <button
                     type="button"
                     onClick={() => removeStage(i)}
                     title={count > 0 ? `${count} oportunidad(es): no se puede eliminar` : "Eliminar"}
-                    className="p-1 rounded hover:bg-red-50 text-(--zaire-text-muted) hover:text-red-600 disabled:opacity-30"
+                    className="p-1 rounded hover:bg-red-50 dark:bg-red-500/15 text-(--zaire-text-muted) hover:text-red-600 dark:text-red-300 disabled:opacity-30"
                     disabled={count > 0}
                   >
                     <Trash2 className="w-3.5 h-3.5" />

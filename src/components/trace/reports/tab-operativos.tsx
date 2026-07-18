@@ -143,7 +143,7 @@ function OrdenesPeriodoCard() {
           </div>
           <div className="border border-(--zaire-border) rounded-lg overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-(--zaire-border)">
+              <thead className="bg-subtle border-b border-(--zaire-border)">
                 <tr>
                   {["Estado", "Tipo", "Cantidad"].map(h => (
                     <th key={h} className="px-3 py-2 text-left text-xs font-medium text-(--zaire-text-muted) uppercase">{h}</th>
@@ -152,9 +152,9 @@ function OrdenesPeriodoCard() {
               </thead>
               <tbody className="divide-y divide-(--zaire-border)">
                 {rows.map((r, i) => (
-                  <tr key={i} className="hover:bg-slate-50">
+                  <tr key={i} className="hover:bg-subtle">
                     <td className="px-3 py-2">{ORDER_STATUS_LABELS[r.status as OrderStatus] ?? r.status}</td>
-                    <td className="px-3 py-2"><span className={cn("text-xs font-semibold", r.order_type === "OT" ? "text-blue-700" : "text-orange-700")}>{r.order_type}</span></td>
+                    <td className="px-3 py-2"><span className={cn("text-xs font-semibold", r.order_type === "OT" ? "text-blue-700 dark:text-blue-300" : "text-orange-700 dark:text-orange-300")}>{r.order_type}</span></td>
                     <td className="px-3 py-2 font-bold">{r.count}</td>
                   </tr>
                 ))}
@@ -245,7 +245,7 @@ function OrdenesPorClienteCard() {
         <div className="space-y-3">
           <div className="border border-(--zaire-border) rounded-lg overflow-hidden max-h-72 overflow-y-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-(--zaire-border) sticky top-0">
+              <thead className="bg-subtle border-b border-(--zaire-border) sticky top-0">
                 <tr>
                   {["#", "Cliente", "Cant.", "Total USD", "Total ARS"].map(h => (
                     <th key={h} className="px-3 py-2 text-left text-xs font-medium text-(--zaire-text-muted) uppercase">{h}</th>
@@ -254,12 +254,12 @@ function OrdenesPorClienteCard() {
               </thead>
               <tbody className="divide-y divide-(--zaire-border)">
                 {rows.map((r, i) => (
-                  <tr key={i} className="hover:bg-slate-50">
+                  <tr key={i} className="hover:bg-subtle">
                     <td className="px-3 py-2 text-xs text-(--zaire-text-muted)">{i + 1}</td>
                     <td className="px-3 py-2 font-medium">{r.client_name}</td>
                     <td className="px-3 py-2 font-bold">{r.count}</td>
-                    <td className="px-3 py-2 text-blue-700">{formatCurrency(r.total_usd, "USD")}</td>
-                    <td className="px-3 py-2 text-emerald-700">{formatCurrency(r.total_ars, "ARS")}</td>
+                    <td className="px-3 py-2 text-blue-700 dark:text-blue-300">{formatCurrency(r.total_usd, "USD")}</td>
+                    <td className="px-3 py-2 text-emerald-700 dark:text-emerald-300">{formatCurrency(r.total_ars, "ARS")}</td>
                   </tr>
                 ))}
               </tbody>
@@ -354,13 +354,13 @@ function ProyeccionCard() {
       {totals && byStatus && byClient && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-xs text-blue-600 uppercase font-semibold mb-1">Total proyectado USD</p>
-              <p className="text-2xl font-bold text-blue-700">{formatCurrency(totals.usd, "USD")}</p>
+            <div className="bg-blue-50 dark:bg-blue-500/15 border border-blue-200 dark:border-blue-500/30 rounded-lg p-4">
+              <p className="text-xs text-blue-600 dark:text-blue-300 uppercase font-semibold mb-1">Total proyectado USD</p>
+              <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{formatCurrency(totals.usd, "USD")}</p>
             </div>
-            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-              <p className="text-xs text-emerald-600 uppercase font-semibold mb-1">Total proyectado ARS</p>
-              <p className="text-2xl font-bold text-emerald-700">{formatCurrency(totals.ars, "ARS")}</p>
+            <div className="bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/30 rounded-lg p-4">
+              <p className="text-xs text-emerald-600 dark:text-emerald-300 uppercase font-semibold mb-1">Total proyectado ARS</p>
+              <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{formatCurrency(totals.ars, "ARS")}</p>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -370,7 +370,7 @@ function ProyeccionCard() {
                 {byStatus.map(r => (
                   <div key={r.status} className="flex items-center justify-between text-sm">
                     <span className="text-(--zaire-text-muted)">{ORDER_STATUS_LABELS[r.status as OrderStatus] ?? r.status} ({r.count})</span>
-                    <span className="font-medium text-blue-700">{formatCurrency(r.total_usd, "USD")}</span>
+                    <span className="font-medium text-blue-700 dark:text-blue-300">{formatCurrency(r.total_usd, "USD")}</span>
                   </div>
                 ))}
               </div>
@@ -381,7 +381,7 @@ function ProyeccionCard() {
                 {byClient.map(r => (
                   <div key={r.name} className="flex items-center justify-between text-sm">
                     <span className="text-(--zaire-text-muted) truncate max-w-32">{r.name}</span>
-                    <span className="font-medium text-blue-700">{formatCurrency(r.total_usd, "USD")}</span>
+                    <span className="font-medium text-blue-700 dark:text-blue-300">{formatCurrency(r.total_usd, "USD")}</span>
                   </div>
                 ))}
               </div>
@@ -465,15 +465,15 @@ function PendientesFacturacionCard() {
       {rows && (
         <div className="space-y-3">
           {rows.length === 0 ? (
-            <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+            <p className="text-sm text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-500/15 border border-green-200 dark:border-green-500/30 rounded-lg px-4 py-3">
               ✅ No hay órdenes con ítems pendientes de facturación.
             </p>
           ) : (
             <>
-              <p className="text-sm text-amber-700">{rows.length} orden{rows.length !== 1 ? "es" : ""} con pendientes de facturación</p>
+              <p className="text-sm text-amber-700 dark:text-amber-300">{rows.length} orden{rows.length !== 1 ? "es" : ""} con pendientes de facturación</p>
               <div className="border border-(--zaire-border) rounded-lg overflow-hidden max-h-72 overflow-y-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-50 border-b border-(--zaire-border) sticky top-0">
+                  <thead className="bg-subtle border-b border-(--zaire-border) sticky top-0">
                     <tr>
                       {["Nro. Orden", "Cliente", "Suc.", "Total USD", "Total ARS", "Entregados", "Facturados"].map(h => (
                         <th key={h} className="px-3 py-2 text-left text-xs font-medium text-(--zaire-text-muted) uppercase">{h}</th>
@@ -482,14 +482,14 @@ function PendientesFacturacionCard() {
                   </thead>
                   <tbody className="divide-y divide-(--zaire-border)">
                     {rows.map(r => (
-                      <tr key={r.order_number} className="hover:bg-slate-50">
+                      <tr key={r.order_number} className="hover:bg-subtle">
                         <td className="px-3 py-2 font-mono font-semibold">{r.order_number}</td>
                         <td className="px-3 py-2">{r.client_name}</td>
                         <td className="px-3 py-2 text-xs">{r.branch}</td>
-                        <td className="px-3 py-2 text-blue-700">{formatCurrency(r.total_usd, "USD")}</td>
-                        <td className="px-3 py-2 text-emerald-700">{formatCurrency(r.total_ars, "ARS")}</td>
-                        <td className="px-3 py-2 font-medium text-green-700">{r.delivered}</td>
-                        <td className="px-3 py-2 font-medium text-amber-600">{r.invoiced}</td>
+                        <td className="px-3 py-2 text-blue-700 dark:text-blue-300">{formatCurrency(r.total_usd, "USD")}</td>
+                        <td className="px-3 py-2 text-emerald-700 dark:text-emerald-300">{formatCurrency(r.total_ars, "ARS")}</td>
+                        <td className="px-3 py-2 font-medium text-green-700 dark:text-green-300">{r.delivered}</td>
+                        <td className="px-3 py-2 font-medium text-amber-600 dark:text-amber-300">{r.invoiced}</td>
                       </tr>
                     ))}
                   </tbody>

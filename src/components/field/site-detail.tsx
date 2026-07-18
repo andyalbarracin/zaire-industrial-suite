@@ -36,7 +36,7 @@ export function SiteDetail({ site: initial, clients }: SiteDetailProps) {
           </Link>
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl font-bold text-(--zaire-text)">{site.name}</h1>
-            <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border", site.is_active ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200")}>
+            <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border", site.is_active ? "bg-green-50 dark:bg-green-500/15 text-green-700 dark:text-green-300 border-green-200 dark:border-green-500/30" : "bg-red-50 dark:bg-red-500/15 text-red-700 dark:text-red-300 border-red-200 dark:border-red-500/30")}>
               {site.is_active ? "Activa" : "Inactiva"}
             </span>
           </div>

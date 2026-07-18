@@ -149,7 +149,7 @@ export function LeadForm({ open, onOpenChange, lead, profiles, onSaved }: LeadFo
             <div className="space-y-1.5">
               <Label htmlFor="company_name">Empresa</Label>
               <Input id="company_name" {...register("company_name")} placeholder="Razón social del prospecto" />
-              {errors.company_name && <p className="text-xs text-red-600">{errors.company_name.message}</p>}
+              {errors.company_name && <p className="text-xs text-red-600 dark:text-red-300">{errors.company_name.message}</p>}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="contact_name">Contacto</Label>

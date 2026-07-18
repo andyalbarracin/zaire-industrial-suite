@@ -169,7 +169,7 @@ export function VisitExpensesSection({ visitId, technicianId, initialExpenses, c
               <div className="space-y-1.5">
                 <Label htmlFor="amount">Monto *</Label>
                 <Input id="amount" type="number" step="0.01" {...register("amount")} placeholder="0.00" />
-                {errors.amount && <p className="text-xs text-red-600">{errors.amount.message}</p>}
+                {errors.amount && <p className="text-xs text-red-600 dark:text-red-300">{errors.amount.message}</p>}
               </div>
               <div className="space-y-1.5">
                 <Label>Moneda</Label>

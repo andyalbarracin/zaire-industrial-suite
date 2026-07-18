@@ -118,8 +118,8 @@ export function PipelineView({ initialOpportunities, initialStages, clients, pro
           <div className="flex flex-wrap items-center gap-2">
             <Button onClick={openNew} className="bg-zaire-navy-mid hover:bg-zaire-navy text-white h-9"><Plus className="w-4 h-4 mr-1.5" /> Nueva Oportunidad</Button>
             <div className="inline-flex rounded-lg border border-(--zaire-border) overflow-hidden h-9">
-              <button onClick={exportXLS} title="Exportar a XLS" className="flex items-center gap-1.5 px-3 text-sm font-medium text-(--zaire-text-muted) hover:bg-slate-50"><Download className="w-4 h-4" /> XLS</button>
-              <button onClick={exportCSV} title="Exportar a CSV" className="flex items-center gap-1.5 px-3 text-sm font-medium text-(--zaire-text-muted) hover:bg-slate-50 border-l border-(--zaire-border)"><Download className="w-4 h-4" /> CSV</button>
+              <button onClick={exportXLS} title="Exportar a XLS" className="flex items-center gap-1.5 px-3 text-sm font-medium text-(--zaire-text-muted) hover:bg-subtle"><Download className="w-4 h-4" /> XLS</button>
+              <button onClick={exportCSV} title="Exportar a CSV" className="flex items-center gap-1.5 px-3 text-sm font-medium text-(--zaire-text-muted) hover:bg-subtle border-l border-(--zaire-border)"><Download className="w-4 h-4" /> CSV</button>
             </div>
           </div>
 
@@ -128,13 +128,13 @@ export function PipelineView({ initialOpportunities, initialStages, clients, pro
             <div className="inline-flex rounded-lg border border-(--zaire-border) overflow-hidden">
               <button
                 onClick={() => setView("board")}
-                className={cn("flex items-center gap-1.5 px-3 h-9 text-sm font-medium transition-colors", view === "board" ? "bg-zaire-navy text-white" : "bg-white text-(--zaire-text-muted) hover:bg-slate-50")}
+                className={cn("flex items-center gap-1.5 px-3 h-9 text-sm font-medium transition-colors", view === "board" ? "bg-zaire-navy text-white" : "bg-panel text-(--zaire-text-muted) hover:bg-subtle")}
               >
                 <LayoutGrid className="w-4 h-4" /> Tablero
               </button>
               <button
                 onClick={() => setView("list")}
-                className={cn("flex items-center gap-1.5 px-3 h-9 text-sm font-medium transition-colors border-l border-(--zaire-border)", view === "list" ? "bg-zaire-navy text-white" : "bg-white text-(--zaire-text-muted) hover:bg-slate-50")}
+                className={cn("flex items-center gap-1.5 px-3 h-9 text-sm font-medium transition-colors border-l border-(--zaire-border)", view === "list" ? "bg-zaire-navy text-white" : "bg-panel text-(--zaire-text-muted) hover:bg-subtle")}
               >
                 <List className="w-4 h-4" /> Lista
               </button>
@@ -172,7 +172,7 @@ export function PipelineView({ initialOpportunities, initialStages, clients, pro
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
+              <thead className="bg-subtle border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
                 <tr>
                   <th className="text-left px-4 py-3">Oportunidad</th>
                   <th className="text-left px-4 py-3">Cliente</th>
@@ -188,7 +188,7 @@ export function PipelineView({ initialOpportunities, initialStages, clients, pro
                 {filtered.map((o) => {
                   const st = stageByKey.get(o.stage);
                   return (
-                    <tr key={o.id} onClick={() => openEdit(o)} className="hover:bg-slate-50/80 cursor-pointer">
+                    <tr key={o.id} onClick={() => openEdit(o)} className="hover:bg-subtle/80 cursor-pointer">
                       <td className="px-4 py-3 font-medium text-(--zaire-text)">{o.title}</td>
                       <td className="px-4 py-3 text-(--zaire-text-muted)">{o.client?.business_name ?? "—"}</td>
                       <td className="px-4 py-3">

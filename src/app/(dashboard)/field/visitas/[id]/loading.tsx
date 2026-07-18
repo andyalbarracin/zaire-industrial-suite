@@ -4,15 +4,15 @@
 export default function Loading() {
   return (
     <div className="space-y-6 animate-pulse">
-      <div className="h-8 w-48 bg-slate-200 rounded" />
+      <div className="h-8 w-48 bg-skeleton rounded" />
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="space-y-6">
-          <div className="h-40 w-full bg-slate-200 rounded-xl" />
-          <div className="h-40 w-full bg-slate-200 rounded-xl" />
+          <div className="h-40 w-full bg-skeleton rounded-xl" />
+          <div className="h-40 w-full bg-skeleton rounded-xl" />
         </div>
         <div className="lg:col-span-2 space-y-6">
-          <div className="h-80 w-full bg-slate-200 rounded-xl" />
-          <div className="h-48 w-full bg-slate-200 rounded-xl" />
+          <div className="h-80 w-full bg-skeleton rounded-xl" />
+          <div className="h-48 w-full bg-skeleton rounded-xl" />
         </div>
       </div>
     </div>

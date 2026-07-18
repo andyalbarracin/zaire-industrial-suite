@@ -17,10 +17,10 @@ const PAGE_SIZES = [10, 20, 50, 100];
 
 function scoreClass(s: number) {
   return s >= 66
-    ? "bg-green-50 text-green-700 border-green-200"
+    ? "bg-green-50 dark:bg-green-500/15 text-green-700 dark:text-green-300 border-green-200 dark:border-green-500/30"
     : s >= 33
-      ? "bg-amber-50 text-amber-700 border-amber-200"
-      : "bg-red-50 text-red-700 border-red-200";
+      ? "bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/30"
+      : "bg-red-50 dark:bg-red-500/15 text-red-700 dark:text-red-300 border-red-200 dark:border-red-500/30";
 }
 
 export function AccountsTable({ initialAccounts }: { initialAccounts: CrmAccount[] }) {
@@ -63,7 +63,7 @@ export function AccountsTable({ initialAccounts }: { initialAccounts: CrmAccount
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
+          <thead className="bg-subtle border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
             <tr>
               <th className="text-left px-4 py-3">Cuenta</th>
               <th className="text-center px-4 py-3">Score</th>
@@ -75,7 +75,7 @@ export function AccountsTable({ initialAccounts }: { initialAccounts: CrmAccount
           </thead>
           <tbody className="divide-y divide-(--zaire-border)">
             {pageRows.map((a) => (
-              <tr key={a.client.id} onClick={() => router.push(ROUTES.crm.cuenta(a.client.id))} className="hover:bg-slate-50/80 cursor-pointer">
+              <tr key={a.client.id} onClick={() => router.push(ROUTES.crm.cuenta(a.client.id))} className="hover:bg-subtle/80 cursor-pointer">
                 <td className="px-4 py-3">
                   <div className="font-medium text-(--zaire-text)">{a.client.business_name}</div>
                   {a.client.tax_id && <div className="text-xs text-(--zaire-text-muted) font-mono">{a.client.tax_id}</div>}
@@ -106,7 +106,7 @@ export function AccountsTable({ initialAccounts }: { initialAccounts: CrmAccount
           <span>{filtered.length} cuentas</span>
           <span className="text-(--zaire-border)">·</span>
           <label className="flex items-center gap-1.5">Mostrar
-            <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }} className="h-8 rounded-lg border border-(--zaire-border) bg-white px-2 text-sm text-(--zaire-text)">
+            <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }} className="h-8 rounded-lg border border-(--zaire-border) bg-panel px-2 text-sm text-(--zaire-text)">
               {PAGE_SIZES.map((n) => (<option key={n} value={n}>{n}</option>))}
             </select>
           </label>

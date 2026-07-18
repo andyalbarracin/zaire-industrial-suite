@@ -44,22 +44,22 @@ function NumberPicker({
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-green-700 font-medium mr-1">Cant.:</span>
+      <span className="text-xs text-green-700 dark:text-green-300 font-medium mr-1">Cant.:</span>
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); dec(); }}
         disabled={value <= 0}
         className={cn(
           "w-7 h-7 rounded-md border flex items-center justify-center transition-all",
-          "border-green-300 bg-white text-green-700",
+          "border-green-300 bg-panel text-green-700 dark:text-green-300",
           "hover:bg-green-100 active:scale-95",
           "disabled:opacity-40 disabled:cursor-not-allowed"
         )}
       >
         <Minus className="w-3 h-3" strokeWidth={2.5} />
       </button>
-      <div className="w-10 h-7 rounded-md border border-green-300 bg-white flex items-center justify-center">
-        <span className="text-sm font-bold text-green-800 tabular-nums">{value}</span>
+      <div className="w-10 h-7 rounded-md border border-green-300 bg-panel flex items-center justify-center">
+        <span className="text-sm font-bold text-green-800 dark:text-green-200 tabular-nums">{value}</span>
       </div>
       <button
         type="button"
@@ -67,7 +67,7 @@ function NumberPicker({
         disabled={value >= max}
         className={cn(
           "w-7 h-7 rounded-md border flex items-center justify-center transition-all",
-          "border-green-300 bg-white text-green-700",
+          "border-green-300 bg-panel text-green-700 dark:text-green-300",
           "hover:bg-green-100 active:scale-95",
           "disabled:opacity-40 disabled:cursor-not-allowed"
         )}
@@ -80,7 +80,7 @@ function NumberPicker({
 
 export function ItemStatusChecklist({ values, quantity, onToggle, onQtyChange }: ItemStatusChecklistProps) {
   return (
-    <div className="border border-(--zaire-border) rounded-lg p-3 bg-white">
+    <div className="border border-(--zaire-border) rounded-lg p-3 bg-panel">
       <p className="text-xs font-semibold text-(--zaire-text-muted) uppercase tracking-wide mb-3">
         Estado del ítem
       </p>
@@ -100,30 +100,30 @@ export function ItemStatusChecklist({ values, quantity, onToggle, onQtyChange }:
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-sm transition-all text-left",
                   checked
-                    ? "bg-green-50 border-green-200"
-                    : "bg-white border-(--zaire-border) hover:border-slate-300 hover:bg-slate-50"
+                    ? "bg-green-50 dark:bg-green-500/15 border-green-200 dark:border-green-500/30"
+                    : "bg-panel border-(--zaire-border) hover:border-slate-300 dark:border-slate-600 hover:bg-subtle"
                 )}
               >
                 <span className={cn(
                   "w-5 h-5 rounded flex items-center justify-center shrink-0 border transition-all",
-                  checked ? "bg-green-500 border-green-500" : "border-slate-300 bg-white"
+                  checked ? "bg-green-500 border-green-500" : "border-slate-300 dark:border-slate-600 bg-panel"
                 )}>
                   {checked && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
                 </span>
                 <span className={cn(
                   "flex-1 font-medium",
-                  checked ? "text-green-800" : "text-(--zaire-text-muted)"
+                  checked ? "text-green-800 dark:text-green-200" : "text-(--zaire-text-muted)"
                 )}>
                   {label}
                 </span>
                 {showReadonlyQty && (
-                  <span className="text-xs text-green-600 font-medium">{qty}/{quantity}</span>
+                  <span className="text-xs text-green-600 dark:text-green-300 font-medium">{qty}/{quantity}</span>
                 )}
               </button>
 
               {/* Number picker — solo cuando está marcado, tiene qty y se pasa onQtyChange */}
               {showPicker && (
-                <div className="mt-1 ml-3 px-3 py-2 bg-green-50 rounded-lg border border-green-200">
+                <div className="mt-1 ml-3 px-3 py-2 bg-green-50 dark:bg-green-500/15 rounded-lg border border-green-200 dark:border-green-500/30">
                   <NumberPicker
                     value={qty}
                     max={quantity}

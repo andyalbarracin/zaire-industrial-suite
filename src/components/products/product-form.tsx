@@ -142,12 +142,12 @@ export function ProductForm({ open, onOpenChange, product, onSaved }: ProductFor
             <div className="space-y-1.5">
               <Label>Código</Label>
               <Input {...register("code")} placeholder="SM-001" />
-              {errors.code && <p className="text-xs text-red-600">{errors.code.message}</p>}
+              {errors.code && <p className="text-xs text-red-600 dark:text-red-300">{errors.code.message}</p>}
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Nombre *</Label>
               <Input {...register("name")} placeholder="Nombre del producto" />
-              {errors.name && <p className="text-xs text-red-600">{errors.name.message}</p>}
+              {errors.name && <p className="text-xs text-red-600 dark:text-red-300">{errors.name.message}</p>}
             </div>
           </div>
 

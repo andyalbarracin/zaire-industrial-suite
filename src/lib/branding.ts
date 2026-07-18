@@ -4,6 +4,10 @@
 export const BRANDING = {
   companyName: "Empresa Demo S.A.",
 
+  // Tema por defecto de la suite (un usuario sin preferencia guardada arranca acá).
+  // Cambiar a "bronze" | "azul" | "bordo". Ver src/lib/theme.ts y globals.css.
+  defaultTheme: "azul",
+
   // Suite y sus módulos
   suiteName: "Zaire",
   suiteSubtitle: "Suite Industrial",

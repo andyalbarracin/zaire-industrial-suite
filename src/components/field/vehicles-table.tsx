@@ -114,7 +114,7 @@ export function VehiclesTable({ initialVehicles, technicians }: VehiclesTablePro
       {/* Tabla */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
+          <thead className="bg-subtle border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
             <tr>
               <th className="text-left px-4 py-3">Patente</th>
               <th className="text-left px-4 py-3">Vehículo</th>
@@ -127,14 +127,14 @@ export function VehiclesTable({ initialVehicles, technicians }: VehiclesTablePro
           </thead>
           <tbody className="divide-y divide-(--zaire-border)">
             {pageRows.map((v) => (
-              <tr key={v.id} onClick={() => router.push(ROUTES.field.unidad(v.id))} className="hover:bg-slate-50/80 cursor-pointer">
+              <tr key={v.id} onClick={() => router.push(ROUTES.field.unidad(v.id))} className="hover:bg-subtle/80 cursor-pointer">
                 <td className="px-4 py-3 font-mono font-medium text-(--zaire-text)">{v.plate ?? "—"}</td>
                 <td className="px-4 py-3">{[v.brand, v.model].filter(Boolean).join(" ") || "—"}{v.year ? ` (${v.year})` : ""}</td>
                 <td className="px-4 py-3">{v.type ? VEHICLE_TYPE_LABELS[v.type as VehicleType] : "—"}</td>
                 <td className="px-4 py-3">{branchName(v.branch_id)}</td>
                 <td className="px-4 py-3">{techName(v.assigned_technician_id)}</td>
                 <td className="px-4 py-3">
-                  <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border", v.is_active ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200")}>
+                  <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border", v.is_active ? "bg-green-50 dark:bg-green-500/15 text-green-700 dark:text-green-300 border-green-200 dark:border-green-500/30" : "bg-red-50 dark:bg-red-500/15 text-red-700 dark:text-red-300 border-red-200 dark:border-red-500/30")}>
                     {v.is_active ? "Activa" : "Inactiva"}
                   </span>
                 </td>
@@ -156,7 +156,7 @@ export function VehiclesTable({ initialVehicles, technicians }: VehiclesTablePro
           <span>{filtered.length} registros</span>
           <span className="text-(--zaire-border)">·</span>
           <label className="flex items-center gap-1.5">Mostrar
-            <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }} className="h-8 rounded-lg border border-(--zaire-border) bg-white px-2 text-sm text-(--zaire-text)">
+            <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }} className="h-8 rounded-lg border border-(--zaire-border) bg-panel px-2 text-sm text-(--zaire-text)">
               {PAGE_SIZES.map((n) => (<option key={n} value={n}>{n}</option>))}
             </select>
           </label>

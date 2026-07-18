@@ -12,10 +12,10 @@ export const PRODUCT_CATEGORY_LABELS: Record<ProductCategory, string> = {
 };
 
 export const PRODUCT_CATEGORY_COLORS: Record<ProductCategory, string> = {
-  sello_mecanico: "bg-blue-100 text-blue-700",
-  bomba: "bg-orange-100 text-orange-700",
-  empaquetadura: "bg-purple-100 text-purple-700",
-  spare_part: "bg-gray-100 text-gray-700",
+  sello_mecanico: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
+  bomba: "bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300",
+  empaquetadura: "bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300",
+  spare_part: "bg-gray-100 text-gray-700 dark:bg-gray-500/15 dark:text-gray-300",
   otro: "bg-slate-100 text-slate-600",
 };
 

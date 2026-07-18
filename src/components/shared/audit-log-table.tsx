@@ -14,10 +14,10 @@ import { cn } from "@/lib/utils";
 import type { AuditLog, AuditAction } from "@/lib/types/database";
 
 const ACTION_COLORS: Record<AuditAction, string> = {
-  create: "bg-green-100 text-green-700",
-  update: "bg-blue-100 text-blue-700",
-  delete: "bg-red-100 text-red-700",
-  status_change: "bg-violet-100 text-violet-700",
+  create: "bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300",
+  update: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
+  delete: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300",
+  status_change: "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
 };
 
 const ENTITY_LABELS: Record<string, string> = {
@@ -102,7 +102,7 @@ export function AuditLogTable({ logs }: AuditLogTableProps) {
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-(--zaire-border)">
+          <thead className="bg-subtle border-b border-(--zaire-border)">
             <tr>
               {["Fecha y hora", "Usuario", "Acción", "Entidad", "Descripción", ""].map((h) => (
                 <th key={h} className="px-4 py-3 text-left text-xs font-medium text-(--zaire-text-muted) uppercase tracking-wide whitespace-nowrap">{h}</th>
@@ -122,7 +122,7 @@ export function AuditLogTable({ logs }: AuditLogTableProps) {
                       if (isNavigable) router.push(`${navRoute}/${log.entity_id}`);
                     }}
                     className={cn(
-                      "hover:bg-slate-50 transition-colors",
+                      "hover:bg-subtle transition-colors",
                       isNavigable && "cursor-pointer"
                     )}
                   >
@@ -157,13 +157,13 @@ export function AuditLogTable({ logs }: AuditLogTableProps) {
                     </td>
                   </tr>
                   {expanded && (
-                    <tr className="bg-slate-50">
+                    <tr className="bg-subtle">
                       <td colSpan={6} className="px-4 py-3">
                         <div className="grid grid-cols-2 gap-4">
                           {log.old_data && (
                             <div>
                               <p className="text-xs font-semibold text-(--zaire-text-muted) mb-1 uppercase">Datos anteriores</p>
-                              <pre className="text-xs bg-red-50 border border-red-100 rounded p-2 overflow-x-auto max-h-32">
+                              <pre className="text-xs bg-red-50 dark:bg-red-500/15 border border-red-100 dark:border-red-500/25 rounded p-2 overflow-x-auto max-h-32">
                                 {JSON.stringify(log.old_data, null, 2)}
                               </pre>
                             </div>
@@ -171,7 +171,7 @@ export function AuditLogTable({ logs }: AuditLogTableProps) {
                           {log.new_data && (
                             <div>
                               <p className="text-xs font-semibold text-(--zaire-text-muted) mb-1 uppercase">Datos nuevos</p>
-                              <pre className="text-xs bg-green-50 border border-green-100 rounded p-2 overflow-x-auto max-h-32">
+                              <pre className="text-xs bg-green-50 dark:bg-green-500/15 border border-green-100 dark:border-green-500/25 rounded p-2 overflow-x-auto max-h-32">
                                 {JSON.stringify(log.new_data, null, 2)}
                               </pre>
                             </div>

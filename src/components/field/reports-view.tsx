@@ -15,7 +15,8 @@ import { formatCurrency } from "@/lib/utils";
 import { computeFieldReports, type NameValue } from "@/lib/field/reports";
 import type { FieldVisit, FieldExpense } from "@/lib/field/types";
 
-const COLORS = ["#0B2447", "#19376D", "#576CBC", "#A5D7E8", "#16A34A", "#EAB308", "#DC2626", "#8B5CF6"];
+// Rampa categórica TONAL por tema (var(--chart-1..6)); ver globals.css. Evita el arcoíris.
+const COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "var(--chart-6)"];
 
 interface ReportsViewProps {
   visits: FieldVisit[];
@@ -80,14 +81,16 @@ export function ReportsView({ visits, expenses }: ReportsViewProps) {
           <div className="grid lg:grid-cols-2 gap-6">
             <ChartCard title="Visitas por estado">
               <BarChart data={rep.byStatus}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" /><XAxis dataKey="name" tick={{ fontSize: 11 }} /><YAxis allowDecimals={false} tick={{ fontSize: 11 }} /><Tooltip />
-                <Bar dataKey="value" fill="#576CBC" radius={[4, 4, 0, 0]} name="Visitas" />
+                <defs><linearGradient id="zbar" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--chart-from)" /><stop offset="100%" stopColor="var(--chart-to)" /></linearGradient></defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" /><XAxis dataKey="name" tick={{ fontSize: 11 }} /><YAxis allowDecimals={false} tick={{ fontSize: 11 }} /><Tooltip />
+                <Bar dataKey="value" fill="url(#zbar)" radius={[4, 4, 0, 0]} name="Visitas" />
               </BarChart>
             </ChartCard>
             <ChartCard title="Visitas por sucursal">
               <BarChart data={rep.byBranch}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" /><XAxis dataKey="name" tick={{ fontSize: 11 }} /><YAxis allowDecimals={false} tick={{ fontSize: 11 }} /><Tooltip />
-                <Bar dataKey="value" fill="#19376D" radius={[4, 4, 0, 0]} name="Visitas" />
+                <defs><linearGradient id="zbar" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--chart-from)" /><stop offset="100%" stopColor="var(--chart-to)" /></linearGradient></defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" /><XAxis dataKey="name" tick={{ fontSize: 11 }} /><YAxis allowDecimals={false} tick={{ fontSize: 11 }} /><Tooltip />
+                <Bar dataKey="value" fill="url(#zbar)" radius={[4, 4, 0, 0]} name="Visitas" />
               </BarChart>
             </ChartCard>
           </div>
@@ -114,8 +117,9 @@ export function ReportsView({ visits, expenses }: ReportsViewProps) {
             </ChartCard>
             <ChartCard title="Control de cobranza (visitas facturables)">
               <BarChart data={rep.byBilling}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" /><XAxis dataKey="name" tick={{ fontSize: 11 }} /><YAxis allowDecimals={false} tick={{ fontSize: 11 }} /><Tooltip />
-                <Bar dataKey="value" fill="#EAB308" radius={[4, 4, 0, 0]} name="Visitas" />
+                <defs><linearGradient id="zbar-amber" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--warning)" stopOpacity="1" /><stop offset="100%" stopColor="var(--warning)" stopOpacity="0.14" /></linearGradient></defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" /><XAxis dataKey="name" tick={{ fontSize: 11 }} /><YAxis allowDecimals={false} tick={{ fontSize: 11 }} /><Tooltip />
+                <Bar dataKey="value" fill="url(#zbar-amber)" radius={[4, 4, 0, 0]} name="Visitas" />
               </BarChart>
             </ChartCard>
           </div>

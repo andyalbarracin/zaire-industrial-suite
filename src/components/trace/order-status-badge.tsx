@@ -35,8 +35,8 @@ export function OrderTypeBadge({ type, className }: OrderTypeBadgeProps) {
       className={cn(
         "inline-flex items-center px-2 py-0.5 rounded text-xs font-bold border",
         type === "OT"
-          ? "bg-blue-50 text-blue-700 border-blue-200"
-          : "bg-orange-50 text-orange-700 border-orange-200",
+          ? "bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-500/30"
+          : "bg-orange-50 dark:bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-500/30",
         className
       )}
     >

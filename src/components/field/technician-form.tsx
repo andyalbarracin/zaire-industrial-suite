@@ -125,7 +125,7 @@ export function TechnicianForm({ open, onOpenChange, technician, onSaved }: Tech
           <div className="space-y-1.5">
             <Label htmlFor="full_name">Nombre completo *</Label>
             <Input id="full_name" {...register("full_name")} placeholder="Nombre y apellido" />
-            {errors.full_name && <p className="text-xs text-red-600">{errors.full_name.message}</p>}
+            {errors.full_name && <p className="text-xs text-red-600 dark:text-red-300">{errors.full_name.message}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -147,7 +147,7 @@ export function TechnicianForm({ open, onOpenChange, technician, onSaved }: Tech
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" {...register("email")} placeholder="tecnico@empresa.com" />
-              {errors.email && <p className="text-xs text-red-600">{errors.email.message}</p>}
+              {errors.email && <p className="text-xs text-red-600 dark:text-red-300">{errors.email.message}</p>}
             </div>
           </div>
 

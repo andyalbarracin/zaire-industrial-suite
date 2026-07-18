@@ -35,6 +35,7 @@ import {
   CalendarClock,
   Building2,
   FileText,
+  SlidersHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/lib/routes";
@@ -62,6 +63,7 @@ const NAV_TRACE: NavItem[] = [
 const NAV_GENERAL: NavItem[] = [
   { href: ROUTES.clientes, label: "Clientes", icon: Users },
   { href: ROUTES.historial, label: "Historial", icon: History },
+  { href: ROUTES.preferencias, label: "Preferencias", icon: SlidersHorizontal },
   { href: ROUTES.configuracion, label: "Gestión", icon: Settings, adminOnly: true },
 ];
 
@@ -113,7 +115,7 @@ export function Sidebar({ profile }: SidebarProps) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
     const onField = pathname.startsWith(ROUTES.field.home);
     const onCrm = pathname.startsWith(ROUTES.crm.dashboard);
-    const onGeneral = [ROUTES.clientes, ROUTES.historial, ROUTES.configuracion].some((r) => pathname.startsWith(r));
+    const onGeneral = [ROUTES.clientes, ROUTES.historial, ROUTES.preferencias, ROUTES.configuracion].some((r) => pathname.startsWith(r));
     return { trace: !onField && !onCrm && !onGeneral, field: onField, crm: onCrm, general: onGeneral };
   });
 
@@ -141,7 +143,7 @@ export function Sidebar({ profile }: SidebarProps) {
           "relative flex items-center gap-3 px-3 py-2.5 rounded-[9px] text-[13.5px] font-medium transition-colors duration-140",
           isActive(item.href)
             ? "bg-linear-to-r from-zaire-blue/30 to-zaire-blue/15 text-white before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:rounded-r-[3px] before:bg-zaire-light"
-            : "text-[#B7C5E0] hover:text-white hover:bg-white/6",
+            : "text-(--nav-fg) hover:text-white hover:bg-white/6",
           collapsed && "justify-center px-2"
         )}
         title={collapsed ? item.label : undefined}
@@ -155,7 +157,7 @@ export function Sidebar({ profile }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "flex flex-col h-screen bg-zaire-navy text-white transition-all duration-300 shrink-0 relative",
+        "flex flex-col h-screen zaire-nav text-white transition-all duration-300 shrink-0 relative",
         collapsed ? "w-16" : "w-60"
       )}
     >
@@ -175,7 +177,7 @@ export function Sidebar({ profile }: SidebarProps) {
       {/* Toggle collapse */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-2.75 top-17.5 w-5.5 h-5.5 bg-white border border-(--zaire-border) rounded-[7px] flex items-center justify-center text-(--zaire-text-muted) hover:text-zaire-blue shadow-sm transition-colors duration-150 z-10"
+        className="absolute -right-2.75 top-17.5 w-5.5 h-5.5 bg-surface border border-(--zaire-border) rounded-[7px] flex items-center justify-center text-(--zaire-text-muted) hover:text-zaire-blue shadow-sm transition-colors duration-150 z-10"
         aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
       >
         {collapsed ? (
@@ -206,7 +208,7 @@ export function Sidebar({ profile }: SidebarProps) {
                   onClick={() => setExpanded((e) => ({ ...e, [mod.key]: !e[mod.key] }))}
                   className={cn(
                     "w-full flex items-center gap-2.5 px-4 py-2 text-[11px] font-semibold tracking-widest uppercase transition-colors",
-                    moduleActive ? "text-zaire-light" : "text-[#5C719B] hover:text-[#8ea3cf]"
+                    moduleActive ? "text-zaire-light" : "text-(--nav-label) hover:text-(--nav-fg-muted)"
                   )}
                 >
                   <mod.icon className="w-4 h-4 shrink-0" />
@@ -223,7 +225,7 @@ export function Sidebar({ profile }: SidebarProps) {
       {/* Soporte (Ayuda) */}
       <div className="px-3.5 border-t border-white/[0.07] pt-2 pb-1">
         {!collapsed && (
-          <div className="text-[10px] font-semibold tracking-widest uppercase text-[#5C719B] px-3 pt-1 pb-1.5">Soporte</div>
+          <div className="text-[10px] font-semibold tracking-widest uppercase text-(--nav-label) px-3 pt-1 pb-1.5">Soporte</div>
         )}
         <Link
           href={ROUTES.ayuda}
@@ -231,7 +233,7 @@ export function Sidebar({ profile }: SidebarProps) {
             "relative flex items-center gap-3 px-3 py-2.5 rounded-[9px] text-[13.5px] font-medium transition-colors duration-140",
             isActive(ROUTES.ayuda)
               ? "bg-linear-to-r from-zaire-blue/30 to-zaire-blue/15 text-white before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:rounded-r-[3px] before:bg-zaire-light"
-              : "text-[#B7C5E0] hover:text-white hover:bg-white/6",
+              : "text-(--nav-fg) hover:text-white hover:bg-white/6",
             collapsed && "justify-center px-2"
           )}
           title={collapsed ? "Ayuda" : undefined}

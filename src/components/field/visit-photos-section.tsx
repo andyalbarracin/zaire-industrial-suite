@@ -84,7 +84,7 @@ export function VisitPhotosSection({ visitId, initialPhotos }: VisitPhotosSectio
               <img src={publicUrl(p.storage_path)} alt={p.caption ?? "Foto"} className="w-full h-full object-cover" />
               <button
                 onClick={() => handleDelete(p)}
-                className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 rounded-md p-1 text-red-600 hover:bg-white"
+                className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 rounded-md p-1 text-red-600 dark:text-red-300 hover:bg-panel"
                 title="Eliminar"
               >
                 <Trash2 className="w-3.5 h-3.5" />

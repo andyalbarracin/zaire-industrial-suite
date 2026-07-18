@@ -175,7 +175,7 @@ export function VisitForm({ visit, technicians, vehicles, sites, clients, workOr
           <div className="space-y-1.5">
             <Label>Sucursal *</Label>
             {isEdit ? (
-              <div className="h-9 flex items-center px-3 rounded-lg border border-(--zaire-border) bg-slate-50 text-sm text-(--zaire-text-muted)">
+              <div className="h-9 flex items-center px-3 rounded-lg border border-(--zaire-border) bg-subtle text-sm text-(--zaire-text-muted)">
                 {BRANCHES.find((b) => b.id === branchId)?.name ?? branchId}
               </div>
             ) : (
@@ -194,7 +194,7 @@ export function VisitForm({ visit, technicians, vehicles, sites, clients, workOr
                 </SelectContent>
               </Select>
             )}
-            {errors.branch_id && <p className="text-xs text-red-600">{errors.branch_id.message}</p>}
+            {errors.branch_id && <p className="text-xs text-red-600 dark:text-red-300">{errors.branch_id.message}</p>}
           </div>
 
           {/* Propósito */}

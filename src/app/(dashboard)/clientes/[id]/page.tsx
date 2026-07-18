@@ -52,7 +52,7 @@ export default async function ClientDetailPage({
             <p className="text-sm text-(--zaire-text-muted) font-mono">CUIT: {client.tax_id}</p>
           )}
         </div>
-        <span className={`ml-auto inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${client.is_active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+        <span className={`ml-auto inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${client.is_active ? "bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300" : "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300"}`}>
           {client.is_active ? "Activo" : "Inactivo"}
         </span>
       </div>
@@ -110,7 +110,7 @@ export default async function ClientDetailPage({
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-(--zaire-border)">
+              <thead className="bg-subtle border-b border-(--zaire-border)">
                 <tr>
                   {["Nro Orden", "Tipo", "Estado", "Fecha Ingreso", "Vencimiento", "Total"].map((h) => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-medium text-(--zaire-text-muted) uppercase tracking-wide">{h}</th>
@@ -119,7 +119,7 @@ export default async function ClientDetailPage({
               </thead>
               <tbody className="divide-y divide-(--zaire-border)">
                 {orders?.map((order) => (
-                  <tr key={order.id} className="hover:bg-slate-50">
+                  <tr key={order.id} className="hover:bg-subtle">
                     <td className="px-4 py-3">
                       <Link href={ROUTES.trace.orden(order.id)} className="font-mono text-sm font-medium text-zaire-blue hover:underline">
                         {order.order_number}

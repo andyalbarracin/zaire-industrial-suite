@@ -167,7 +167,7 @@ export function TechnicianDetail({ technician: initial, contacts: initialContact
           </Link>
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl font-bold text-(--zaire-text)">{tech.full_name}</h1>
-            <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border", tech.is_active ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200")}>
+            <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border", tech.is_active ? "bg-green-50 dark:bg-green-500/15 text-green-700 dark:text-green-300 border-green-200 dark:border-green-500/30" : "bg-red-50 dark:bg-red-500/15 text-red-700 dark:text-red-300 border-red-200 dark:border-red-500/30")}>
               {tech.is_active ? "Activo" : "Inactivo"}
             </span>
           </div>
@@ -179,7 +179,7 @@ export function TechnicianDetail({ technician: initial, contacts: initialContact
         {/* Foto + datos */}
         <div className="zaire-card p-5 space-y-4">
           <div className="flex flex-col items-center gap-3">
-            <div className="w-28 h-28 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center border border-(--zaire-border)">
+            <div className="w-28 h-28 rounded-full overflow-hidden bg-subtle-2 flex items-center justify-center border border-(--zaire-border)">
               {photoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={photoUrl} alt={tech.full_name} className="w-full h-full object-cover" />
@@ -187,7 +187,7 @@ export function TechnicianDetail({ technician: initial, contacts: initialContact
             </div>
             <label className="inline-flex">
               <input type="file" accept="image/*" className="hidden" onChange={(e) => uploadPhoto(e.target.files)} />
-              <span className={cn("inline-flex items-center h-8 px-3 rounded-lg text-xs font-medium cursor-pointer border border-(--zaire-border) hover:bg-slate-50", uploading && "opacity-60 pointer-events-none")}>
+              <span className={cn("inline-flex items-center h-8 px-3 rounded-lg text-xs font-medium cursor-pointer border border-(--zaire-border) hover:bg-subtle", uploading && "opacity-60 pointer-events-none")}>
                 <Upload className="w-3.5 h-3.5 mr-1.5" /> Foto
               </span>
             </label>
@@ -227,7 +227,7 @@ export function TechnicianDetail({ technician: initial, contacts: initialContact
                       <li key={c.id} className="flex items-center gap-3 py-2.5">
                         <span className="text-xs font-medium text-(--zaire-text-muted) w-32 shrink-0">{c.kind ? CONTACT_KIND_LABELS[c.kind] : "Otro"}{c.label ? ` · ${c.label}` : ""}</span>
                         <span className="flex-1 text-sm text-(--zaire-text)">{c.value}</span>
-                        <button onClick={() => deleteContact(c)} className="text-red-600 hover:text-red-700"><Trash2 className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => deleteContact(c)} className="text-red-600 dark:text-red-300 hover:text-red-700 dark:text-red-300"><Trash2 className="w-3.5 h-3.5" /></button>
                       </li>
                     ))}
                   </ul>
@@ -257,12 +257,12 @@ export function TechnicianDetail({ technician: initial, contacts: initialContact
                   <h3 className="text-sm font-semibold text-(--zaire-text) mb-3">Imágenes</h3>
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                     {photos.map((f) => (
-                      <div key={f.id} className="relative group aspect-square rounded-lg overflow-hidden border border-(--zaire-border) bg-slate-100">
+                      <div key={f.id} className="relative group aspect-square rounded-lg overflow-hidden border border-(--zaire-border) bg-subtle-2">
                         {urls[f.id] ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={urls[f.id]} alt={f.title ?? "img"} className="w-full h-full object-cover" />
                         ) : <div className="w-full h-full animate-pulse" />}
-                        <button onClick={() => deleteFile(f)} className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 bg-white/90 rounded p-1 text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => deleteFile(f)} className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 bg-white/90 rounded p-1 text-red-600 dark:text-red-300"><Trash2 className="w-3.5 h-3.5" /></button>
                       </div>
                     ))}
                   </div>
@@ -279,7 +279,7 @@ export function TechnicianDetail({ technician: initial, contacts: initialContact
                         <FileText className="w-4 h-4 text-zaire-blue shrink-0" />
                         <button onClick={() => openFile(f.storage_path)} className="flex-1 text-left text-sm text-zaire-blue hover:underline truncate">{f.title ?? f.storage_path}</button>
                         <span className="text-xs text-(--zaire-text-muted)">{TECHNICIAN_FILE_CATEGORY_LABELS[f.category ?? "otro"]}</span>
-                        <button onClick={() => deleteFile(f)} className="text-red-600 hover:text-red-700"><Trash2 className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => deleteFile(f)} className="text-red-600 dark:text-red-300 hover:text-red-700 dark:text-red-300"><Trash2 className="w-3.5 h-3.5" /></button>
                       </li>
                     ))}
                   </ul>

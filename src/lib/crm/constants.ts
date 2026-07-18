@@ -42,11 +42,11 @@ export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
 };
 
 export const LEAD_STATUS_COLORS: Record<LeadStatus, string> = {
-  nuevo: "bg-slate-100 text-slate-700 border-slate-200",
-  contactado: "bg-blue-100 text-blue-700 border-blue-200",
-  calificado: "bg-violet-100 text-violet-700 border-violet-200",
-  convertido: "bg-green-100 text-green-700 border-green-200",
-  descartado: "bg-red-100 text-red-700 border-red-200",
+  nuevo: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-500/15 dark:text-slate-300 dark:border-slate-500/25",
+  contactado: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/25",
+  calificado: "bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-500/15 dark:text-violet-300 dark:border-violet-500/25",
+  convertido: "bg-green-100 text-green-700 border-green-200 dark:bg-green-500/15 dark:text-green-300 dark:border-green-500/25",
+  descartado: "bg-red-100 text-red-700 border-red-200 dark:bg-red-500/15 dark:text-red-300 dark:border-red-500/25",
 };
 
 // Transiciones válidas del lead (calificado puede convertir; convertido/descartado son finales).
@@ -77,12 +77,12 @@ export const STAGE_DOT: Record<string, string> = {
 
 // Badge (pill de etapa en la lista/tabla).
 export const STAGE_BADGE: Record<string, string> = {
-  slate: "bg-slate-100 text-slate-700 border-slate-200", blue: "bg-blue-100 text-blue-700 border-blue-200",
-  violet: "bg-violet-100 text-violet-700 border-violet-200", amber: "bg-amber-100 text-amber-700 border-amber-200",
-  cyan: "bg-cyan-100 text-cyan-700 border-cyan-200", green: "bg-green-100 text-green-700 border-green-200",
-  lime: "bg-lime-100 text-lime-700 border-lime-200", indigo: "bg-indigo-100 text-indigo-700 border-indigo-200",
-  red: "bg-red-100 text-red-700 border-red-200", orange: "bg-orange-100 text-orange-700 border-orange-200",
-  teal: "bg-teal-100 text-teal-700 border-teal-200", pink: "bg-pink-100 text-pink-700 border-pink-200",
+  slate: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-500/15 dark:text-slate-300 dark:border-slate-500/25", blue: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/25",
+  violet: "bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-500/15 dark:text-violet-300 dark:border-violet-500/25", amber: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/25",
+  cyan: "bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-500/15 dark:text-cyan-300 dark:border-cyan-500/25", green: "bg-green-100 text-green-700 border-green-200 dark:bg-green-500/15 dark:text-green-300 dark:border-green-500/25",
+  lime: "bg-lime-100 text-lime-700 border-lime-200 dark:bg-lime-500/15 dark:text-lime-300 dark:border-lime-500/25", indigo: "bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-500/15 dark:text-indigo-300 dark:border-indigo-500/25",
+  red: "bg-red-100 text-red-700 border-red-200 dark:bg-red-500/15 dark:text-red-300 dark:border-red-500/25", orange: "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-500/15 dark:text-orange-300 dark:border-orange-500/25",
+  teal: "bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-500/15 dark:text-teal-300 dark:border-teal-500/25", pink: "bg-pink-100 text-pink-700 border-pink-200 dark:bg-pink-500/15 dark:text-pink-300 dark:border-pink-500/25",
 };
 
 export const stageDot = (color: string) => STAGE_DOT[color] ?? STAGE_DOT.slate;
@@ -121,9 +121,9 @@ export const QUOTE_STATUS_LABELS: Record<QuoteStatus, string> = {
 };
 
 export const QUOTE_STATUS_COLORS: Record<QuoteStatus, string> = {
-  borrador: "bg-slate-100 text-slate-700 border-slate-200",
-  enviada: "bg-blue-100 text-blue-700 border-blue-200",
-  aceptada: "bg-green-100 text-green-700 border-green-200",
-  rechazada: "bg-red-100 text-red-700 border-red-200",
-  vencida: "bg-amber-100 text-amber-700 border-amber-200",
+  borrador: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-500/15 dark:text-slate-300 dark:border-slate-500/25",
+  enviada: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/25",
+  aceptada: "bg-green-100 text-green-700 border-green-200 dark:bg-green-500/15 dark:text-green-300 dark:border-green-500/25",
+  rechazada: "bg-red-100 text-red-700 border-red-200 dark:bg-red-500/15 dark:text-red-300 dark:border-red-500/25",
+  vencida: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/25",
 };

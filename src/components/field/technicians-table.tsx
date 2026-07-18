@@ -93,7 +93,7 @@ export function TechniciansTable({ initialTechnicians }: TechniciansTableProps) 
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
+          <thead className="bg-subtle border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
             <tr>
               <th className="text-left px-4 py-3">Nombre</th>
               <th className="text-left px-4 py-3">DNI</th>
@@ -106,14 +106,14 @@ export function TechniciansTable({ initialTechnicians }: TechniciansTableProps) 
           </thead>
           <tbody className="divide-y divide-(--zaire-border)">
             {pageRows.map((t) => (
-              <tr key={t.id} onClick={() => router.push(ROUTES.field.tecnico(t.id))} className="hover:bg-slate-50/80 cursor-pointer">
+              <tr key={t.id} onClick={() => router.push(ROUTES.field.tecnico(t.id))} className="hover:bg-subtle/80 cursor-pointer">
                 <td className="px-4 py-3 font-medium text-(--zaire-text)">{t.full_name}</td>
                 <td className="px-4 py-3">{t.document_id ?? "—"}</td>
                 <td className="px-4 py-3">{branchName(t.branch_id)}</td>
                 <td className="px-4 py-3 font-mono text-xs">{t.license_number ?? "—"}</td>
                 <td className="px-4 py-3">{t.phone ?? "—"}</td>
                 <td className="px-4 py-3">
-                  <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border", t.is_active ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200")}>
+                  <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border", t.is_active ? "bg-green-50 dark:bg-green-500/15 text-green-700 dark:text-green-300 border-green-200 dark:border-green-500/30" : "bg-red-50 dark:bg-red-500/15 text-red-700 dark:text-red-300 border-red-200 dark:border-red-500/30")}>
                     {t.is_active ? "Activo" : "Inactivo"}
                   </span>
                 </td>
@@ -134,7 +134,7 @@ export function TechniciansTable({ initialTechnicians }: TechniciansTableProps) 
           <span>{filtered.length} registros</span>
           <span className="text-(--zaire-border)">·</span>
           <label className="flex items-center gap-1.5">Mostrar
-            <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }} className="h-8 rounded-lg border border-(--zaire-border) bg-white px-2 text-sm text-(--zaire-text)">
+            <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }} className="h-8 rounded-lg border border-(--zaire-border) bg-panel px-2 text-sm text-(--zaire-text)">
               {PAGE_SIZES.map((n) => (<option key={n} value={n}>{n}</option>))}
             </select>
           </label>

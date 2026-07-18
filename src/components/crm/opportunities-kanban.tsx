@@ -92,16 +92,16 @@ export function OpportunitiesKanban({ opportunities, stages, onEdit, onRequestDe
                 onDragLeave={() => setOverStage((s) => (s === col.key ? null : s))}
                 onDrop={(e) => { e.preventDefault(); handleDrop(col.key); }}
                 className={cn(
-                  "w-64 shrink-0 rounded-xl border bg-slate-50/60 flex flex-col max-h-[calc(100vh-19rem)]",
-                  isTarget && valid && "border-green-400 bg-green-50/60 ring-1 ring-green-300",
+                  "w-64 shrink-0 rounded-xl border bg-subtle/60 flex flex-col max-h-[calc(100vh-19rem)]",
+                  isTarget && valid && "border-green-400 bg-green-50 dark:bg-green-500/15/60 ring-1 ring-green-300",
                   !isTarget && "border-(--zaire-border)"
                 )}
               >
-                <div className="px-3 py-2.5 border-b border-(--zaire-border) sticky top-0 bg-slate-50/90 backdrop-blur-sm rounded-t-xl">
+                <div className="px-3 py-2.5 border-b border-(--zaire-border) sticky top-0 bg-subtle/90 backdrop-blur-sm rounded-t-xl">
                   <div className="flex items-center gap-2">
                     <span className={cn("w-2 h-2 rounded-full shrink-0", stageDot(col.color))} />
                     <span className="text-xs font-semibold text-(--zaire-text) uppercase tracking-wide truncate">{col.name}</span>
-                    <span className="ml-auto text-xs font-semibold text-(--zaire-text-muted) bg-white border border-(--zaire-border) rounded-full px-1.5 min-w-5 text-center">{list.length}</span>
+                    <span className="ml-auto text-xs font-semibold text-(--zaire-text-muted) bg-panel border border-(--zaire-border) rounded-full px-1.5 min-w-5 text-center">{list.length}</span>
                   </div>
                   {(totalArs > 0 || totalUsd > 0) && (
                     <div className="mt-1 text-[10px] text-(--zaire-text-muted) tabular-nums">
@@ -125,7 +125,7 @@ export function OpportunitiesKanban({ opportunities, stages, onEdit, onRequestDe
                           onDragStart={() => setDragging({ id: o.id, stage: o.stage })}
                           onDragEnd={() => { setDragging(null); setOverStage(null); }}
                           className={cn(
-                            "group bg-white border border-(--zaire-border) rounded-lg p-2.5 shadow-sm cursor-grab active:cursor-grabbing transition-opacity",
+                            "group bg-panel border border-(--zaire-border) rounded-lg p-2.5 shadow-sm cursor-grab active:cursor-grabbing transition-opacity",
                             isDragging && "opacity-40"
                           )}
                         >
@@ -138,10 +138,10 @@ export function OpportunitiesKanban({ opportunities, stages, onEdit, onRequestDe
                               {o.title}
                             </button>
                             <div className="flex items-center gap-0.5 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
-                              <button type="button" onClick={() => onEdit(o)} title="Editar" className="p-0.5 rounded hover:bg-slate-100 text-(--zaire-text-muted) hover:text-zaire-blue">
+                              <button type="button" onClick={() => onEdit(o)} title="Editar" className="p-0.5 rounded hover:bg-subtle-2 text-(--zaire-text-muted) hover:text-zaire-blue">
                                 <Pencil className="w-3.5 h-3.5" />
                               </button>
-                              <button type="button" onClick={() => onRequestDelete(o)} title="Eliminar" className="p-0.5 rounded hover:bg-red-50 text-(--zaire-text-muted) hover:text-red-600">
+                              <button type="button" onClick={() => onRequestDelete(o)} title="Eliminar" className="p-0.5 rounded hover:bg-red-50 dark:bg-red-500/15 text-(--zaire-text-muted) hover:text-red-600 dark:text-red-300">
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </div>

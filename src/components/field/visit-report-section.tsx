@@ -240,25 +240,25 @@ export function VisitReportSection({ visitId, report, visit, clientWorkOrders, c
             )}
             {reqStatus === "solicitada" && (
               <>
-                <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">OT/OTS solicitada</span>
+                <span className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/30 rounded-full px-2 py-0.5">OT/OTS solicitada</span>
                 {isAdmin && (
                   <>
                     <Button size="sm" variant="outline" className="h-8" onClick={() => setLinkOpen(true)} title="Vincular una OT existente (admin)">
                       <Link2 className="w-4 h-4 mr-1" /> Vincular OT
                     </Button>
-                    <Button size="sm" variant="ghost" className="h-8 text-red-600" onClick={() => setReqStatus("rechazada")} title="Rechazar solicitud (admin)">Rechazar</Button>
+                    <Button size="sm" variant="ghost" className="h-8 text-red-600 dark:text-red-300" onClick={() => setReqStatus("rechazada")} title="Rechazar solicitud (admin)">Rechazar</Button>
                   </>
                 )}
               </>
             )}
             {reqStatus === "vinculada" && (
-              <span className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">
+              <span className="text-xs text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-500/15 border border-green-200 dark:border-green-500/30 rounded-full px-2 py-0.5">
                 OT vinculada{visit.work_order_number ? `: ${visit.work_order_number}` : ""}
               </span>
             )}
             {reqStatus === "rechazada" && (
               <>
-                <span className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-full px-2 py-0.5">Solicitud rechazada</span>
+                <span className="text-xs text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-500/15 border border-red-200 dark:border-red-500/30 rounded-full px-2 py-0.5">Solicitud rechazada</span>
                 {isAdmin && <Button size="sm" variant="ghost" className="h-8" onClick={() => setReqStatus("solicitada")}>Reabrir</Button>}
               </>
             )}
@@ -300,7 +300,7 @@ export function VisitReportSection({ visitId, report, visit, clientWorkOrders, c
               con los datos técnicos del reporte (medida, marca, materiales…) para no recargarlos.
             </p>
             {clientWorkOrders.length === 0 ? (
-              <p className="text-sm text-amber-600">El cliente de la visita no tiene OTs. Creá una en Zaire Trace primero.</p>
+              <p className="text-sm text-amber-600 dark:text-amber-300">El cliente de la visita no tiene OTs. Creá una en Zaire Trace primero.</p>
             ) : (
               <div className="space-y-1.5">
                 <Label>OT destino</Label>

@@ -20,7 +20,7 @@ export function TableSkeleton({ rows = 8, cols = 6 }: { rows?: number; cols?: nu
           {Array.from({ length: cols }).map((_, j) => (
             <div
               key={j}
-              className="h-9 bg-slate-100 rounded flex-1"
+              className="h-9 bg-subtle-2 rounded flex-1"
               style={{ flex: j === 0 ? "0 0 140px" : 1 }}
             />
           ))}

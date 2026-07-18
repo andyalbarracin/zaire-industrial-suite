@@ -47,7 +47,7 @@ export function AccountDetail(props: AccountDetailProps) {
     contactsCount: contacts.length,
     lastActivityAt,
   });
-  const scoreCls = score >= 66 ? "bg-green-50 text-green-700 border-green-200" : score >= 33 ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-red-50 text-red-700 border-red-200";
+  const scoreCls = score >= 66 ? "bg-green-50 dark:bg-green-500/15 text-green-700 dark:text-green-300 border-green-200 dark:border-green-500/30" : score >= 33 ? "bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/30" : "bg-red-50 dark:bg-red-500/15 text-red-700 dark:text-red-300 border-red-200 dark:border-red-500/30";
   const siteMarkers: MapMarker[] = sites
     .filter((s) => s.latitude != null && s.longitude != null)
     .map((s) => ({ id: s.id, lat: s.latitude!, lng: s.longitude!, kind: "site", label: s.name }));
@@ -108,7 +108,7 @@ export function AccountDetail(props: AccountDetailProps) {
                   <ul className="divide-y divide-(--zaire-border)">
                     {contacts.map((c) => (
                       <li key={c.id}>
-                        <Link href={ROUTES.crm.contacto(c.id)} className="flex items-center gap-3 py-2.5 hover:bg-slate-50/60 -mx-2 px-2 rounded">
+                        <Link href={ROUTES.crm.contacto(c.id)} className="flex items-center gap-3 py-2.5 hover:bg-subtle/60 -mx-2 px-2 rounded">
                           {c.is_primary && <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-400 shrink-0" />}
                           <span className="font-medium text-(--zaire-text) w-48 truncate">{c.full_name}</span>
                           <span className="text-xs text-(--zaire-text-muted) flex-1 truncate">{c.role_title ?? ""}</span>

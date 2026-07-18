@@ -232,7 +232,7 @@ export function QuoteForm({ quote, opportunities, clients, products, lastPrices 
         <div className="px-5 py-3 border-b border-(--zaire-border)"><h2 className="text-sm font-semibold text-(--zaire-text)">Ítems del presupuesto</h2></div>
         <div className="overflow-x-auto">
           <div className="min-w-180">
-            <div className="grid grid-cols-[1fr_90px_120px_120px_120px_40px] gap-2 bg-slate-50 px-5 py-2 text-[11px] font-semibold uppercase tracking-wide text-(--zaire-text-muted)">
+            <div className="grid grid-cols-[1fr_90px_120px_120px_120px_40px] gap-2 bg-subtle px-5 py-2 text-[11px] font-semibold uppercase tracking-wide text-(--zaire-text-muted)">
               <span>Descripción</span><span className="text-right">Cant.</span><span className="text-right">Costo</span><span className="text-right">Precio</span><span className="text-right">Subtotal</span><span></span>
             </div>
             <div className="divide-y divide-(--zaire-border)">
@@ -247,7 +247,7 @@ export function QuoteForm({ quote, opportunities, clients, products, lastPrices 
                       <Input type="number" step="0.01" value={it.unit_cost} onChange={(e) => updateItem(i, { unit_cost: e.target.value })} className="h-8 text-right" />
                       <Input type="number" step="0.01" value={it.unit_price} onChange={(e) => updateItem(i, { unit_price: e.target.value })} className="h-8 text-right" />
                       <span className="text-sm text-(--zaire-text) tabular-nums text-right">{formatCurrency(line, currency)}</span>
-                      <button type="button" onClick={() => setItems((prev) => prev.filter((_, idx) => idx !== i))} className="text-(--zaire-text-muted) hover:text-red-600 flex justify-center" title="Quitar"><Trash2 className="w-4 h-4" /></button>
+                      <button type="button" onClick={() => setItems((prev) => prev.filter((_, idx) => idx !== i))} className="text-(--zaire-text-muted) hover:text-red-600 dark:text-red-300 flex justify-center" title="Quitar"><Trash2 className="w-4 h-4" /></button>
                     </div>
                     <div className="grid grid-cols-[180px_1fr] gap-2 items-center">
                       <Select value={it.product_id ?? NONE} onValueChange={(v) => pickProduct(i, v ?? NONE)}>
@@ -266,7 +266,7 @@ export function QuoteForm({ quote, opportunities, clients, products, lastPrices 
             </div>
           </div>
         </div>
-        <button type="button" onClick={() => setItems((prev) => [...prev, emptyRow()])} className="w-full flex items-center justify-center gap-1.5 py-2.5 text-sm text-zaire-blue hover:bg-slate-50 border-t border-(--zaire-border)">
+        <button type="button" onClick={() => setItems((prev) => [...prev, emptyRow()])} className="w-full flex items-center justify-center gap-1.5 py-2.5 text-sm text-zaire-blue hover:bg-subtle border-t border-(--zaire-border)">
           <Plus className="w-4 h-4" /> Agregar ítem
         </button>
       </div>
@@ -275,7 +275,7 @@ export function QuoteForm({ quote, opportunities, clients, products, lastPrices 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Summary label="Subtotal" value={formatCurrency(totals.subtotal, currency)} />
         <Summary label="Costo" value={formatCurrency(totals.totalCost, currency)} />
-        <Summary label={`Margen (${totals.marginPct.toFixed(1)}%)`} value={formatCurrency(totals.marginAmount, currency)} accent={totals.marginAmount >= 0 ? "text-green-600" : "text-red-600"} />
+        <Summary label={`Margen (${totals.marginPct.toFixed(1)}%)`} value={formatCurrency(totals.marginAmount, currency)} accent={totals.marginAmount >= 0 ? "text-green-600 dark:text-green-300" : "text-red-600 dark:text-red-300"} />
         <Summary label={`Total (c/${num(taxPct)}%)`} value={formatCurrency(totals.total, currency)} strong />
       </div>
 
@@ -308,7 +308,7 @@ export function QuoteForm({ quote, opportunities, clients, products, lastPrices 
 
 function Summary({ label, value, accent, strong }: { label: string; value: string; accent?: string; strong?: boolean }) {
   return (
-    <div className="rounded-lg border border-(--zaire-border) bg-white p-3">
+    <div className="rounded-lg border border-(--zaire-border) bg-panel p-3">
       <p className="text-[11px] text-(--zaire-text-muted) font-medium">{label}</p>
       <p className={cn("tabular-nums mt-0.5", strong ? "text-lg font-bold text-(--zaire-text)" : "text-sm font-semibold", accent ?? "text-(--zaire-text)")}>{value}</p>
     </div>

@@ -40,7 +40,7 @@ export function FilterBar({ groups, onClear }: FilterBarProps) {
                   "px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
                   active
                     ? g.activeClass ?? "bg-zaire-navy text-white border-zaire-navy"
-                    : "bg-white text-(--zaire-text-muted) border-(--zaire-border) hover:bg-slate-50"
+                    : "bg-panel text-(--zaire-text-muted) border-(--zaire-border) hover:bg-subtle"
                 )}
               >
                 {o.label}

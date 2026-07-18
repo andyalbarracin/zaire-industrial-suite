@@ -91,7 +91,7 @@ export function VisitsTable({ initialVisits }: VisitsTableProps) {
         accessorKey: "branch_id",
         header: "Sucursal",
         cell: ({ getValue }) => (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-subtle-2 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
             {branchName(getValue() as string | null)}
           </span>
         ),
@@ -214,7 +214,7 @@ export function VisitsTable({ initialVisits }: VisitsTableProps) {
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-(--zaire-border)">
+          <thead className="bg-subtle border-b border-(--zaire-border)">
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
                 {hg.headers.map((header) => {
@@ -234,7 +234,7 @@ export function VisitsTable({ initialVisits }: VisitsTableProps) {
                 key={row.id}
                 onClick={() => router.push(ROUTES.field.visita(row.original.id))}
                 className={cn(
-                  "hover:bg-slate-50/80 transition-colors duration-100 cursor-pointer",
+                  "hover:bg-subtle/80 transition-colors duration-100 cursor-pointer",
                   row.original.status === "cancelada" && "opacity-55"
                 )}
               >
@@ -262,7 +262,7 @@ export function VisitsTable({ initialVisits }: VisitsTableProps) {
           <span>{table.getFilteredRowModel().rows.length} registros</span>
           <span className="text-(--zaire-border)">·</span>
           <label className="flex items-center gap-1.5">Mostrar
-            <select value={table.getState().pagination.pageSize} onChange={(e) => table.setPageSize(Number(e.target.value))} className="h-8 rounded-lg border border-(--zaire-border) bg-white px-2 text-sm text-(--zaire-text)">
+            <select value={table.getState().pagination.pageSize} onChange={(e) => table.setPageSize(Number(e.target.value))} className="h-8 rounded-lg border border-(--zaire-border) bg-panel px-2 text-sm text-(--zaire-text)">
               {[10, 20, 50, 100].map((n) => (<option key={n} value={n}>{n}</option>))}
             </select>
           </label>

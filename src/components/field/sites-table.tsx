@@ -108,7 +108,7 @@ export function SitesTable({ initialSites, clients }: SitesTableProps) {
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
+            <thead className="bg-subtle border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
               <tr>
                 <th className="text-left px-4 py-3">Planta</th>
                 <th className="text-left px-4 py-3">Cliente</th>
@@ -123,14 +123,14 @@ export function SitesTable({ initialSites, clients }: SitesTableProps) {
               {pageRows.map((s) => {
                 const hasCoords = s.latitude != null && s.longitude != null;
                 return (
-                  <tr key={s.id} onClick={() => router.push(ROUTES.field.planta(s.id))} className="hover:bg-slate-50/80 cursor-pointer">
+                  <tr key={s.id} onClick={() => router.push(ROUTES.field.planta(s.id))} className="hover:bg-subtle/80 cursor-pointer">
                     <td className="px-4 py-3 font-medium text-(--zaire-text)">{s.name}</td>
                     <td className="px-4 py-3">{s.client?.business_name ?? "—"}</td>
                     <td className="px-4 py-3">{s.city ?? "—"}</td>
                     <td className="px-4 py-3">{s.province ?? "—"}</td>
-                    <td className="px-4 py-3">{hasCoords ? <span className="text-xs">{s.geofence_radius_m} m</span> : <span className="text-xs text-amber-600">Sin ubicación</span>}</td>
+                    <td className="px-4 py-3">{hasCoords ? <span className="text-xs">{s.geofence_radius_m} m</span> : <span className="text-xs text-amber-600 dark:text-amber-300">Sin ubicación</span>}</td>
                     <td className="px-4 py-3">
-                      <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border", s.is_active ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200")}>{s.is_active ? "Activa" : "Inactiva"}</span>
+                      <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border", s.is_active ? "bg-green-50 dark:bg-green-500/15 text-green-700 dark:text-green-300 border-green-200 dark:border-green-500/30" : "bg-red-50 dark:bg-red-500/15 text-red-700 dark:text-red-300 border-red-200 dark:border-red-500/30")}>{s.is_active ? "Activa" : "Inactiva"}</span>
                     </td>
                     <td className="px-4 py-3 text-right" onClick={(ev) => ev.stopPropagation()}>
                       <Button variant="ghost" size="sm" onClick={() => router.push(ROUTES.field.planta(s.id))} title="Ver ficha"><Pencil className="w-3.5 h-3.5" /></Button>
@@ -150,7 +150,7 @@ export function SitesTable({ initialSites, clients }: SitesTableProps) {
             <span>{filtered.length} registros</span>
             <span className="text-(--zaire-border)">·</span>
             <label className="flex items-center gap-1.5">Mostrar
-              <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }} className="h-8 rounded-lg border border-(--zaire-border) bg-white px-2 text-sm text-(--zaire-text)">
+              <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }} className="h-8 rounded-lg border border-(--zaire-border) bg-panel px-2 text-sm text-(--zaire-text)">
                 {PAGE_SIZES.map((n) => (<option key={n} value={n}>{n}</option>))}
               </select>
             </label>

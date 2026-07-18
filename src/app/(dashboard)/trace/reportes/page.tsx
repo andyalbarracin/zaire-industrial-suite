@@ -20,7 +20,7 @@ export default function ReportesPage() {
       </div>
 
       <Tabs defaultValue="auditoria">
-        <TabsList className="bg-white border border-(--zaire-border)">
+        <TabsList className="bg-panel border border-(--zaire-border)">
           <TabsTrigger value="auditoria" className="flex items-center gap-1.5">
             <ShieldCheck className="w-4 h-4" /> Auditoría
           </TabsTrigger>

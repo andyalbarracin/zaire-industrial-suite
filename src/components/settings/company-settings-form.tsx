@@ -210,7 +210,7 @@ export function CompanySettingsForm({ settings }: CompanySettingsFormProps) {
             <img
               src={logoPreview}
               alt="Logo actual"
-              className="h-20 max-w-60 object-contain border border-(--zaire-border) rounded-lg p-2 bg-white"
+              className="h-20 max-w-60 object-contain border border-(--zaire-border) rounded-lg p-2 bg-panel"
             />
             <button
               type="button"
@@ -222,7 +222,7 @@ export function CompanySettingsForm({ settings }: CompanySettingsFormProps) {
             </button>
           </div>
         ) : (
-          <div className="w-60 h-20 border-2 border-dashed border-(--zaire-border) rounded-lg flex items-center justify-center mb-4 bg-slate-50">
+          <div className="w-60 h-20 border-2 border-dashed border-(--zaire-border) rounded-lg flex items-center justify-center mb-4 bg-subtle">
             <div className="text-center">
               <ImageIcon className="w-6 h-6 text-(--zaire-text-muted) mx-auto mb-1" />
               <p className="text-xs text-(--zaire-text-muted)">Sin logo</p>

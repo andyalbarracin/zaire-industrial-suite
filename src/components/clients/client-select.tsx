@@ -57,7 +57,7 @@ export function ClientSelect({ clients, value, onChange, disabled }: ClientSelec
         <div className="max-h-60 overflow-y-auto space-y-0.5">
           <button
             type="button"
-            className="w-full text-left px-3 py-2 text-sm rounded hover:bg-slate-100 text-(--zaire-text-muted)"
+            className="w-full text-left px-3 py-2 text-sm rounded hover:bg-subtle-2 text-(--zaire-text-muted)"
             onClick={() => { onChange(null); setOpen(false); }}
           >
             — Sin cliente —
@@ -66,7 +66,7 @@ export function ClientSelect({ clients, value, onChange, disabled }: ClientSelec
             <button
               key={client.id}
               type="button"
-              className="w-full text-left px-3 py-2 text-sm rounded hover:bg-slate-100 flex items-center gap-2"
+              className="w-full text-left px-3 py-2 text-sm rounded hover:bg-subtle-2 flex items-center gap-2"
               onClick={() => { onChange(client.id); setOpen(false); setSearch(""); }}
             >
               <Check

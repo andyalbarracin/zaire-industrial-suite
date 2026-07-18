@@ -99,7 +99,7 @@ export function QuotesTable({ initialQuotes }: { initialQuotes: CrmQuote[] }) {
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
+            <thead className="bg-subtle border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
               <tr>
                 <th className="text-left px-4 py-3">N°</th>
                 <th className="text-left px-4 py-3">Título</th>
@@ -113,7 +113,7 @@ export function QuotesTable({ initialQuotes }: { initialQuotes: CrmQuote[] }) {
             </thead>
             <tbody className="divide-y divide-(--zaire-border)">
               {pageRows.map((q) => (
-                <tr key={q.id} onClick={() => router.push(ROUTES.crm.cotizacion(q.id))} className="hover:bg-slate-50/80 cursor-pointer">
+                <tr key={q.id} onClick={() => router.push(ROUTES.crm.cotizacion(q.id))} className="hover:bg-subtle/80 cursor-pointer">
                   <td className="px-4 py-3 font-mono text-xs text-zaire-blue">{q.quote_number ?? "—"}</td>
                   <td className="px-4 py-3 font-medium text-(--zaire-text)">{q.title}</td>
                   <td className="px-4 py-3 text-(--zaire-text-muted)">{q.client?.business_name ?? "—"}</td>
@@ -141,7 +141,7 @@ export function QuotesTable({ initialQuotes }: { initialQuotes: CrmQuote[] }) {
             <span>{filtered.length} cotizaciones</span>
             <span className="text-(--zaire-border)">·</span>
             <label className="flex items-center gap-1.5">Mostrar
-              <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }} className="h-8 rounded-lg border border-(--zaire-border) bg-white px-2 text-sm text-(--zaire-text)">
+              <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }} className="h-8 rounded-lg border border-(--zaire-border) bg-panel px-2 text-sm text-(--zaire-text)">
                 {PAGE_SIZES.map((n) => (<option key={n} value={n}>{n}</option>))}
               </select>
             </label>

@@ -144,7 +144,7 @@ export function OrdersTable({ initialOrders, clients, initialSearch = "", curren
             onClick={(e) => e.stopPropagation()}
             className={cn(
               "font-mono text-sm font-semibold hover:underline",
-              row.original.order_type === "OT" ? "text-blue-700" : "text-orange-700"
+              row.original.order_type === "OT" ? "text-blue-700 dark:text-blue-300" : "text-orange-700 dark:text-orange-300"
             )}
           >
             {row.original.order_number}
@@ -158,7 +158,7 @@ export function OrdersTable({ initialOrders, clients, initialSearch = "", curren
         cell: ({ row }) => {
           const b = BRANCHES.find((x) => x.id === row.original.branch_id);
           return b ? (
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-subtle-2 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
               {b.code}
             </span>
           ) : <span className="text-(--zaire-text-muted) text-xs">—</span>;
@@ -210,7 +210,7 @@ export function OrdersTable({ initialOrders, clients, initialSearch = "", curren
                 {formatCurrency(row.original.total, row.original.currency as Currency)}
               </span>
               {totalArs > 0 && (
-                <p className="text-xs text-emerald-600 mt-0.5">{formatCurrency(totalArs, "ARS")}</p>
+                <p className="text-xs text-emerald-600 dark:text-emerald-300 mt-0.5">{formatCurrency(totalArs, "ARS")}</p>
               )}
             </div>
           );
@@ -389,7 +389,7 @@ export function OrdersTable({ initialOrders, clients, initialSearch = "", curren
             )}
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <div className="flex items-center rounded-md border border-(--zaire-border) p-0.5 bg-white">
+            <div className="flex items-center rounded-md border border-(--zaire-border) p-0.5 bg-panel">
               <button type="button" onClick={() => setView("list")} title="Vista lista"
                 className={cn("flex items-center gap-1.5 h-8 px-2.5 rounded text-xs font-medium transition-colors", view === "list" ? "bg-zaire-navy text-white" : "text-(--zaire-text-muted) hover:text-(--zaire-text)")}>
                 <List className="w-3.5 h-3.5" /> Lista
@@ -418,7 +418,7 @@ export function OrdersTable({ initialOrders, clients, initialSearch = "", curren
           <button
             type="button"
             onClick={() => setStatusFilter([])}
-            className={cn("text-xs px-3 py-1 rounded-full border font-medium transition-colors duration-140", statusFilter.length === 0 ? "bg-zaire-navy text-white border-zaire-navy" : "bg-white text-(--zaire-text-muted) border-(--zaire-border) hover:border-zaire-navy-mid hover:text-(--zaire-text)")}
+            className={cn("text-xs px-3 py-1 rounded-full border font-medium transition-colors duration-140", statusFilter.length === 0 ? "bg-zaire-navy text-white border-zaire-navy" : "bg-panel text-(--zaire-text-muted) border-(--zaire-border) hover:border-zaire-navy-mid hover:text-(--zaire-text)")}
           >
             Todos
           </button>
@@ -427,7 +427,7 @@ export function OrdersTable({ initialOrders, clients, initialSearch = "", curren
               key={s}
               type="button"
               onClick={() => setStatusFilter((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s])}
-              className={cn("text-xs px-3 py-1 rounded-full border font-medium transition-colors duration-140", statusFilter.includes(s) ? "bg-zaire-navy-mid text-white border-zaire-navy-mid" : "bg-white text-(--zaire-text-muted) border-(--zaire-border) hover:border-zaire-navy-mid hover:text-(--zaire-text)")}
+              className={cn("text-xs px-3 py-1 rounded-full border font-medium transition-colors duration-140", statusFilter.includes(s) ? "bg-zaire-navy-mid text-white border-zaire-navy-mid" : "bg-panel text-(--zaire-text-muted) border-(--zaire-border) hover:border-zaire-navy-mid hover:text-(--zaire-text)")}
             >
               {ORDER_STATUS_LABELS[s]}
             </button>
@@ -442,7 +442,7 @@ export function OrdersTable({ initialOrders, clients, initialSearch = "", curren
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-(--zaire-border)">
+          <thead className="bg-subtle border-b border-(--zaire-border)">
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
                 {hg.headers.map((header) => {
@@ -462,7 +462,7 @@ export function OrdersTable({ initialOrders, clients, initialSearch = "", curren
                 key={row.id}
                 onClick={() => router.push(ROUTES.trace.orden(row.original.id))}
                 className={cn(
-                  "cursor-pointer hover:bg-blue-50/50 transition-colors duration-100",
+                  "cursor-pointer hover:bg-blue-50 dark:bg-blue-500/15/50 transition-colors duration-100",
                   row.original.status === "cancelada" && "opacity-50",
                   row.original.order_type === "OTS" ? "border-l-2 border-l-orange-200" : "border-l-2 border-l-blue-200"
                 )}

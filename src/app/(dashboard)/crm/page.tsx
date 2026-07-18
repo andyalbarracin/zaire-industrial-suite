@@ -57,9 +57,9 @@ export default async function CrmDashboardPage() {
     ...staleOpps.slice(0, 3).map((o) => ({ id: `s-${o.id}`, kind: "stale" as const, title: o.title, subtitle: `Sin actividad hace +14 días · ${o.client?.business_name ?? ""}`, href: ROUTES.crm.pipeline })),
   ].slice(0, 6);
   const ALERT_STYLE = {
-    overdue: { icon: AlertTriangle, cls: "bg-red-50 text-red-600" },
-    close: { icon: Clock, cls: "bg-amber-50 text-amber-600" },
-    stale: { icon: Hourglass, cls: "bg-slate-100 text-slate-500" },
+    overdue: { icon: AlertTriangle, cls: "bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-300" },
+    close: { icon: Clock, cls: "bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300" },
+    stale: { icon: Hourglass, cls: "bg-subtle-2 text-slate-500 dark:text-(--zaire-text-muted)" },
   };
 
   // Conteo + monto por etapa (para el embudo), según las etapas dinámicas del pipeline.
@@ -76,10 +76,10 @@ export default async function CrmDashboardPage() {
   const wonSub = stats.wonThisMonthUsd > 0 ? formatCurrencyCompact(stats.wonThisMonthUsd, "USD") : null;
 
   const kpis = [
-    { label: "Leads nuevos", value: String(stats.newLeads), sub: null as string | null, info: null as string | null, icon: UserPlus, color: "text-blue-600", bg: "bg-blue-50", href: ROUTES.crm.leads as string | null },
-    { label: "Oportunidades", value: String(stats.openOpportunities), sub: null as string | null, info: "Oportunidades en etapas abiertas (ni ganadas ni perdidas)." as string | null, icon: Target, color: "text-violet-600", bg: "bg-violet-50", href: ROUTES.crm.pipeline as string | null },
-    { label: "En pipeline", value: formatCurrencyCompact(stats.pipelineArs, "ARS"), sub: pipelineSub, info: "Monto total de las oportunidades en etapas abiertas." as string | null, icon: TrendingUp, color: "text-amber-600", bg: "bg-amber-50", href: null as string | null },
-    { label: "Ganadas del mes", value: formatCurrencyCompact(stats.wonThisMonthArs, "ARS"), sub: wonSub, info: `${stats.wonThisMonthCount} oportunidad(es) marcada(s) como ganada(s) este mes. El monto es el total cerrado.` as string | null, icon: Trophy, color: "text-green-600", bg: "bg-green-50", href: null as string | null },
+    { label: "Leads nuevos", value: String(stats.newLeads), sub: null as string | null, info: null as string | null, icon: UserPlus, color: "text-blue-600 dark:text-blue-300", bg: "bg-blue-50 dark:bg-blue-500/15", href: ROUTES.crm.leads as string | null },
+    { label: "Oportunidades", value: String(stats.openOpportunities), sub: null as string | null, info: "Oportunidades en etapas abiertas (ni ganadas ni perdidas)." as string | null, icon: Target, color: "text-violet-600 dark:text-violet-300", bg: "bg-violet-50 dark:bg-violet-500/15", href: ROUTES.crm.pipeline as string | null },
+    { label: "En pipeline", value: formatCurrencyCompact(stats.pipelineArs, "ARS"), sub: pipelineSub, info: "Monto total de las oportunidades en etapas abiertas." as string | null, icon: TrendingUp, color: "text-amber-600 dark:text-amber-300", bg: "bg-amber-50 dark:bg-amber-500/15", href: null as string | null },
+    { label: "Ganadas del mes", value: formatCurrencyCompact(stats.wonThisMonthArs, "ARS"), sub: wonSub, info: `${stats.wonThisMonthCount} oportunidad(es) marcada(s) como ganada(s) este mes. El monto es el total cerrado.` as string | null, icon: Trophy, color: "text-green-600 dark:text-green-300", bg: "bg-green-50 dark:bg-green-500/15", href: null as string | null },
   ];
 
   return (
@@ -91,26 +91,29 @@ export default async function CrmDashboardPage() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-up">
-        {kpis.map((k) => {
+        {kpis.map((k, idx) => {
+          const fc = idx === 0 ? "zaire-card-feature" : idx === 3 ? "zaire-card-feature-2" : null;
+          const feature = !!fc;
           const inner = (
             <>
               <div className="flex items-center justify-between gap-1">
-                <span className="text-xs text-(--zaire-text-muted) font-medium inline-flex items-center gap-1 min-w-0">
+                <span className={cn("text-xs font-medium inline-flex items-center gap-1 min-w-0", feature ? "text-(--feature-fg-muted)" : "text-(--zaire-text-muted)")}>
                   <span className="truncate">{k.label}</span>
-                  {k.info && <InfoTooltip text={k.info} className="shrink-0" />}
+                  {k.info && <InfoTooltip text={k.info} tone={feature ? "onDark" : "muted"} className="shrink-0" />}
                 </span>
-                <span className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", k.bg)}>
-                  <k.icon className={cn("w-4 h-4", k.color)} />
+                <span className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", feature ? "bg-white/15 backdrop-blur-sm" : k.bg)}>
+                  <k.icon className={cn("w-4 h-4", feature ? "text-white" : k.color)} />
                 </span>
               </div>
-              <p className="text-xl font-bold text-(--zaire-text) mt-2 tabular-nums truncate">{k.value}</p>
-              {k.sub && <p className="text-xs font-medium text-(--zaire-text-muted) tabular-nums truncate">{k.sub}</p>}
+              <p className={cn("text-xl font-bold mt-2 tabular-nums truncate", feature ? "text-(--feature-fg)" : "text-(--zaire-text)")}>{k.value}</p>
+              {k.sub && <p className={cn("text-xs font-medium tabular-nums truncate", feature ? "text-(--feature-fg-muted)" : "text-(--zaire-text-muted)")}>{k.sub}</p>}
             </>
           );
+          const cls = cn("p-4", fc ?? "zaire-card");
           return k.href ? (
-            <Link key={k.label} href={k.href} className="zaire-card p-4 hover:shadow-md transition-shadow">{inner}</Link>
+            <Link key={k.label} href={k.href} className={cn(cls, "hover:shadow-md transition-shadow")}>{inner}</Link>
           ) : (
-            <div key={k.label} className="zaire-card p-4">{inner}</div>
+            <div key={k.label} className={cls}>{inner}</div>
           );
         })}
       </div>
@@ -131,7 +134,7 @@ export default async function CrmDashboardPage() {
                   <span className={cn("w-2 h-2 rounded-full shrink-0", stageDot(s.color))} />
                   <span className="text-sm text-(--zaire-text) truncate">{s.name}</span>
                 </span>
-                <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
+                <div className="flex-1 h-2 rounded-full bg-subtle-2 overflow-hidden">
                   <div className={cn("h-full rounded-full", stageDot(s.color))} style={{ width: `${(s.count / maxCount) * 100}%` }} />
                 </div>
                 <span className="text-sm font-semibold text-(--zaire-text) tabular-nums w-6 text-right">{s.count}</span>
@@ -154,7 +157,7 @@ export default async function CrmDashboardPage() {
             <ul className="space-y-2.5">
               {pendingTasks.map((t) => (
                 <li key={t.id} className="flex items-start gap-2.5">
-                  <span className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                  <span className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-300 flex items-center justify-center shrink-0">
                     <ListChecks className="w-3.5 h-3.5" />
                   </span>
                   <div className="flex-1 min-w-0">
@@ -183,7 +186,7 @@ export default async function CrmDashboardPage() {
               const st = ALERT_STYLE[al.kind];
               return (
                 <li key={al.id}>
-                  <Link href={al.href} className="flex items-start gap-2.5 rounded-xl border border-(--zaire-border) bg-white p-3 hover:bg-slate-50/60">
+                  <Link href={al.href} className="flex items-start gap-2.5 rounded-xl border border-(--zaire-border) bg-panel p-3 hover:bg-subtle/60">
                     <span className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", st.cls)}>
                       <st.icon className="w-4 h-4" />
                     </span>
@@ -222,7 +225,7 @@ export default async function CrmDashboardPage() {
               </thead>
               <tbody className="divide-y divide-(--zaire-border)">
                 {recentLeads.map((l) => (
-                  <ClickableRow key={l.id} href={ROUTES.crm.lead(l.id)} className="hover:bg-slate-50/80">
+                  <ClickableRow key={l.id} href={ROUTES.crm.lead(l.id)} className="hover:bg-subtle/80">
                     <td className="py-2 text-(--zaire-text)">{l.company_name ?? l.contact_name ?? "—"}</td>
                     <td className="py-2">
                       <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border", LEAD_STATUS_COLORS[l.status])}>

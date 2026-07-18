@@ -124,7 +124,7 @@ export function ContactForm({ open, onOpenChange, contact, clients, onSaved }: C
             <div className="space-y-1.5">
               <Label htmlFor="full_name">Nombre *</Label>
               <Input id="full_name" {...register("full_name")} placeholder="Nombre y apellido" />
-              {errors.full_name && <p className="text-xs text-red-600">{errors.full_name.message}</p>}
+              {errors.full_name && <p className="text-xs text-red-600 dark:text-red-300">{errors.full_name.message}</p>}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="role_title">Cargo</Label>

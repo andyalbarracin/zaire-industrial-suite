@@ -159,20 +159,20 @@ function FacturacionPeriodoCard() {
       {rows && (
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-xs text-blue-600 uppercase font-semibold mb-1">Total facturado USD</p>
-              <p className="text-2xl font-bold text-blue-700">{formatCurrency(totalUsd, "USD")}</p>
+            <div className="bg-blue-50 dark:bg-blue-500/15 border border-blue-200 dark:border-blue-500/30 rounded-lg p-4">
+              <p className="text-xs text-blue-600 dark:text-blue-300 uppercase font-semibold mb-1">Total facturado USD</p>
+              <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{formatCurrency(totalUsd, "USD")}</p>
               <p className="text-xs text-blue-500 mt-1">{rows.length} orden{rows.length !== 1 ? "es" : ""}</p>
             </div>
-            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-              <p className="text-xs text-emerald-600 uppercase font-semibold mb-1">Total facturado ARS</p>
-              <p className="text-2xl font-bold text-emerald-700">{formatCurrency(totalArs, "ARS")}</p>
+            <div className="bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/30 rounded-lg p-4">
+              <p className="text-xs text-emerald-600 dark:text-emerald-300 uppercase font-semibold mb-1">Total facturado ARS</p>
+              <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{formatCurrency(totalArs, "ARS")}</p>
             </div>
           </div>
           {rows.length > 0 && (
             <div className="border border-(--zaire-border) rounded-lg overflow-hidden max-h-64 overflow-y-auto">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 border-b border-(--zaire-border) sticky top-0">
+                <thead className="bg-subtle border-b border-(--zaire-border) sticky top-0">
                   <tr>
                     {["Nro. Orden", "Cliente", "Fecha", "Total USD", "Total ARS"].map(h => (
                       <th key={h} className="px-3 py-2 text-left text-xs font-medium text-(--zaire-text-muted) uppercase">{h}</th>
@@ -181,12 +181,12 @@ function FacturacionPeriodoCard() {
                 </thead>
                 <tbody className="divide-y divide-(--zaire-border)">
                   {rows.map(r => (
-                    <tr key={r.order_number} className="hover:bg-slate-50">
+                    <tr key={r.order_number} className="hover:bg-subtle">
                       <td className="px-3 py-2 font-mono font-semibold">{r.order_number}</td>
                       <td className="px-3 py-2">{r.client_name}</td>
                       <td className="px-3 py-2 text-xs text-(--zaire-text-muted)">{formatDate(r.date_in)}</td>
-                      <td className="px-3 py-2 text-blue-700">{formatCurrency(r.total_usd, "USD")}</td>
-                      <td className="px-3 py-2 text-emerald-700">{formatCurrency(r.total_ars, "ARS")}</td>
+                      <td className="px-3 py-2 text-blue-700 dark:text-blue-300">{formatCurrency(r.total_usd, "USD")}</td>
+                      <td className="px-3 py-2 text-emerald-700 dark:text-emerald-300">{formatCurrency(r.total_ars, "ARS")}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -278,11 +278,11 @@ function IngresosPorClienteCard() {
       {rows && (
         <div className="space-y-3">
           <p className="text-sm text-(--zaire-text-muted)">
-            {rows.length} cliente{rows.length !== 1 ? "s" : ""} · Total: <span className="font-bold text-blue-700">{formatCurrency(totalUsd, "USD")}</span>
+            {rows.length} cliente{rows.length !== 1 ? "s" : ""} · Total: <span className="font-bold text-blue-700 dark:text-blue-300">{formatCurrency(totalUsd, "USD")}</span>
           </p>
           <div className="border border-(--zaire-border) rounded-lg overflow-hidden max-h-72 overflow-y-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-(--zaire-border) sticky top-0">
+              <thead className="bg-subtle border-b border-(--zaire-border) sticky top-0">
                 <tr>
                   {["#", "Cliente", "OTs facturadas", "Total USD", "Total ARS"].map(h => (
                     <th key={h} className="px-3 py-2 text-left text-xs font-medium text-(--zaire-text-muted) uppercase">{h}</th>
@@ -291,12 +291,12 @@ function IngresosPorClienteCard() {
               </thead>
               <tbody className="divide-y divide-(--zaire-border)">
                 {rows.map((r, i) => (
-                  <tr key={i} className="hover:bg-slate-50">
+                  <tr key={i} className="hover:bg-subtle">
                     <td className="px-3 py-2 text-xs text-(--zaire-text-muted)">{i + 1}</td>
                     <td className="px-3 py-2 font-medium">{r.client_name}</td>
                     <td className="px-3 py-2 font-bold">{r.count}</td>
-                    <td className="px-3 py-2 text-blue-700">{formatCurrency(r.total_usd, "USD")}</td>
-                    <td className="px-3 py-2 text-emerald-700">{formatCurrency(r.total_ars, "ARS")}</td>
+                    <td className="px-3 py-2 text-blue-700 dark:text-blue-300">{formatCurrency(r.total_usd, "USD")}</td>
+                    <td className="px-3 py-2 text-emerald-700 dark:text-emerald-300">{formatCurrency(r.total_ars, "ARS")}</td>
                   </tr>
                 ))}
               </tbody>

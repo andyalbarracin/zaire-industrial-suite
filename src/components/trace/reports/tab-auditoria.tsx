@@ -169,20 +169,20 @@ function SecuenciaCard() {
         <div className="space-y-4">
           {/* Resumen */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="bg-slate-50 rounded-lg p-3 border border-(--zaire-border) text-center">
+            <div className="bg-subtle rounded-lg p-3 border border-(--zaire-border) text-center">
               <p className="text-2xl font-bold text-(--zaire-text)">{rows.length}</p>
               <p className="text-xs text-(--zaire-text-muted)">Total órdenes</p>
             </div>
-            <div className={cn("rounded-lg p-3 border text-center", gaps.length === 0 ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200")}>
-              <p className={cn("text-2xl font-bold", gaps.length === 0 ? "text-green-700" : "text-red-700")}>{gaps.length}</p>
+            <div className={cn("rounded-lg p-3 border text-center", gaps.length === 0 ? "bg-green-50 dark:bg-green-500/15 border-green-200 dark:border-green-500/30" : "bg-red-50 dark:bg-red-500/15 border-red-200 dark:border-red-500/30")}>
+              <p className={cn("text-2xl font-bold", gaps.length === 0 ? "text-green-700 dark:text-green-300" : "text-red-700 dark:text-red-300")}>{gaps.length}</p>
               <p className="text-xs text-(--zaire-text-muted)">Huecos</p>
             </div>
-            <div className="bg-slate-50 rounded-lg p-3 border border-(--zaire-border) text-center">
-              <p className="text-2xl font-bold text-amber-600">{canceladas}</p>
+            <div className="bg-subtle rounded-lg p-3 border border-(--zaire-border) text-center">
+              <p className="text-2xl font-bold text-amber-600 dark:text-amber-300">{canceladas}</p>
               <p className="text-xs text-(--zaire-text-muted)">Canceladas</p>
             </div>
-            <div className={cn("rounded-lg p-3 border text-center", gaps.length === 0 ? "bg-green-50 border-green-200" : "bg-amber-50 border-amber-200")}>
-              <p className={cn("text-sm font-semibold", gaps.length === 0 ? "text-green-700" : "text-amber-700")}>
+            <div className={cn("rounded-lg p-3 border text-center", gaps.length === 0 ? "bg-green-50 dark:bg-green-500/15 border-green-200 dark:border-green-500/30" : "bg-amber-50 dark:bg-amber-500/15 border-amber-200 dark:border-amber-500/30")}>
+              <p className={cn("text-sm font-semibold", gaps.length === 0 ? "text-green-700 dark:text-green-300" : "text-amber-700 dark:text-amber-300")}>
                 {gaps.length === 0 ? "✅ Íntegra" : "⚠️ Con huecos"}
               </p>
               <p className="text-xs text-(--zaire-text-muted)">Secuencia</p>
@@ -191,11 +191,11 @@ function SecuenciaCard() {
 
           {/* Huecos encontrados */}
           {gaps.length > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-sm font-semibold text-red-700 mb-2">⚠️ Huecos detectados</p>
+            <div className="bg-red-50 dark:bg-red-500/15 border border-red-200 dark:border-red-500/30 rounded-lg p-4">
+              <p className="text-sm font-semibold text-red-700 dark:text-red-300 mb-2">⚠️ Huecos detectados</p>
               <div className="space-y-1">
                 {gaps.map((g, i) => (
-                  <p key={i} className="text-xs text-red-600">
+                  <p key={i} className="text-xs text-red-600 dark:text-red-300">
                     Número faltante: <span className="font-mono font-bold">{g.missing}</span> — {g.around}
                   </p>
                 ))}
@@ -206,7 +206,7 @@ function SecuenciaCard() {
           {/* Tabla de órdenes */}
           <div className="border border-(--zaire-border) rounded-lg overflow-hidden max-h-72 overflow-y-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-(--zaire-border) sticky top-0">
+              <thead className="bg-subtle border-b border-(--zaire-border) sticky top-0">
                 <tr>
                   {["Nro. Orden", "Estado", "Secuencia", "Verificación"].map(h => (
                     <th key={h} className="px-3 py-2 text-left text-xs font-medium text-(--zaire-text-muted) uppercase">{h}</th>
@@ -219,17 +219,17 @@ function SecuenciaCard() {
                   const samePrev = i > 0 && rows[i - 1].branch === r.branch;
                   const ok = samePrev && r.seq === rows[i - 1].seq + 1;
                   return (
-                    <tr key={r.order_number} className="hover:bg-slate-50">
+                    <tr key={r.order_number} className="hover:bg-subtle">
                       <td className="px-3 py-2 font-mono text-sm font-medium">{r.order_number}</td>
                       <td className="px-3 py-2 text-xs text-(--zaire-text-muted)">{ORDER_STATUS_LABELS[r.status as OrderStatus] ?? r.status}</td>
                       <td className="px-3 py-2 font-mono text-xs">{String(r.seq).padStart(4, "0")}</td>
                       <td className="px-3 py-2">
                         {!samePrev ? (
-                          <span className="text-xs text-blue-600">Inicio</span>
+                          <span className="text-xs text-blue-600 dark:text-blue-300">Inicio</span>
                         ) : ok ? (
-                          <span className="text-xs text-green-600 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" />Correlativo</span>
+                          <span className="text-xs text-green-600 dark:text-green-300 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" />Correlativo</span>
                         ) : (
-                          <span className="text-xs text-red-600 flex items-center gap-1"><AlertTriangle className="w-3 h-3" />Salto detectado</span>
+                          <span className="text-xs text-red-600 dark:text-red-300 flex items-center gap-1"><AlertTriangle className="w-3 h-3" />Salto detectado</span>
                         )}
                       </td>
                     </tr>
@@ -382,11 +382,11 @@ function TrazabilidadCard() {
             className="pl-9 h-9"
           />
           {suggestions.length > 0 && (
-            <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-(--zaire-border) rounded-lg shadow-lg z-10 overflow-hidden">
+            <div className="absolute top-full mt-1 left-0 right-0 bg-panel border border-(--zaire-border) rounded-lg shadow-lg z-10 overflow-hidden">
               {suggestions.map(s => (
                 <button key={s.id} type="button"
                   onClick={() => { setSelected(s); setSearch(s.order_number); setSuggestions([]); }}
-                  className="w-full px-3 py-2 text-left text-sm font-mono hover:bg-slate-50 transition-colors border-b border-(--zaire-border) last:border-0">
+                  className="w-full px-3 py-2 text-left text-sm font-mono hover:bg-subtle transition-colors border-b border-(--zaire-border) last:border-0">
                   {s.order_number}
                 </button>
               ))}
@@ -403,7 +403,7 @@ function TrazabilidadCard() {
       {order && (
         <div className="space-y-4">
           {/* Datos generales */}
-          <div className="bg-slate-50 rounded-lg border border-(--zaire-border) p-4">
+          <div className="bg-subtle rounded-lg border border-(--zaire-border) p-4">
             <p className="text-xs font-semibold text-(--zaire-text-muted) uppercase tracking-wide mb-3">Datos generales</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
               {[
@@ -444,7 +444,7 @@ function TrazabilidadCard() {
             <p className="text-xs font-semibold text-(--zaire-text-muted) uppercase tracking-wide mb-2">Ítems ({items.length})</p>
             <div className="border border-(--zaire-border) rounded-lg overflow-hidden">
               <table className="w-full text-xs">
-                <thead className="bg-slate-50 border-b border-(--zaire-border)">
+                <thead className="bg-subtle border-b border-(--zaire-border)">
                   <tr>
                     {["#", "Descripción", "Serie", "Marca/Medida", "P.Unit", "Total", "Estados"].map(h => (
                       <th key={h} className="px-3 py-2 text-left font-medium text-(--zaire-text-muted) uppercase">{h}</th>
@@ -453,7 +453,7 @@ function TrazabilidadCard() {
                 </thead>
                 <tbody className="divide-y divide-(--zaire-border)">
                   {items.map(it => (
-                    <tr key={it.item_number} className="hover:bg-slate-50">
+                    <tr key={it.item_number} className="hover:bg-subtle">
                       <td className="px-3 py-2 font-mono">{it.item_number}</td>
                       <td className="px-3 py-2 max-w-32 truncate">{it.products?.name ?? it.custom_description ?? "—"}</td>
                       <td className="px-3 py-2 font-mono">{it.serial_number ?? "—"}</td>
@@ -464,7 +464,7 @@ function TrazabilidadCard() {
                         <div className="flex gap-1">
                           {[["C", it.is_quoted], ["R", it.is_remitted], ["E", it.is_delivered], ["F", it.is_invoiced]].map(([l, v]) => (
                             <span key={String(l)} className={cn("w-5 h-5 rounded text-xs font-bold flex items-center justify-center",
-                              v ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-400")}>
+                              v ? "bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300" : "bg-subtle-2 text-slate-400")}>
                               {String(l)}
                             </span>
                           ))}
@@ -503,7 +503,7 @@ function TrazabilidadCard() {
               <p className="text-xs font-semibold text-(--zaire-text-muted) uppercase tracking-wide mb-2">Historial de modificaciones ({audit.length})</p>
               <div className="border border-(--zaire-border) rounded-lg overflow-hidden max-h-40 overflow-y-auto">
                 <table className="w-full text-xs">
-                  <thead className="bg-slate-50 border-b border-(--zaire-border) sticky top-0">
+                  <thead className="bg-subtle border-b border-(--zaire-border) sticky top-0">
                     <tr>
                       {["Fecha", "Usuario", "Acción", "Descripción"].map(h => (
                         <th key={h} className="px-3 py-2 text-left font-medium text-(--zaire-text-muted) uppercase">{h}</th>
@@ -512,7 +512,7 @@ function TrazabilidadCard() {
                   </thead>
                   <tbody className="divide-y divide-(--zaire-border)">
                     {audit.map((a, i) => (
-                      <tr key={i} className="hover:bg-slate-50">
+                      <tr key={i} className="hover:bg-subtle">
                         <td className="px-3 py-2 whitespace-nowrap">{formatDateTime(a.created_at)}</td>
                         <td className="px-3 py-2">{a.user_name ?? "Sistema"}</td>
                         <td className="px-3 py-2 capitalize">{a.action}</td>
@@ -551,8 +551,8 @@ type CheckRowProps = { label: string; ok: boolean; detail?: string };
 function CheckRow({ label, ok, detail }: CheckRowProps) {
   return (
     <div className={cn("flex items-center justify-between px-4 py-2.5 rounded-lg border text-sm",
-      ok ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200")}>
-      <span className={ok ? "text-green-800" : "text-red-800"}>{label}</span>
+      ok ? "bg-green-50 dark:bg-green-500/15 border-green-200 dark:border-green-500/30" : "bg-red-50 dark:bg-red-500/15 border-red-200 dark:border-red-500/30")}>
+      <span className={ok ? "text-green-800 dark:text-green-200" : "text-red-800 dark:text-red-200"}>{label}</span>
       <div className="flex items-center gap-2">
         {detail && <span className="text-xs text-(--zaire-text-muted)">{detail}</span>}
         {ok
@@ -654,10 +654,10 @@ function IntegridadCard() {
             ))}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="bg-slate-50 rounded-lg border border-(--zaire-border) p-4">
+            <div className="bg-subtle rounded-lg border border-(--zaire-border) p-4">
               <p className="text-xs font-semibold text-(--zaire-text-muted) uppercase mb-2">Financiero USD</p>
-              <p className="text-sm">Facturado: <span className="font-bold text-green-700">{formatCurrency(data.totalFacturadoUsd, "USD")}</span></p>
-              <p className="text-sm mt-1">Pendiente: <span className="font-bold text-amber-700">{formatCurrency(data.totalPendienteUsd, "USD")}</span></p>
+              <p className="text-sm">Facturado: <span className="font-bold text-green-700 dark:text-green-300">{formatCurrency(data.totalFacturadoUsd, "USD")}</span></p>
+              <p className="text-sm mt-1">Pendiente: <span className="font-bold text-amber-700 dark:text-amber-300">{formatCurrency(data.totalPendienteUsd, "USD")}</span></p>
             </div>
             <div className="space-y-2">
               <CheckRow label="Sin registros sin número" ok={!data.hasNoNumber} />

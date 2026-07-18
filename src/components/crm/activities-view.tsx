@@ -27,11 +27,11 @@ const TYPE_ICON: Record<ActivityType, React.ComponentType<{ className?: string }
 };
 
 const TYPE_STYLE: Record<ActivityType, string> = {
-  llamada: "bg-blue-50 text-blue-600",
-  email: "bg-violet-50 text-violet-600",
-  reunion: "bg-cyan-50 text-cyan-600",
-  nota: "bg-slate-100 text-slate-600",
-  tarea: "bg-amber-50 text-amber-600",
+  llamada: "bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-300",
+  email: "bg-violet-50 dark:bg-violet-500/15 text-violet-600 dark:text-violet-300",
+  reunion: "bg-cyan-50 dark:bg-cyan-500/15 text-cyan-600 dark:text-cyan-300",
+  nota: "bg-subtle-2 text-slate-600 dark:text-slate-300",
+  tarea: "bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-300",
 };
 
 interface ActivitiesViewProps {
@@ -100,13 +100,13 @@ export function ActivitiesView({ initialActivities, clients, opportunities }: Ac
             <div className="inline-flex rounded-lg border border-(--zaire-border) overflow-hidden">
               <button
                 onClick={() => setView("list")}
-                className={cn("flex items-center gap-1.5 px-3 h-9 text-sm font-medium transition-colors", view === "list" ? "bg-zaire-navy text-white" : "bg-white text-(--zaire-text-muted) hover:bg-slate-50")}
+                className={cn("flex items-center gap-1.5 px-3 h-9 text-sm font-medium transition-colors", view === "list" ? "bg-zaire-navy text-white" : "bg-panel text-(--zaire-text-muted) hover:bg-subtle")}
               >
                 <List className="w-4 h-4" /> Lista
               </button>
               <button
                 onClick={() => setView("calendar")}
-                className={cn("flex items-center gap-1.5 px-3 h-9 text-sm font-medium transition-colors border-l border-(--zaire-border)", view === "calendar" ? "bg-zaire-navy text-white" : "bg-white text-(--zaire-text-muted) hover:bg-slate-50")}
+                className={cn("flex items-center gap-1.5 px-3 h-9 text-sm font-medium transition-colors border-l border-(--zaire-border)", view === "calendar" ? "bg-zaire-navy text-white" : "bg-panel text-(--zaire-text-muted) hover:bg-subtle")}
               >
                 <CalendarDays className="w-4 h-4" /> Calendario
               </button>
@@ -141,7 +141,7 @@ export function ActivitiesView({ initialActivities, clients, opportunities }: Ac
                 const Icon = TYPE_ICON[a.activity_type];
                 const parent = a.client?.business_name ?? a.lead?.company_name ?? a.lead?.contact_name ?? null;
                 return (
-                  <li key={a.id} className="group flex gap-3 rounded-xl border border-(--zaire-border) bg-white p-3 hover:bg-slate-50/60">
+                  <li key={a.id} className="group flex gap-3 rounded-xl border border-(--zaire-border) bg-panel p-3 hover:bg-subtle/60">
                     <span className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", TYPE_STYLE[a.activity_type])}>
                       <Icon className="w-4 h-4" />
                     </span>

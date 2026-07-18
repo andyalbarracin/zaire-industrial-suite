@@ -138,9 +138,9 @@ export function SolicitudActions({ report, visitId, clientId, defaultBranchId, c
               </div>
             </div>
 
-            <div className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
-              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-800">
+            <div className="flex gap-2 rounded-lg border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/15 p-3">
+              <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-300 shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-800 dark:text-amber-200">
                 Se creará una orden con <strong>numeración correlativa e irrepetible</strong> y un ítem con los
                 datos del reporte. Esta acción <strong>no se puede deshacer</strong> y queda registrada de forma
                 imborrable en el historial y la auditoría. Luego completás los precios en el detalle de la orden.

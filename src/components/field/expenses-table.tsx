@@ -43,13 +43,13 @@ interface ExpensesTableProps {
 
 // Color por categoría para las mini-cards (hex para la barra + clases suaves para el fondo)
 const CATEGORY_COLOR: Record<string, { hex: string; bg: string; text: string }> = {
-  combustible: { hex: "#576CBC", bg: "bg-blue-50", text: "text-blue-700" },
-  peaje: { hex: "#06B6D4", bg: "bg-cyan-50", text: "text-cyan-700" },
-  comida: { hex: "#EAB308", bg: "bg-amber-50", text: "text-amber-700" },
-  hotel: { hex: "#8B5CF6", bg: "bg-violet-50", text: "text-violet-700" },
-  estacionamiento: { hex: "#64748B", bg: "bg-slate-50", text: "text-slate-700" },
-  insumos: { hex: "#16A34A", bg: "bg-green-50", text: "text-green-700" },
-  otro: { hex: "#94A3B8", bg: "bg-slate-50", text: "text-slate-600" },
+  combustible: { hex: "#576CBC", bg: "bg-blue-50 dark:bg-blue-500/15", text: "text-blue-700 dark:text-blue-300" },
+  peaje: { hex: "#06B6D4", bg: "bg-cyan-50 dark:bg-cyan-500/15", text: "text-cyan-700 dark:text-cyan-300" },
+  comida: { hex: "#EAB308", bg: "bg-amber-50 dark:bg-amber-500/15", text: "text-amber-700 dark:text-amber-300" },
+  hotel: { hex: "#8B5CF6", bg: "bg-violet-50 dark:bg-violet-500/15", text: "text-violet-700 dark:text-violet-300" },
+  estacionamiento: { hex: "#64748B", bg: "bg-subtle", text: "text-slate-700 dark:text-slate-200" },
+  insumos: { hex: "#16A34A", bg: "bg-green-50 dark:bg-green-500/15", text: "text-green-700 dark:text-green-300" },
+  otro: { hex: "#94A3B8", bg: "bg-subtle", text: "text-slate-600 dark:text-slate-300" },
 };
 
 const PAGE_SIZES = [10, 20, 50, 100];
@@ -248,7 +248,7 @@ export function ExpensesTable({ initialExpenses, visits, currentUser }: Expenses
         {summary.cats.map(({ cat, amount, share }) => {
           const c = CATEGORY_COLOR[cat] ?? CATEGORY_COLOR.otro;
           return (
-            <div key={cat} className="flex-1 basis-40 min-w-37.5 rounded-xl border border-(--zaire-border) bg-white p-3.5 shadow-sm flex flex-col">
+            <div key={cat} className="flex-1 basis-40 min-w-37.5 rounded-xl border border-(--zaire-border) bg-panel p-3.5 shadow-sm flex flex-col">
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-[11px] font-medium text-(--zaire-text)">
                   <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.hex }} />
@@ -257,7 +257,7 @@ export function ExpensesTable({ initialExpenses, visits, currentUser }: Expenses
                 <span className="text-[10px] text-(--zaire-text-muted)">{Math.round(share * 100)}%</span>
               </div>
               <span className="text-base font-bold text-(--zaire-text) mt-1.5">{formatCurrency(amount, "ARS")}</span>
-              <div className="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+              <div className="mt-2 h-1.5 rounded-full bg-subtle-2 overflow-hidden">
                 <div className="h-full rounded-full" style={{ width: `${Math.max(share * 100, 4)}%`, backgroundColor: c.hex }} />
               </div>
             </div>
@@ -294,7 +294,7 @@ export function ExpensesTable({ initialExpenses, visits, currentUser }: Expenses
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
+            <thead className="bg-subtle border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
               <tr>
                 <th className="text-left px-4 py-3">Fecha</th>
                 <th className="text-left px-4 py-3">Técnico</th>
@@ -311,7 +311,7 @@ export function ExpensesTable({ initialExpenses, visits, currentUser }: Expenses
                 <tr
                   key={e.id}
                   onClick={() => router.push(ROUTES.field.gasto(e.id))}
-                  className="hover:bg-slate-50/80 cursor-pointer"
+                  className="hover:bg-subtle/80 cursor-pointer"
                 >
                   <td className="px-4 py-3">{formatDate(e.incurred_at)}</td>
                   <td className="px-4 py-3">{e.technician?.full_name ?? "—"}</td>
@@ -329,10 +329,10 @@ export function ExpensesTable({ initialExpenses, visits, currentUser }: Expenses
                   <td className="px-4 py-3" onClick={(ev) => ev.stopPropagation()}>
                     {e.status === "pendiente" && currentUser?.role === "admin" && (
                       <div className="flex items-center gap-1 justify-end">
-                        <Button variant="ghost" size="sm" onClick={() => setConfirm({ expense: e, status: "aprobado" })} title="Aprobar" className="text-green-600">
+                        <Button variant="ghost" size="sm" onClick={() => setConfirm({ expense: e, status: "aprobado" })} title="Aprobar" className="text-green-600 dark:text-green-300">
                           <Check className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => setConfirm({ expense: e, status: "rechazado" })} title="Rechazar" className="text-red-600">
+                        <Button variant="ghost" size="sm" onClick={() => setConfirm({ expense: e, status: "rechazado" })} title="Rechazar" className="text-red-600 dark:text-red-300">
                           <X className="w-4 h-4" />
                         </Button>
                       </div>
@@ -357,7 +357,7 @@ export function ExpensesTable({ initialExpenses, visits, currentUser }: Expenses
               <select
                 value={pageSize}
                 onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }}
-                className="h-8 rounded-lg border border-(--zaire-border) bg-white px-2 text-sm text-(--zaire-text)"
+                className="h-8 rounded-lg border border-(--zaire-border) bg-panel px-2 text-sm text-(--zaire-text)"
               >
                 {PAGE_SIZES.map((n) => (<option key={n} value={n}>{n}</option>))}
               </select>
@@ -400,7 +400,7 @@ export function ExpensesTable({ initialExpenses, visits, currentUser }: Expenses
                   {visits.map((v) => (<SelectItem key={v.id} value={v.id}>{v.visit_number ?? v.id.slice(0, 8)}</SelectItem>))}
                 </SelectContent>
               </Select>
-              {errors.visit_id && <p className="text-xs text-red-600">{errors.visit_id.message}</p>}
+              {errors.visit_id && <p className="text-xs text-red-600 dark:text-red-300">{errors.visit_id.message}</p>}
             </div>
             <div className="space-y-1.5">
               <Label>Categoría</Label>
@@ -415,7 +415,7 @@ export function ExpensesTable({ initialExpenses, visits, currentUser }: Expenses
               <div className="space-y-1.5">
                 <Label htmlFor="amount">Monto *</Label>
                 <Input id="amount" type="number" step="0.01" {...register("amount")} />
-                {errors.amount && <p className="text-xs text-red-600">{errors.amount.message}</p>}
+                {errors.amount && <p className="text-xs text-red-600 dark:text-red-300">{errors.amount.message}</p>}
               </div>
               <div className="space-y-1.5">
                 <Label>Moneda</Label>

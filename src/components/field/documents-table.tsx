@@ -163,7 +163,7 @@ export function DocumentsTable({ initialDocuments, technicians, vehicles }: Docu
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--zaire-text-muted)" />
             <Input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9" />
           </div>
-          <select value={typeFilter} onChange={(e) => { setTypeFilter(e.target.value); setPage(0); }} className="h-9 rounded-lg border border-(--zaire-border) bg-white px-2 text-sm">
+          <select value={typeFilter} onChange={(e) => { setTypeFilter(e.target.value); setPage(0); }} className="h-9 rounded-lg border border-(--zaire-border) bg-panel px-2 text-sm">
             <option value="">Todos los tipos</option>
             {DOC_TYPES.map((t) => (<option key={t.value} value={t.value}>{t.label}</option>))}
           </select>
@@ -183,7 +183,7 @@ export function DocumentsTable({ initialDocuments, technicians, vehicles }: Docu
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
+          <thead className="bg-subtle border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
             <tr>
               <th className="text-left px-4 py-3">Entidad</th>
               <th className="text-left px-4 py-3">Tipo</th>
@@ -196,7 +196,7 @@ export function DocumentsTable({ initialDocuments, technicians, vehicles }: Docu
           </thead>
           <tbody className="divide-y divide-(--zaire-border)">
             {pageRows.map((d) => (
-              <tr key={d.id} className="hover:bg-slate-50/80">
+              <tr key={d.id} className="hover:bg-subtle/80">
                 <td className="px-4 py-3">
                   <span className="font-medium text-(--zaire-text)">{entityName(d)}</span>
                   <span className="text-xs text-(--zaire-text-muted) ml-1">({d.entity_type === "technician" ? "Técnico" : "Vehículo"})</span>
@@ -232,7 +232,7 @@ export function DocumentsTable({ initialDocuments, technicians, vehicles }: Docu
           <span>{filtered.length} registros</span>
           <span className="text-(--zaire-border)">·</span>
           <label className="flex items-center gap-1.5">Mostrar
-            <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }} className="h-8 rounded-lg border border-(--zaire-border) bg-white px-2 text-sm text-(--zaire-text)">
+            <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }} className="h-8 rounded-lg border border-(--zaire-border) bg-panel px-2 text-sm text-(--zaire-text)">
               {PAGE_SIZES.map((n) => (<option key={n} value={n}>{n}</option>))}
             </select>
           </label>
@@ -278,7 +278,7 @@ export function DocumentsTable({ initialDocuments, technicians, vehicles }: Docu
                 )}
               </div>
             </div>
-            {errors.entity_type && <p className="text-xs text-red-600">{errors.entity_type.message}</p>}
+            {errors.entity_type && <p className="text-xs text-red-600 dark:text-red-300">{errors.entity_type.message}</p>}
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">

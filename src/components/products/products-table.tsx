@@ -49,7 +49,7 @@ export function ProductsTable({ initialProducts }: ProductsTableProps) {
         accessorKey: "code",
         header: "Código",
         cell: ({ getValue }) => (
-          <span className="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded">
+          <span className="font-mono text-xs bg-subtle-2 px-1.5 py-0.5 rounded">
             {(getValue() as string) ?? "—"}
           </span>
         ),
@@ -102,7 +102,7 @@ export function ProductsTable({ initialProducts }: ProductsTableProps) {
         accessorKey: "is_active",
         header: "Estado",
         cell: ({ getValue }) => (
-          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getValue() ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200"}`}>
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getValue() ? "bg-green-50 dark:bg-green-500/15 text-green-700 dark:text-green-300 border-green-200 dark:border-green-500/30" : "bg-red-50 dark:bg-red-500/15 text-red-700 dark:text-red-300 border-red-200 dark:border-red-500/30"}`}>
             {getValue() ? "Activo" : "Inactivo"}
           </span>
         ),
@@ -180,7 +180,7 @@ export function ProductsTable({ initialProducts }: ProductsTableProps) {
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-(--zaire-border)">
+            <thead className="bg-subtle border-b border-(--zaire-border)">
               {table.getHeaderGroups().map((hg) => (
                 <tr key={hg.id}>
                   {hg.headers.map((header) => (
@@ -193,7 +193,7 @@ export function ProductsTable({ initialProducts }: ProductsTableProps) {
             </thead>
             <tbody className="divide-y divide-(--zaire-border)">
               {table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className="hover:bg-slate-50/80 transition-colors duration-100">
+                <tr key={row.id} className="hover:bg-subtle/80 transition-colors duration-100">
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id} className="px-4 py-3 text-(--zaire-text)">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}

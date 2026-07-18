@@ -105,16 +105,16 @@ export function OrdersKanban({ orders, currentProfile }: OrdersKanbanProps) {
                 onDragLeave={() => setOverStatus((s) => (s === col.value ? null : s))}
                 onDrop={(e) => { e.preventDefault(); handleDrop(col.value); }}
                 className={cn(
-                  "w-64 shrink-0 rounded-xl border bg-slate-50/60 flex flex-col max-h-[calc(100vh-19rem)]",
-                  isTarget && valid && "border-green-400 bg-green-50/60 ring-1 ring-green-300",
-                  isTarget && !valid && "border-red-300 bg-red-50/40",
+                  "w-64 shrink-0 rounded-xl border bg-subtle/60 flex flex-col max-h-[calc(100vh-19rem)]",
+                  isTarget && valid && "border-green-400 bg-green-50 dark:bg-green-500/15/60 ring-1 ring-green-300",
+                  isTarget && !valid && "border-red-300 bg-red-50 dark:bg-red-500/15/40",
                   !isTarget && "border-(--zaire-border)"
                 )}
               >
-                <div className="flex items-center gap-2 px-3 py-2.5 border-b border-(--zaire-border) sticky top-0 bg-slate-50/90 backdrop-blur-sm rounded-t-xl">
+                <div className="flex items-center gap-2 px-3 py-2.5 border-b border-(--zaire-border) sticky top-0 bg-subtle/90 backdrop-blur-sm rounded-t-xl">
                   <span className={cn("w-2 h-2 rounded-full shrink-0", DOT[col.color] ?? "bg-slate-400")} />
                   <span className="text-xs font-semibold text-(--zaire-text) uppercase tracking-wide truncate">{col.label}</span>
-                  <span className="ml-auto text-xs font-semibold text-(--zaire-text-muted) bg-white border border-(--zaire-border) rounded-full px-1.5 min-w-5 text-center">{list.length}</span>
+                  <span className="ml-auto text-xs font-semibold text-(--zaire-text-muted) bg-panel border border-(--zaire-border) rounded-full px-1.5 min-w-5 text-center">{list.length}</span>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-2 space-y-2">
@@ -131,7 +131,7 @@ export function OrdersKanban({ orders, currentProfile }: OrdersKanbanProps) {
                           onDragStart={() => setDragging({ id: o.id, status: o.status })}
                           onDragEnd={() => { setDragging(null); setOverStatus(null); }}
                           className={cn(
-                            "group bg-white border border-(--zaire-border) rounded-lg p-2.5 shadow-sm cursor-grab active:cursor-grabbing transition-opacity",
+                            "group bg-panel border border-(--zaire-border) rounded-lg p-2.5 shadow-sm cursor-grab active:cursor-grabbing transition-opacity",
                             o.order_type === "OTS" ? "border-l-2 border-l-orange-300" : "border-l-2 border-l-blue-300",
                             isDragging && "opacity-40"
                           )}
@@ -141,7 +141,7 @@ export function OrdersKanban({ orders, currentProfile }: OrdersKanbanProps) {
                               href={ROUTES.trace.orden(o.id)}
                               onClick={(e) => e.stopPropagation()}
                               draggable={false}
-                              className={cn("font-mono text-xs font-semibold hover:underline", o.order_type === "OT" ? "text-blue-700" : "text-orange-700")}
+                              className={cn("font-mono text-xs font-semibold hover:underline", o.order_type === "OT" ? "text-blue-700 dark:text-blue-300" : "text-orange-700 dark:text-orange-300")}
                             >
                               {o.order_number}
                             </Link>
@@ -150,7 +150,7 @@ export function OrdersKanban({ orders, currentProfile }: OrdersKanbanProps) {
                           <p className="text-xs text-(--zaire-text) mt-1.5 truncate">{o.clients?.business_name ?? "—"}</p>
                           <div className="flex items-center justify-between gap-2 mt-1.5 text-[11px] text-(--zaire-text-muted)">
                             <span className="inline-flex items-center gap-1">
-                              {b && <span className="font-bold text-slate-600">{b.code}</span>}
+                              {b && <span className="font-bold text-slate-600 dark:text-slate-300">{b.code}</span>}
                               <span>{formatDate(o.date_in)}</span>
                             </span>
                             <span className="font-semibold text-(--zaire-text) tabular-nums">{formatCurrency(o.total, o.currency as Currency)}</span>

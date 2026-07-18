@@ -74,7 +74,7 @@ export function QuoteDetail({ quote, attachments, currentProfile, traceEnabled }
       <div className="zaire-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
+            <thead className="bg-subtle border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
               <tr>
                 <th className="text-left px-4 py-2.5 w-8">#</th>
                 <th className="text-left px-4 py-2.5">Descripción</th>
@@ -108,7 +108,7 @@ export function QuoteDetail({ quote, attachments, currentProfile, traceEnabled }
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <Sum label="Subtotal" value={formatCurrency(quote.subtotal, quote.currency)} />
         <Sum label="Costo" value={formatCurrency(quote.total_cost, quote.currency)} />
-        <Sum label={`Margen (${quote.margin_pct.toFixed(1)}%)`} value={formatCurrency(quote.margin_amount, quote.currency)} accent={quote.margin_amount >= 0 ? "text-green-600" : "text-red-600"} />
+        <Sum label={`Margen (${quote.margin_pct.toFixed(1)}%)`} value={formatCurrency(quote.margin_amount, quote.currency)} accent={quote.margin_amount >= 0 ? "text-green-600 dark:text-green-300" : "text-red-600 dark:text-red-300"} />
         <Sum label={`Impuesto (${quote.tax_pct}%)`} value={formatCurrency(quote.tax_amount, quote.currency)} />
         <Sum label="Total" value={formatCurrency(quote.total, quote.currency)} strong />
       </div>
@@ -131,7 +131,7 @@ export function QuoteDetail({ quote, attachments, currentProfile, traceEnabled }
 
 function Sum({ label, value, accent, strong }: { label: string; value: string; accent?: string; strong?: boolean }) {
   return (
-    <div className="rounded-lg border border-(--zaire-border) bg-white p-3">
+    <div className="rounded-lg border border-(--zaire-border) bg-panel p-3">
       <p className="text-[11px] text-(--zaire-text-muted) font-medium">{label}</p>
       <p className={cn("tabular-nums mt-0.5", strong ? "text-lg font-bold text-(--zaire-text)" : "text-sm font-semibold", accent ?? "text-(--zaire-text)")}>{value}</p>
     </div>

@@ -28,7 +28,7 @@ export default async function BuscarPage({ searchParams }: { searchParams: Promi
           defaultValue={term}
           autoFocus
           placeholder="Buscar en toda la suite (clientes, órdenes, leads, oportunidades, cotizaciones, visitas...)"
-          className="w-full h-11 pl-10 pr-4 rounded-xl border border-(--zaire-border) bg-white text-sm text-(--zaire-text) focus:outline-none focus:ring-2 focus:ring-zaire-blue/40"
+          className="w-full h-11 pl-10 pr-4 rounded-xl border border-(--zaire-border) bg-panel text-sm text-(--zaire-text) focus:outline-none focus:ring-2 focus:ring-zaire-blue/40"
         />
       </form>
 
@@ -42,13 +42,13 @@ export default async function BuscarPage({ searchParams }: { searchParams: Promi
         <div className="space-y-4">
           {groups.map((g) => (
             <div key={g.key} className="zaire-card overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-(--zaire-border) bg-slate-50">
+              <div className="px-4 py-2.5 border-b border-(--zaire-border) bg-subtle">
                 <h2 className="text-xs font-semibold uppercase tracking-wide text-(--zaire-text-muted)">{g.label} ({g.hits.length})</h2>
               </div>
               <ul className="divide-y divide-(--zaire-border)">
                 {g.hits.map((h, i) => (
                   <li key={i}>
-                    <Link href={h.href} className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50/80">
+                    <Link href={h.href} className="flex items-center gap-3 px-4 py-2.5 hover:bg-subtle/80">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-(--zaire-text) truncate">{h.title}</p>
                         {h.subtitle && <p className="text-xs text-(--zaire-text-muted) truncate">{h.subtitle}</p>}

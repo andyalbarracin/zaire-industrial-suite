@@ -30,11 +30,11 @@ export const VISIT_STATUS_LABELS: Record<VisitStatus, string> = {
 };
 
 export const VISIT_STATUS_COLORS: Record<VisitStatus, string> = {
-  planificada: "bg-slate-100 text-slate-700 border-slate-200",
-  en_curso: "bg-blue-100 text-blue-700 border-blue-200",
-  en_sitio: "bg-violet-100 text-violet-700 border-violet-200",
-  finalizada: "bg-green-100 text-green-700 border-green-200",
-  cancelada: "bg-red-100 text-red-700 border-red-200",
+  planificada: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-500/15 dark:text-slate-300 dark:border-slate-500/25",
+  en_curso: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/25",
+  en_sitio: "bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-500/15 dark:text-violet-300 dark:border-violet-500/25",
+  finalizada: "bg-green-100 text-green-700 border-green-200 dark:bg-green-500/15 dark:text-green-300 dark:border-green-500/25",
+  cancelada: "bg-red-100 text-red-700 border-red-200 dark:bg-red-500/15 dark:text-red-300 dark:border-red-500/25",
 };
 
 export const VISIT_STATUS_TRANSITIONS: Record<string, string[]> = {
@@ -81,10 +81,10 @@ export const BILLING_STATUS_LABELS: Record<BillingStatus, string> = {
 };
 
 export const BILLING_STATUS_COLORS: Record<BillingStatus, string> = {
-  no_facturable: "bg-slate-100 text-slate-700 border-slate-200",
-  pendiente: "bg-amber-100 text-amber-700 border-amber-200",
-  facturado: "bg-blue-100 text-blue-700 border-blue-200",
-  cobrado: "bg-green-100 text-green-700 border-green-200",
+  no_facturable: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-500/15 dark:text-slate-300 dark:border-slate-500/25",
+  pendiente: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/25",
+  facturado: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/25",
+  cobrado: "bg-green-100 text-green-700 border-green-200 dark:bg-green-500/15 dark:text-green-300 dark:border-green-500/25",
 };
 
 export const EXPENSE_CATEGORIES = [
@@ -122,10 +122,10 @@ export const EXPENSE_STATUS_LABELS: Record<ExpenseStatus, string> = {
 };
 
 export const EXPENSE_STATUS_COLORS: Record<ExpenseStatus, string> = {
-  pendiente: "bg-amber-100 text-amber-700 border-amber-200",
-  aprobado: "bg-green-100 text-green-700 border-green-200",
-  reintegrado: "bg-blue-100 text-blue-700 border-blue-200",
-  rechazado: "bg-red-100 text-red-700 border-red-200",
+  pendiente: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/25",
+  aprobado: "bg-green-100 text-green-700 border-green-200 dark:bg-green-500/15 dark:text-green-300 dark:border-green-500/25",
+  reintegrado: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/25",
+  rechazado: "bg-red-100 text-red-700 border-red-200 dark:bg-red-500/15 dark:text-red-300 dark:border-red-500/25",
 };
 
 export const VEHICLE_TYPES = [

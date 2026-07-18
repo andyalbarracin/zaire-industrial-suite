@@ -108,15 +108,15 @@ export function CrmAttachments({ entityType, entityId, initialAttachments, curre
       {attachments.length > 0 && (
         <ul className="space-y-1.5 mb-3">
           {attachments.map((a) => (
-            <li key={a.id} className="flex items-center gap-2 rounded-lg border border-(--zaire-border) bg-white px-2.5 py-1.5">
+            <li key={a.id} className="flex items-center gap-2 rounded-lg border border-(--zaire-border) bg-panel px-2.5 py-1.5">
               <FileText className="w-3.5 h-3.5 text-(--zaire-text-muted) shrink-0" />
               <button type="button" onClick={() => handleDownload(a)} className="text-sm text-zaire-blue hover:underline truncate text-left flex-1" title={a.file_name}>
                 {a.file_name}
               </button>
-              <span className="text-[10px] font-medium text-(--zaire-text-muted) bg-slate-100 border border-(--zaire-border) rounded px-1.5 py-0.5 shrink-0">{CAT_LABEL[a.category] ?? a.category}</span>
+              <span className="text-[10px] font-medium text-(--zaire-text-muted) bg-subtle-2 border border-(--zaire-border) rounded px-1.5 py-0.5 shrink-0">{CAT_LABEL[a.category] ?? a.category}</span>
               <span className="text-[10px] text-(--zaire-text-muted) shrink-0 tabular-nums w-14 text-right">{fmtSize(a.size_bytes)}</span>
               <button type="button" onClick={() => handleDownload(a)} title="Descargar" className="text-(--zaire-text-muted) hover:text-zaire-blue"><Download className="w-3.5 h-3.5" /></button>
-              <button type="button" onClick={() => setToDelete(a)} title="Eliminar" className="text-(--zaire-text-muted) hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
+              <button type="button" onClick={() => setToDelete(a)} title="Eliminar" className="text-(--zaire-text-muted) hover:text-red-600 dark:text-red-300"><Trash2 className="w-3.5 h-3.5" /></button>
             </li>
           ))}
         </ul>
@@ -130,7 +130,7 @@ export function CrmAttachments({ entityType, entityId, initialAttachments, curre
         >
           {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
         </select>
-        <label className={cn("inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm font-medium cursor-pointer transition-colors", uploading ? "bg-slate-100 text-(--zaire-text-muted)" : "bg-zaire-navy-mid text-white hover:bg-zaire-navy")}>
+        <label className={cn("inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm font-medium cursor-pointer transition-colors", uploading ? "bg-subtle-2 text-(--zaire-text-muted)" : "bg-zaire-navy-mid text-white hover:bg-zaire-navy")}>
           {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />} Subir archivo
           <input
             type="file"

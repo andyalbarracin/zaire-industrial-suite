@@ -22,7 +22,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${inter.variable} h-full antialiased`}>
+    <html lang="es" data-theme="azul" suppressHydrationWarning className={`${inter.variable} h-full antialiased`}>
+      <head>
+        {/* No-flash: aplica tema/modo guardados ANTES del primer paint (evita parpadeo). */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var t=localStorage.getItem('zaire-theme');var m=localStorage.getItem('zaire-mode');var d=document.documentElement;if(t==='bronze'||t==='azul'||t==='bordo')d.setAttribute('data-theme',t);var dark=m==='dark'||(m==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);d.classList.toggle('dark',dark);}catch(e){}})();",
+          }}
+        />
+      </head>
       <body className="min-h-full bg-zaire-bg">
         {children}
         <Toaster richColors position="top-right" />

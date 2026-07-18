@@ -44,10 +44,10 @@ export default async function FieldDashboardPage() {
   }));
 
   const kpis = [
-    { label: "Visitas activas", value: stats.activeVisits, icon: MapPin, color: "text-violet-600", bg: "bg-violet-50" },
-    { label: "Técnicos en ruta", value: stats.techniciansOnRoute, icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Docs por vencer (≤30d)", value: stats.docsExpiringSoon, icon: FileWarning, color: "text-amber-600", bg: "bg-amber-50" },
-    { label: "Gastos del mes", value: stats.monthExpensesUsd > 0 ? `${formatCurrency(stats.monthExpensesArs, "ARS")} · ${formatCurrency(stats.monthExpensesUsd, "USD")}` : formatCurrency(stats.monthExpensesArs, "ARS"), icon: Wallet, color: "text-green-600", bg: "bg-green-50" },
+    { label: "Visitas activas", value: stats.activeVisits, icon: MapPin, color: "text-violet-600 dark:text-violet-300", bg: "bg-violet-50 dark:bg-violet-500/15" },
+    { label: "Técnicos en ruta", value: stats.techniciansOnRoute, icon: Users, color: "text-blue-600 dark:text-blue-300", bg: "bg-blue-50 dark:bg-blue-500/15" },
+    { label: "Docs por vencer (≤30d)", value: stats.docsExpiringSoon, icon: FileWarning, color: "text-amber-600 dark:text-amber-300", bg: "bg-amber-50 dark:bg-amber-500/15" },
+    { label: "Gastos del mes", value: stats.monthExpensesUsd > 0 ? `${formatCurrency(stats.monthExpensesArs, "ARS")} · ${formatCurrency(stats.monthExpensesUsd, "USD")}` : formatCurrency(stats.monthExpensesArs, "ARS"), icon: Wallet, color: "text-green-600 dark:text-green-300", bg: "bg-green-50 dark:bg-green-500/15" },
   ];
 
   return (
@@ -59,17 +59,21 @@ export default async function FieldDashboardPage() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-up">
-        {kpis.map((k) => (
-          <div key={k.label} className="zaire-card p-4">
+        {kpis.map((k, idx) => {
+          const fc = idx === 0 ? "zaire-card-feature" : idx === 3 ? "zaire-card-feature-2" : null;
+          const feature = !!fc;
+          return (
+          <div key={k.label} className={cn("p-4", fc ?? "zaire-card")}>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-(--zaire-text-muted) font-medium">{k.label}</span>
-              <span className={cn("w-8 h-8 rounded-lg flex items-center justify-center", k.bg)}>
-                <k.icon className={cn("w-4 h-4", k.color)} />
+              <span className={cn("text-xs font-medium", feature ? "text-(--feature-fg-muted)" : "text-(--zaire-text-muted)")}>{k.label}</span>
+              <span className={cn("w-8 h-8 rounded-lg flex items-center justify-center", feature ? "bg-white/15 backdrop-blur-sm" : k.bg)}>
+                <k.icon className={cn("w-4 h-4", feature ? "text-white" : k.color)} />
               </span>
             </div>
-            <p className="text-2xl font-bold text-(--zaire-text) mt-2">{k.value}</p>
+            <p className={cn("text-2xl font-bold mt-2", feature ? "text-(--feature-fg)" : "text-(--zaire-text)")}>{k.value}</p>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Mapa general + vencimientos */}
@@ -138,7 +142,7 @@ export default async function FieldDashboardPage() {
               </thead>
               <tbody className="divide-y divide-(--zaire-border)">
                 {recentVisits.map((v) => (
-                  <tr key={v.id} className="hover:bg-slate-50/80">
+                  <tr key={v.id} className="hover:bg-subtle/80">
                     <td className="py-2">
                       <Link href={ROUTES.field.visita(v.id)} className="font-mono text-xs text-zaire-blue hover:underline">{v.visit_number ?? "—"}</Link>
                     </td>

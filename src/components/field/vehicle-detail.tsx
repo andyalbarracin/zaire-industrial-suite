@@ -142,7 +142,7 @@ export function VehicleDetail({ vehicle: initialVehicle, technicians, files: ini
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl font-bold text-(--zaire-text) font-mono">{vehicle.plate ?? "Unidad"}</h1>
             <span className="text-(--zaire-text-muted)">{[vehicle.brand, vehicle.model].filter(Boolean).join(" ")}</span>
-            <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border", vehicle.is_active ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200")}>
+            <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border", vehicle.is_active ? "bg-green-50 dark:bg-green-500/15 text-green-700 dark:text-green-300 border-green-200 dark:border-green-500/30" : "bg-red-50 dark:bg-red-500/15 text-red-700 dark:text-red-300 border-red-200 dark:border-red-500/30")}>
               {vehicle.is_active ? "Activa" : "Inactiva"}
             </span>
           </div>
@@ -158,7 +158,7 @@ export function VehicleDetail({ vehicle: initialVehicle, technicians, files: ini
               // eslint-disable-next-line @next/next/no-img-element
               <img src={coverUrl} alt="Portada" className="w-full h-44 object-cover" />
             ) : (
-              <div className="w-full h-44 bg-slate-100 flex items-center justify-center text-sm text-(--zaire-text-muted)">Sin foto de portada</div>
+              <div className="w-full h-44 bg-subtle-2 flex items-center justify-center text-sm text-(--zaire-text-muted)">Sin foto de portada</div>
             )}
             <div className="p-5 space-y-2.5 text-sm">
               <Row label="Tipo" value={vehicle.type ? VEHICLE_TYPE_LABELS[vehicle.type as VehicleType] : "—"} />
@@ -205,16 +205,16 @@ export function VehicleDetail({ vehicle: initialVehicle, technicians, files: ini
                   <h3 className="text-sm font-semibold text-(--zaire-text) mb-3">Fotos</h3>
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                     {photos.map((f) => (
-                      <div key={f.id} className="relative group aspect-square rounded-lg overflow-hidden border border-(--zaire-border) bg-slate-100">
+                      <div key={f.id} className="relative group aspect-square rounded-lg overflow-hidden border border-(--zaire-border) bg-subtle-2">
                         {urls[f.id] ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={urls[f.id]} alt={f.title ?? "Foto"} className="w-full h-full object-cover" />
                         ) : <div className="w-full h-full animate-pulse" />}
                         <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => setCover(f)} title="Poner de portada" className="bg-white/90 rounded p-1 text-amber-500 hover:bg-white">
+                          <button onClick={() => setCover(f)} title="Poner de portada" className="bg-white/90 rounded p-1 text-amber-500 hover:bg-panel">
                             <Star className={cn("w-3.5 h-3.5", vehicle.cover_photo_path === f.storage_path && "fill-amber-400")} />
                           </button>
-                          <button onClick={() => deleteFile(f)} title="Eliminar" className="bg-white/90 rounded p-1 text-red-600 hover:bg-white">
+                          <button onClick={() => deleteFile(f)} title="Eliminar" className="bg-white/90 rounded p-1 text-red-600 dark:text-red-300 hover:bg-panel">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -235,7 +235,7 @@ export function VehicleDetail({ vehicle: initialVehicle, technicians, files: ini
                         <FileText className="w-4 h-4 text-zaire-blue shrink-0" />
                         <button onClick={() => openFile(f.storage_path)} className="flex-1 text-left text-sm text-zaire-blue hover:underline truncate">{f.title ?? f.storage_path}</button>
                         <span className="text-xs text-(--zaire-text-muted)">{VEHICLE_FILE_CATEGORY_LABELS[f.category ?? "otro"]}</span>
-                        <button onClick={() => deleteFile(f)} title="Eliminar" className="text-red-600 hover:text-red-700"><Trash2 className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => deleteFile(f)} title="Eliminar" className="text-red-600 dark:text-red-300 hover:text-red-700 dark:text-red-300"><Trash2 className="w-3.5 h-3.5" /></button>
                       </li>
                     ))}
                   </ul>
