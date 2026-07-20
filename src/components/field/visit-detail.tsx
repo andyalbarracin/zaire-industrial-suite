@@ -33,6 +33,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FieldMap, type MapMarker } from "@/components/field/field-map";
 import { VisitCreateLead } from "@/components/field/visit-create-lead";
+import { ConsumeInVisit } from "@/components/stock/consume-in-visit";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { VisitReportSection } from "@/components/field/visit-report-section";
 import { VisitExpensesSection } from "@/components/field/visit-expenses-section";
@@ -236,6 +237,7 @@ export function VisitDetail({ visit, events, pings, report, expenses, photos, cl
             </Button>
           )}
           <VisitCreateLead visit={visit} />
+          <ConsumeInVisit visitId={visit.id} vehicleId={visit.vehicle_id} />
           <Button asChild variant="outline">
             <a href={`/api/field/visit-pdf/${visit.id}`} target="_blank" rel="noopener noreferrer"><FileText className="w-4 h-4 mr-1.5" /> PDF</a>
           </Button>

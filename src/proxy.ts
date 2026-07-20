@@ -59,7 +59,8 @@ export async function proxy(request: NextRequest) {
     if (
       (pathname.startsWith("/trace") && !enabled.includes("trace")) ||
       (pathname.startsWith("/field") && !enabled.includes("field")) ||
-      (pathname.startsWith("/crm") && !enabled.includes("crm"))
+      (pathname.startsWith("/crm") && !enabled.includes("crm")) ||
+      (pathname.startsWith("/stock") && !enabled.includes("stock"))
     ) {
       const url = request.nextUrl.clone();
       url.pathname = ROUTES.home;

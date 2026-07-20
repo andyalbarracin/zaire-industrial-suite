@@ -5,7 +5,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { ChevronRight, Search, Bell, AlertCircle, Clock, FileCheck, GitBranchPlus } from "lucide-react";
+import { ChevronRight, Search, Bell, AlertCircle, Clock, FileCheck, GitBranchPlus, Boxes } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROUTES, ROUTE_LABELS } from "@/lib/routes";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
@@ -90,7 +90,7 @@ export function Header({ notifications }: HeaderProps) {
     }
   }
 
-  const overdueCount = notifications.filter(n => n.kind !== "field_ot_request" && getDaysUntilDue(n.date_due) < 0).length;
+  const overdueCount = notifications.filter(n => n.kind !== "field_ot_request" && n.kind !== "stock_low" && getDaysUntilDue(n.date_due) < 0).length;
   const hasNotifications = notifications.length > 0;
 
   return (
@@ -186,9 +186,10 @@ export function Header({ notifications }: HeaderProps) {
               ) : (
                 notifications.map((n) => {
                   const isRequest = n.kind === "field_ot_request";
+                  const isStock = n.kind === "stock_low";
                   const days = getDaysUntilDue(n.date_due);
-                  const isOverdue = !isRequest && days < 0;
-                  const isUrgent = !isRequest && days >= 0 && days <= 2;
+                  const isOverdue = !isRequest && !isStock && days < 0;
+                  const isUrgent = !isRequest && !isStock && days >= 0 && days <= 2;
                   const isField = n.kind === "field_doc";
                   const isCrm = n.kind === "crm_task" || n.kind === "crm_close";
                   return (
@@ -200,30 +201,33 @@ export function Header({ notifications }: HeaderProps) {
                     >
                       <div className={cn(
                         "mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center shrink-0",
-                        isRequest ? "bg-violet-50 dark:bg-violet-500/15" : isOverdue ? "bg-red-50 dark:bg-red-500/15" : isUrgent ? "bg-amber-50 dark:bg-amber-500/15" : "bg-surface-2"
+                        isRequest ? "bg-violet-50 dark:bg-violet-500/15" : isStock ? "bg-amber-50 dark:bg-amber-500/15" : isOverdue ? "bg-red-50 dark:bg-red-500/15" : isUrgent ? "bg-amber-50 dark:bg-amber-500/15" : "bg-surface-2"
                       )}>
                         {isRequest
                           ? <GitBranchPlus className="w-3.5 h-3.5 text-violet-600 dark:text-violet-300" />
-                          : isField
-                            ? <FileCheck className={cn("w-3.5 h-3.5", isOverdue ? "text-red-500" : "text-amber-500")} />
-                            : isOverdue
-                              ? <AlertCircle className="w-3.5 h-3.5 text-red-500" />
-                              : <Clock className="w-3.5 h-3.5 text-amber-500" />
+                          : isStock
+                            ? <Boxes className="w-3.5 h-3.5 text-amber-500" />
+                            : isField
+                              ? <FileCheck className={cn("w-3.5 h-3.5", isOverdue ? "text-red-500" : "text-amber-500")} />
+                              : isOverdue
+                                ? <AlertCircle className="w-3.5 h-3.5 text-red-500" />
+                                : <Clock className="w-3.5 h-3.5 text-amber-500" />
                         }
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className={cn("text-sm font-medium text-(--zaire-text)", !isField && !isRequest && !isCrm && "font-mono")}>
+                        <p className={cn("text-sm font-medium text-(--zaire-text)", !isField && !isRequest && !isCrm && !isStock && "font-mono")}>
                           {n.title}
                           {(isField || isRequest) && <span className="ml-1.5 text-[10px] font-semibold text-violet-600 dark:text-violet-300 bg-violet-50 dark:bg-violet-500/15 border border-violet-100 dark:border-violet-500/25 rounded px-1 py-0.5">FIELD</span>}
                           {isCrm && <span className="ml-1.5 text-[10px] font-semibold text-zaire-blue bg-blue-50 dark:bg-blue-500/15 border border-blue-100 dark:border-blue-500/25 rounded px-1 py-0.5">CRM</span>}
+                          {isStock && <span className="ml-1.5 text-[10px] font-semibold text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/15 border border-amber-100 dark:border-amber-500/25 rounded px-1 py-0.5">STOCK</span>}
                         </p>
                         <p className="text-xs text-(--zaire-text-muted) truncate">{n.subtitle}</p>
                       </div>
                       <span className={cn(
                         "text-xs font-semibold shrink-0 mt-0.5",
-                        isRequest ? "text-violet-600 dark:text-violet-300" : isOverdue ? "text-red-600 dark:text-red-300" : isUrgent ? "text-amber-600 dark:text-amber-300" : "text-slate-500"
+                        isRequest ? "text-violet-600 dark:text-violet-300" : isStock ? "text-amber-600 dark:text-amber-300" : isOverdue ? "text-red-600 dark:text-red-300" : isUrgent ? "text-amber-600 dark:text-amber-300" : "text-slate-500"
                       )}>
-                        {isRequest ? "Solicitud" : dueLabelShort(days)}
+                        {isRequest ? "Solicitud" : isStock ? "Bajo stock" : dueLabelShort(days)}
                       </span>
                     </Link>
                   );

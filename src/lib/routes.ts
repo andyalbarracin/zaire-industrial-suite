@@ -58,6 +58,20 @@ export const ROUTES = {
     reportes: "/crm/reportes",
   },
 
+  // Módulo Stock — inventario/WMS (depósitos, existencias, movimientos, series, reservas)
+  stock: {
+    dashboard: "/stock",
+    existencias: "/stock/existencias",
+    producto: (id: string) => `/stock/existencias/${id}`,   // kardex del producto
+    movimientos: "/stock/movimientos",
+    movimientoNuevo: "/stock/movimientos/nuevo",
+    depositos: "/stock/depositos",
+    deposito: (id: string) => `/stock/depositos/${id}`,
+    series: "/stock/series",
+    reservas: "/stock/reservas",
+    reportes: "/stock/reportes",
+  },
+
   // Master data compartida — vive en la raíz de la suite (no dentro de un módulo)
   clientes: "/clientes",
   cliente: (id: string) => `/clientes/${id}`,
@@ -97,4 +111,11 @@ export const ROUTE_LABELS: Record<string, string> = {
   cuentas: "Cuentas",
   contactos: "Contactos",
   actividades: "Actividades",
+  // Stock
+  stock: "Zaire Stock",
+  existencias: "Existencias",
+  movimientos: "Movimientos",
+  depositos: "Depósitos",
+  series: "Series",
+  reservas: "Reservas",
 };

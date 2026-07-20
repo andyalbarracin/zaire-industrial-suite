@@ -8,6 +8,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { ROUTES } from "@/lib/routes";
 import { isModuleEnabled } from "@/lib/modules";
+import { getLowStockLevels } from "@/lib/stock/queries";
 import { DOC_TYPE_LABELS } from "@/lib/field/constants";
 import type { DocType } from "@/lib/field/types";
 
@@ -15,7 +16,7 @@ import type { DocType } from "@/lib/field/types";
 // documentos por vencer (Zaire Field). El header las renderiza de forma genérica.
 export type Notification = {
   id: string;
-  kind: "order" | "field_doc" | "field_ot_request" | "crm_task" | "crm_close";
+  kind: "order" | "field_doc" | "field_ot_request" | "crm_task" | "crm_close" | "stock_low";
   title: string;
   subtitle: string;
   date_due: string;
@@ -144,7 +145,19 @@ export default async function DashboardLayout({
     href: ROUTES.crm.pipeline,
   }));
 
-  const notifications = [...requestNotifs, ...orderNotifs, ...docNotifs, ...crmTaskNotifs, ...crmCloseNotifs].sort(
+  // Zaire Stock: alertas de bajo mínimo (sin fecha; se muestran como alerta). Gateado por stock.
+  const stockNotifs: Notification[] = isModuleEnabled("stock")
+    ? (await getLowStockLevels()).slice(0, 15).map((l) => ({
+        id: `stocklow-${l.id}`,
+        kind: "stock_low" as const,
+        title: `Bajo stock · ${l.product?.name ?? "Producto"}`,
+        subtitle: `${l.warehouse?.name ?? ""} · ${l.on_hand}/${l.min_qty} ${l.product?.unit ?? ""}`.trim(),
+        date_due: new Date().toISOString(),
+        href: ROUTES.stock.existencias,
+      }))
+    : [];
+
+  const notifications = [...requestNotifs, ...stockNotifs, ...orderNotifs, ...docNotifs, ...crmTaskNotifs, ...crmCloseNotifs].sort(
     (a, b) => new Date(a.date_due).getTime() - new Date(b.date_due).getTime()
   );
 

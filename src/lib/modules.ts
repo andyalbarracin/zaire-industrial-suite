@@ -6,9 +6,9 @@
 // El helper abstrae la fuente: a futuro se puede leer de company_settings.enabled_modules
 // sin cambiar los call sites. Funciona en Server y Client (NEXT_PUBLIC_ se inlinea en build).
 
-export type ModuleId = "trace" | "field" | "crm";
+export type ModuleId = "trace" | "field" | "crm" | "stock";
 
-const ALL_MODULES: ModuleId[] = ["trace", "field", "crm"];
+const ALL_MODULES: ModuleId[] = ["trace", "field", "crm", "stock"];
 
 export function getEnabledModules(): ModuleId[] {
   const raw = process.env.NEXT_PUBLIC_ENABLED_MODULES?.trim();

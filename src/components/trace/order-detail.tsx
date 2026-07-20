@@ -26,6 +26,7 @@ import { formatDate, formatDateTime, formatCurrency, cn, calculateTrafficLight }
 import { ORDER_STATUS_LABELS, ORDER_STATUS_NEXT } from "@/lib/trace/constants";
 import { BRANCHES } from "@/lib/constants";
 import type { OrderStatus, OrderType, Currency, Profile, Client, Product } from "@/lib/types/database";
+import { ConsumeFromOrder } from "@/components/stock/consume-from-order";
 
 interface ItemDetail {
   id: string;
@@ -210,6 +211,7 @@ export function OrderDetail({ order, items: initialItems, history, currentProfil
               </a>
             </Button>
           )}
+          <ConsumeFromOrder orderId={order.id} items={initialItems} />
         </div>
       </div>
 

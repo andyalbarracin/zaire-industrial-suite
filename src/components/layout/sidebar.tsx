@@ -36,6 +36,12 @@ import {
   Building2,
   FileText,
   SlidersHorizontal,
+  Boxes,
+  Warehouse,
+  ArrowLeftRight,
+  Barcode,
+  BookmarkCheck,
+  PackageSearch,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/lib/routes";
@@ -89,6 +95,16 @@ const NAV_FIELD: NavItem[] = [
   { href: ROUTES.field.reportes, label: "Reportes Field", icon: BarChart3 },
 ];
 
+const NAV_STOCK: NavItem[] = [
+  { href: ROUTES.stock.dashboard, label: "Panel Stock", icon: LayoutDashboard },
+  { href: ROUTES.stock.existencias, label: "Existencias", icon: PackageSearch },
+  { href: ROUTES.stock.movimientos, label: "Movimientos", icon: ArrowLeftRight },
+  { href: ROUTES.stock.depositos, label: "Depósitos", icon: Warehouse },
+  { href: ROUTES.stock.series, label: "Series / Lotes", icon: Barcode },
+  { href: ROUTES.stock.reservas, label: "Reservas", icon: BookmarkCheck },
+  { href: ROUTES.stock.reportes, label: "Reportes Stock", icon: BarChart3 },
+];
+
 // Módulos "padre" colapsables. Sumar acá cuando haya nuevos módulos (ej. futuros).
 interface NavModule {
   key: string;
@@ -100,6 +116,7 @@ const MODULES: NavModule[] = [
   { key: "trace", label: "Zaire Trace", icon: LayoutGrid, items: NAV_TRACE },
   { key: "field", label: "Zaire Field", icon: MapIcon, items: NAV_FIELD },
   { key: "crm", label: "Zaire CRM", icon: Briefcase, items: NAV_CRM },
+  { key: "stock", label: "Zaire Stock", icon: Boxes, items: NAV_STOCK },
   { key: "general", label: "Ajustes", icon: Database, items: NAV_GENERAL },
 ];
 
@@ -115,8 +132,9 @@ export function Sidebar({ profile }: SidebarProps) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
     const onField = pathname.startsWith(ROUTES.field.home);
     const onCrm = pathname.startsWith(ROUTES.crm.dashboard);
+    const onStock = pathname.startsWith(ROUTES.stock.dashboard);
     const onGeneral = [ROUTES.clientes, ROUTES.historial, ROUTES.preferencias, ROUTES.configuracion].some((r) => pathname.startsWith(r));
-    return { trace: !onField && !onCrm && !onGeneral, field: onField, crm: onCrm, general: onGeneral };
+    return { trace: !onField && !onCrm && !onStock && !onGeneral, field: onField, crm: onCrm, stock: onStock, general: onGeneral };
   });
 
   // Grupos visibles según módulos habilitados (Administración/general siempre visible).

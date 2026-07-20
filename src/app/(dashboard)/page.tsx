@@ -13,6 +13,8 @@ export default function Home() {
       ? ROUTES.field.home
       : first === "crm"
         ? ROUTES.crm.dashboard
-        : ROUTES.trace.dashboard
+        : first === "stock"
+          ? ROUTES.stock.dashboard
+          : ROUTES.trace.dashboard
   );
 }

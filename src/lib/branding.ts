@@ -15,6 +15,7 @@ export const BRANDING = {
     trace: "Zaire Trace",
     field: "Zaire Field",
     crm: "Zaire CRM",
+    stock: "Zaire Stock",
   },
 
   // Alias de compatibilidad: los templates de PDF usan systemName en el pie
