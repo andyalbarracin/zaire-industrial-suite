@@ -42,6 +42,8 @@ import {
   Barcode,
   BookmarkCheck,
   PackageSearch,
+  Cog,
+  Wrench,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/lib/routes";
@@ -105,6 +107,13 @@ const NAV_STOCK: NavItem[] = [
   { href: ROUTES.stock.reportes, label: "Reportes Stock", icon: BarChart3 },
 ];
 
+const NAV_ASSETS: NavItem[] = [
+  { href: ROUTES.assets.dashboard, label: "Panel Assets", icon: LayoutDashboard },
+  { href: ROUTES.assets.equipos, label: "Equipos", icon: Wrench },
+  { href: ROUTES.assets.documentos, label: "Documentos", icon: FileCheck },
+  { href: ROUTES.assets.reportes, label: "Reportes Assets", icon: BarChart3 },
+];
+
 // Módulos "padre" colapsables. Sumar acá cuando haya nuevos módulos (ej. futuros).
 interface NavModule {
   key: string;
@@ -117,6 +126,7 @@ const MODULES: NavModule[] = [
   { key: "field", label: "Zaire Field", icon: MapIcon, items: NAV_FIELD },
   { key: "crm", label: "Zaire CRM", icon: Briefcase, items: NAV_CRM },
   { key: "stock", label: "Zaire Stock", icon: Boxes, items: NAV_STOCK },
+  { key: "assets", label: "Zaire Assets", icon: Cog, items: NAV_ASSETS },
   { key: "general", label: "Ajustes", icon: Database, items: NAV_GENERAL },
 ];
 
@@ -133,8 +143,9 @@ export function Sidebar({ profile }: SidebarProps) {
     const onField = pathname.startsWith(ROUTES.field.home);
     const onCrm = pathname.startsWith(ROUTES.crm.dashboard);
     const onStock = pathname.startsWith(ROUTES.stock.dashboard);
+    const onAssets = pathname.startsWith(ROUTES.assets.dashboard);
     const onGeneral = [ROUTES.clientes, ROUTES.historial, ROUTES.preferencias, ROUTES.configuracion].some((r) => pathname.startsWith(r));
-    return { trace: !onField && !onCrm && !onStock && !onGeneral, field: onField, crm: onCrm, stock: onStock, general: onGeneral };
+    return { trace: !onField && !onCrm && !onStock && !onAssets && !onGeneral, field: onField, crm: onCrm, stock: onStock, assets: onAssets, general: onGeneral };
   });
 
   // Grupos visibles según módulos habilitados (Administración/general siempre visible).
@@ -149,7 +160,7 @@ export function Sidebar({ profile }: SidebarProps) {
 
   const isActive = (href: string) => {
     // Rutas "índice" con match exacto para no activarse en sus subrutas
-    if (href === ROUTES.trace.dashboard || href === ROUTES.field.home || href === ROUTES.crm.dashboard) return pathname === href;
+    if (href === ROUTES.trace.dashboard || href === ROUTES.field.home || href === ROUTES.crm.dashboard || href === ROUTES.stock.dashboard || href === ROUTES.assets.dashboard) return pathname === href;
     return pathname.startsWith(href);
   };
 

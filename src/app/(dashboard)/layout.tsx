@@ -9,6 +9,7 @@ import { Footer } from "@/components/layout/footer";
 import { ROUTES } from "@/lib/routes";
 import { isModuleEnabled } from "@/lib/modules";
 import { getLowStockLevels } from "@/lib/stock/queries";
+import { getAssetBellAlerts } from "@/lib/assets/queries";
 import { DOC_TYPE_LABELS } from "@/lib/field/constants";
 import type { DocType } from "@/lib/field/types";
 
@@ -16,7 +17,7 @@ import type { DocType } from "@/lib/field/types";
 // documentos por vencer (Zaire Field). El header las renderiza de forma genérica.
 export type Notification = {
   id: string;
-  kind: "order" | "field_doc" | "field_ot_request" | "crm_task" | "crm_close" | "stock_low";
+  kind: "order" | "field_doc" | "field_ot_request" | "crm_task" | "crm_close" | "stock_low" | "asset_alert";
   title: string;
   subtitle: string;
   date_due: string;
@@ -157,7 +158,19 @@ export default async function DashboardLayout({
       }))
     : [];
 
-  const notifications = [...requestNotifs, ...stockNotifs, ...orderNotifs, ...docNotifs, ...crmTaskNotifs, ...crmCloseNotifs].sort(
+  // Zaire Assets: garantías/documentos por vencer (con fecha, como Field). Gateado por assets.
+  const assetNotifs: Notification[] = isModuleEnabled("assets")
+    ? (await getAssetBellAlerts()).map((a) => ({
+        id: a.id,
+        kind: "asset_alert" as const,
+        title: a.title,
+        subtitle: a.subtitle,
+        date_due: a.date_due,
+        href: a.href,
+      }))
+    : [];
+
+  const notifications = [...requestNotifs, ...stockNotifs, ...assetNotifs, ...orderNotifs, ...docNotifs, ...crmTaskNotifs, ...crmCloseNotifs].sort(
     (a, b) => new Date(a.date_due).getTime() - new Date(b.date_due).getTime()
   );
 

@@ -15,6 +15,8 @@ export default function Home() {
         ? ROUTES.crm.dashboard
         : first === "stock"
           ? ROUTES.stock.dashboard
-          : ROUTES.trace.dashboard
+          : first === "assets"
+            ? ROUTES.assets.dashboard
+            : ROUTES.trace.dashboard
   );
 }

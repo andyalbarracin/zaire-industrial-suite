@@ -27,6 +27,7 @@ import { ORDER_STATUS_LABELS, ORDER_STATUS_NEXT } from "@/lib/trace/constants";
 import { BRANCHES } from "@/lib/constants";
 import type { OrderStatus, OrderType, Currency, Profile, Client, Product } from "@/lib/types/database";
 import { ConsumeFromOrder } from "@/components/stock/consume-from-order";
+import { RegisterAssetService } from "@/components/assets/register-asset-service";
 
 interface ItemDetail {
   id: string;
@@ -212,6 +213,7 @@ export function OrderDetail({ order, items: initialItems, history, currentProfil
             </Button>
           )}
           <ConsumeFromOrder orderId={order.id} items={initialItems} />
+          <RegisterAssetService refType="ot" refId={order.id} defaultCost={order.total} defaultDescription={`OT ${order.order_number}`} />
         </div>
       </div>
 

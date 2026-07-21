@@ -72,6 +72,15 @@ export const ROUTES = {
     reportes: "/stock/reportes",
   },
 
+  // Módulo Activos/Equipos — gemelo digital (equipos, hoja de vida, documentos, reportes)
+  assets: {
+    dashboard: "/assets",
+    equipos: "/assets/equipos",
+    equipo: (id: string) => `/assets/equipos/${id}`,
+    documentos: "/assets/documentos",
+    reportes: "/assets/reportes",
+  },
+
   // Master data compartida — vive en la raíz de la suite (no dentro de un módulo)
   clientes: "/clientes",
   cliente: (id: string) => `/clientes/${id}`,
@@ -118,4 +127,8 @@ export const ROUTE_LABELS: Record<string, string> = {
   depositos: "Depósitos",
   series: "Series",
   reservas: "Reservas",
+  // Assets
+  assets: "Zaire Assets",
+  equipos: "Equipos",
+  documentos: "Documentos",
 };

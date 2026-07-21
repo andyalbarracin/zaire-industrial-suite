@@ -5,7 +5,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { ChevronRight, Search, Bell, AlertCircle, Clock, FileCheck, GitBranchPlus, Boxes } from "lucide-react";
+import { ChevronRight, Search, Bell, AlertCircle, Clock, FileCheck, GitBranchPlus, Boxes, Cog } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROUTES, ROUTE_LABELS } from "@/lib/routes";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
@@ -192,6 +192,7 @@ export function Header({ notifications }: HeaderProps) {
                   const isUrgent = !isRequest && !isStock && days >= 0 && days <= 2;
                   const isField = n.kind === "field_doc";
                   const isCrm = n.kind === "crm_task" || n.kind === "crm_close";
+                  const isAsset = n.kind === "asset_alert";
                   return (
                     <Link
                       key={n.id}
@@ -201,25 +202,28 @@ export function Header({ notifications }: HeaderProps) {
                     >
                       <div className={cn(
                         "mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center shrink-0",
-                        isRequest ? "bg-violet-50 dark:bg-violet-500/15" : isStock ? "bg-amber-50 dark:bg-amber-500/15" : isOverdue ? "bg-red-50 dark:bg-red-500/15" : isUrgent ? "bg-amber-50 dark:bg-amber-500/15" : "bg-surface-2"
+                        isRequest ? "bg-violet-50 dark:bg-violet-500/15" : isStock ? "bg-amber-50 dark:bg-amber-500/15" : isOverdue ? "bg-red-50 dark:bg-red-500/15" : isAsset ? "bg-cyan-50 dark:bg-cyan-500/15" : isUrgent ? "bg-amber-50 dark:bg-amber-500/15" : "bg-surface-2"
                       )}>
                         {isRequest
                           ? <GitBranchPlus className="w-3.5 h-3.5 text-violet-600 dark:text-violet-300" />
                           : isStock
                             ? <Boxes className="w-3.5 h-3.5 text-amber-500" />
-                            : isField
-                              ? <FileCheck className={cn("w-3.5 h-3.5", isOverdue ? "text-red-500" : "text-amber-500")} />
-                              : isOverdue
-                                ? <AlertCircle className="w-3.5 h-3.5 text-red-500" />
-                                : <Clock className="w-3.5 h-3.5 text-amber-500" />
+                            : isAsset
+                              ? <Cog className={cn("w-3.5 h-3.5", isOverdue ? "text-red-500" : "text-cyan-500")} />
+                              : isField
+                                ? <FileCheck className={cn("w-3.5 h-3.5", isOverdue ? "text-red-500" : "text-amber-500")} />
+                                : isOverdue
+                                  ? <AlertCircle className="w-3.5 h-3.5 text-red-500" />
+                                  : <Clock className="w-3.5 h-3.5 text-amber-500" />
                         }
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className={cn("text-sm font-medium text-(--zaire-text)", !isField && !isRequest && !isCrm && !isStock && "font-mono")}>
+                        <p className={cn("text-sm font-medium text-(--zaire-text)", !isField && !isRequest && !isCrm && !isStock && !isAsset && "font-mono")}>
                           {n.title}
                           {(isField || isRequest) && <span className="ml-1.5 text-[10px] font-semibold text-violet-600 dark:text-violet-300 bg-violet-50 dark:bg-violet-500/15 border border-violet-100 dark:border-violet-500/25 rounded px-1 py-0.5">FIELD</span>}
                           {isCrm && <span className="ml-1.5 text-[10px] font-semibold text-zaire-blue bg-blue-50 dark:bg-blue-500/15 border border-blue-100 dark:border-blue-500/25 rounded px-1 py-0.5">CRM</span>}
                           {isStock && <span className="ml-1.5 text-[10px] font-semibold text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/15 border border-amber-100 dark:border-amber-500/25 rounded px-1 py-0.5">STOCK</span>}
+                          {isAsset && <span className="ml-1.5 text-[10px] font-semibold text-cyan-600 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-500/15 border border-cyan-100 dark:border-cyan-500/25 rounded px-1 py-0.5">ASSETS</span>}
                         </p>
                         <p className="text-xs text-(--zaire-text-muted) truncate">{n.subtitle}</p>
                       </div>
