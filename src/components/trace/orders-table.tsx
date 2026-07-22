@@ -462,7 +462,7 @@ export function OrdersTable({ initialOrders, clients, initialSearch = "", curren
                 key={row.id}
                 onClick={() => router.push(ROUTES.trace.orden(row.original.id))}
                 className={cn(
-                  "cursor-pointer hover:bg-blue-50 dark:bg-blue-500/15/50 transition-colors duration-100",
+                  "cursor-pointer hover:bg-subtle/80 transition-colors duration-100",
                   row.original.status === "cancelada" && "opacity-50",
                   row.original.order_type === "OTS" ? "border-l-2 border-l-orange-200" : "border-l-2 border-l-blue-200"
                 )}

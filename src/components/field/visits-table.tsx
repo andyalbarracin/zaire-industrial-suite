@@ -17,11 +17,12 @@ import {
   type SortingState,
   type FilterFn,
 } from "@tanstack/react-table";
-import { Plus, Search, Pencil, Eye, ArrowUpDown, Download } from "lucide-react";
+import { Plus, Search, Pencil, Eye, ArrowUpDown, Download, List, CalendarDays } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FilterBar } from "@/components/field/filter-bar";
+import { VisitsCalendar } from "@/components/field/visits-calendar";
 import { StatusDot } from "@/components/shared/status-dot";
 import { cn, formatDateTime } from "@/lib/utils";
 import { BRANCHES } from "@/lib/constants";
@@ -59,6 +60,7 @@ export function VisitsTable({ initialVisits }: VisitsTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [branchFilter, setBranchFilter] = useState<string[]>([]);
+  const [view, setView] = useState<"list" | "calendar">("list");
 
   const filtered = useMemo(() => {
     return initialVisits.filter((v) => {
@@ -193,6 +195,16 @@ export function VisitsTable({ initialVisits }: VisitsTableProps) {
           <Input placeholder="Buscar visitas..." value={globalFilter} onChange={(e) => setGlobalFilter(e.target.value)} className="pl-9 h-9" />
         </div>
         <div className="flex items-center gap-2">
+          <div className="flex items-center rounded-md border border-(--zaire-border) p-0.5 bg-panel">
+            <button type="button" onClick={() => setView("list")} title="Vista lista"
+              className={cn("flex items-center gap-1.5 h-8 px-2.5 rounded text-xs font-medium transition-colors", view === "list" ? "bg-zaire-navy text-white" : "text-(--zaire-text-muted) hover:text-(--zaire-text)")}>
+              <List className="w-3.5 h-3.5" /> Lista
+            </button>
+            <button type="button" onClick={() => setView("calendar")} title="Vista calendario"
+              className={cn("flex items-center gap-1.5 h-8 px-2.5 rounded text-xs font-medium transition-colors", view === "calendar" ? "bg-zaire-navy text-white" : "text-(--zaire-text-muted) hover:text-(--zaire-text)")}>
+              <CalendarDays className="w-3.5 h-3.5" /> Calendario
+            </button>
+          </div>
           <Button variant="outline" size="sm" onClick={exportExcel} className="h-9">
             <Download className="w-4 h-4 mr-1.5" /> XLS
           </Button>
@@ -211,6 +223,8 @@ export function VisitsTable({ initialVisits }: VisitsTableProps) {
         onClear={() => { setStatusFilter([]); setBranchFilter([]); }}
       />
 
+      {view === "list" ? (
+      <>
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -273,6 +287,10 @@ export function VisitsTable({ initialVisits }: VisitsTableProps) {
           <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>Siguiente</Button>
         </div>
       </div>
+      </>
+      ) : (
+        <VisitsCalendar visits={table.getFilteredRowModel().rows.map((r) => r.original)} />
+      )}
     </div>
   );
 }
