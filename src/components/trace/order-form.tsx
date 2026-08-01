@@ -71,6 +71,9 @@ const orderSchema = z.object({
 
 type OrderFormData = z.infer<typeof orderSchema>;
 
+// Convierte a número seguro: strings de Supabase ("0.00"), vacíos e inválidos → 0 (nunca NaN).
+const toNum = (v: unknown): number => Number(v) || 0;
+
 interface OrderFormProps {
   clients: Pick<Client, "id" | "business_name" | "tax_id">[];
   products: Pick<Product, "id" | "code" | "name" | "brand" | "model" | "category" | "unit" | "default_currency" | "default_unit_price">[];
@@ -165,8 +168,8 @@ export function OrderForm({ clients, products, defaultClientId, order, orderItem
   const currency = watch("currency") as Currency;
   const watchedItems = watch("items");
 
-  const totalUsd = watchedItems.reduce((sum, item) => sum + (item.quantity ?? 0) * (item.unit_price ?? 0), 0);
-  const totalArs = watchedItems.reduce((sum, item) => sum + (item.quantity ?? 0) * (item.unit_price_ars ?? 0), 0);
+  const totalUsd = watchedItems.reduce((sum, item) => sum + toNum(item.quantity) * toNum(item.unit_price), 0);
+  const totalArs = watchedItems.reduce((sum, item) => sum + toNum(item.quantity) * toNum(item.unit_price_ars), 0);
 
   function handleProductSelect(index: number, productId: string | null) {
     setValue(`items.${index}.product_id`, productId);
@@ -200,8 +203,8 @@ export function OrderForm({ clients, products, defaultClientId, order, orderItem
     const sb = supabase as any;
     const { data: { user } } = await supabase.auth.getUser();
 
-    const subtotal = data.items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
-    const subtotalArs = data.items.reduce((sum, item) => sum + item.quantity * (item.unit_price_ars ?? 0), 0);
+    const subtotal = data.items.reduce((sum, item) => sum + toNum(item.quantity) * toNum(item.unit_price), 0);
+    const subtotalArs = data.items.reduce((sum, item) => sum + toNum(item.quantity) * toNum(item.unit_price_ars), 0);
 
     if (isEdit && order) {
       const { error: orderError } = await sb.from("work_orders").update({
@@ -210,7 +213,9 @@ export function OrderForm({ clients, products, defaultClientId, order, orderItem
         requiere_compra: data.requiere_compra || null,
         orden_compra: data.orden_compra || null,
         remito_salida: data.remito_salida || null,
-        general_notes: data.general_notes || null, subtotal, total: subtotal, updated_by: user?.id,
+        general_notes: data.general_notes || null,
+        subtotal, total: subtotal, subtotal_ars: subtotalArs, total_ars: subtotalArs,
+        updated_by: user?.id,
       }).eq("id", order.id);
 
       if (orderError) { toast.error("Error al actualizar la orden"); return; }
@@ -235,7 +240,8 @@ export function OrderForm({ clients, products, defaultClientId, order, orderItem
     const { data: newOrder, error: orderError } = await sb.from("work_orders").insert({
       order_number: orderNumber, order_type: data.order_type, branch_id: data.branch_id,
       client_id: data.client_id, date_in: data.date_in, date_due: data.date_due || null,
-      status: "ingresada", currency: data.currency, subtotal, total: subtotal,
+      status: "ingresada", currency: data.currency,
+      subtotal, total: subtotal, subtotal_ars: subtotalArs, total_ars: subtotalArs,
       requiere_compra: data.requiere_compra || null,
       orden_compra: data.orden_compra || null,
       remito_salida: data.remito_salida || null,
@@ -268,8 +274,10 @@ export function OrderForm({ clients, products, defaultClientId, order, orderItem
       serial_number: item.serial_number || null,
       equipment_number: item.equipment_number || null,
       additional_observation: item.additional_observation || null,
-      unit_price: item.unit_price,
-      total_price: item.quantity * item.unit_price,
+      unit_price: toNum(item.unit_price),
+      total_price: toNum(item.quantity) * toNum(item.unit_price),
+      unit_price_ars: toNum(item.unit_price_ars),
+      total_price_ars: toNum(item.quantity) * toNum(item.unit_price_ars),
       repair_required: item.repair_required,
       notes: item.notes || null,
       status: "pendiente",
@@ -508,8 +516,8 @@ export function OrderForm({ clients, products, defaultClientId, order, orderItem
 
         <div className="space-y-4">
           {fields.map((field, index) => {
-            const itemQty = watchedItems[index]?.quantity ?? 1;
-            const itemPrice = watchedItems[index]?.unit_price ?? 0;
+            const itemQty = toNum(watchedItems[index]?.quantity);
+            const itemPrice = toNum(watchedItems[index]?.unit_price);
             const itemTotal = itemQty * itemPrice;
             const currentMarcaDisplay = marcaDisplay[index] ?? "";
             const isOtroMarca = currentMarcaDisplay === "OTRO";
@@ -704,7 +712,7 @@ export function OrderForm({ clients, products, defaultClientId, order, orderItem
                         type="number"
                         min={0}
                         step="0.01"
-                        {...register(`items.${index}.unit_price`, { valueAsNumber: true })}
+                        {...register(`items.${index}.unit_price`, { setValueAs: toNum })}
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -721,13 +729,13 @@ export function OrderForm({ clients, products, defaultClientId, order, orderItem
                         type="number"
                         min={0}
                         step="0.01"
-                        {...register(`items.${index}.unit_price_ars`, { valueAsNumber: true })}
+                        {...register(`items.${index}.unit_price_ars`, { setValueAs: toNum })}
                       />
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs text-emerald-700 dark:text-emerald-300">Total ARS</Label>
                       <div className="h-10 px-3 rounded-md border border-(--zaire-border) bg-subtle-2 flex items-center text-sm font-medium text-emerald-700 dark:text-emerald-300">
-                        {formatCurrency((watchedItems[index]?.quantity ?? 0) * (watchedItems[index]?.unit_price_ars ?? 0), "ARS")}
+                        {formatCurrency(toNum(watchedItems[index]?.quantity) * toNum(watchedItems[index]?.unit_price_ars), "ARS")}
                       </div>
                     </div>
                   </div>
