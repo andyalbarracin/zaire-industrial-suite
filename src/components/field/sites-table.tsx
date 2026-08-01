@@ -10,25 +10,22 @@ import { ROUTES } from "@/lib/routes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FieldMap, type MapMarker } from "@/components/field/field-map";
-import { SiteForm } from "./site-form";
 import { FilterBar } from "@/components/field/filter-bar";
 import { cn } from "@/lib/utils";
-import type { FieldSite, Client } from "@/lib/field/types";
+import type { FieldSite } from "@/lib/field/types";
 
 const PAGE_SIZES = [10, 20, 50, 100];
 
 interface SitesTableProps {
   initialSites: FieldSite[];
-  clients: Client[];
 }
 
-export function SitesTable({ initialSites, clients }: SitesTableProps) {
+export function SitesTable({ initialSites }: SitesTableProps) {
   const router = useRouter();
-  const [sites, setSites] = useState<FieldSite[]>(initialSites);
+  const [sites] = useState<FieldSite[]>(initialSites);
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<string>("");
   const [locFilter, setLocFilter] = useState<string>("");
-  const [formOpen, setFormOpen] = useState(false);
   const [showMap, setShowMap] = useState(true);
   const [pageSize, setPageSize] = useState(20);
   const [page, setPage] = useState(0);
@@ -56,15 +53,6 @@ export function SitesTable({ initialSites, clients }: SitesTableProps) {
   const mapMarkers: MapMarker[] = filtered
     .filter((s) => s.latitude != null && s.longitude != null)
     .map((s) => ({ id: s.id, lat: s.latitude!, lng: s.longitude!, kind: "site", label: s.name }));
-
-  function handleSaved(s: FieldSite) {
-    setSites((prev) => {
-      const idx = prev.findIndex((x) => x.id === s.id);
-      const merged = idx >= 0 ? { ...prev[idx], ...s } : s;
-      if (idx >= 0) { const next = [...prev]; next[idx] = merged; return next; }
-      return [merged, ...prev];
-    });
-  }
 
   function exportExcel() {
     const rows = filtered.map((s) => ({
@@ -94,7 +82,7 @@ export function SitesTable({ initialSites, clients }: SitesTableProps) {
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => setShowMap((m) => !m)} className="h-9"><MapIcon className="w-4 h-4 mr-1.5" /> {showMap ? "Ocultar mapa" : "Ver mapa"}</Button>
             <Button variant="outline" size="sm" onClick={exportExcel} className="h-9"><Download className="w-4 h-4 mr-1.5" /> XLS</Button>
-            <Button onClick={() => setFormOpen(true)} className="bg-zaire-navy-mid hover:bg-zaire-navy text-white h-9"><Plus className="w-4 h-4 mr-1.5" /> Nueva Planta</Button>
+            <Button onClick={() => router.push(ROUTES.field.plantaNueva)} className="bg-zaire-navy-mid hover:bg-zaire-navy text-white h-9"><Plus className="w-4 h-4 mr-1.5" /> Nueva Planta</Button>
           </div>
         </div>
 
@@ -163,7 +151,6 @@ export function SitesTable({ initialSites, clients }: SitesTableProps) {
         </div>
       </div>
 
-      <SiteForm open={formOpen} onOpenChange={setFormOpen} site={null} clients={clients} onSaved={handleSaved} />
     </div>
   );
 }

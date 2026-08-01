@@ -16,6 +16,7 @@ import {
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useEffect } from "react";
+import { cn } from "@/lib/utils";
 
 export interface MapMarker {
   id: string;
@@ -104,7 +105,9 @@ export default function FieldMapInner({
   const resolvedZoom = center || markers.length > 0 || geofences.length > 0 ? zoom : DEFAULT_ZOOM;
 
   return (
-    <div className={className} style={{ height, width: "100%" }}>
+    // `isolate` crea un stacking context propio: contiene los z-index altos de Leaflet
+    // (panes ~400, controles ~1000) para que NO se monten sobre modales, dropdowns o la campana.
+    <div className={cn("isolate", className)} style={{ height, width: "100%" }}>
       <MapContainer
         center={resolvedCenter}
         zoom={resolvedZoom}

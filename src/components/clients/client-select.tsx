@@ -37,7 +37,7 @@ export function ClientSelect({ clients, value, onChange, disabled }: ClientSelec
       <PopoverTrigger
         disabled={disabled}
         className={cn(
-          "inline-flex w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-normal",
+          "inline-flex min-h-11 sm:min-h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-normal",
           !selected && "text-muted-foreground"
         )}
       >
@@ -46,7 +46,7 @@ export function ClientSelect({ clients, value, onChange, disabled }: ClientSelec
         </span>
         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </PopoverTrigger>
-      <PopoverContent className="w-100 p-2" align="start">
+      <PopoverContent className="w-[calc(100vw-2rem)] sm:w-100 p-2" align="start">
         <Input
           placeholder="Buscar por razón social o CUIT..."
           value={search}

@@ -167,10 +167,10 @@ export function VisitForm({ visit, technicians, vehicles, sites, clients, workOr
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 max-w-3xl">
-      <div className="zaire-card p-5 space-y-4">
+      <div className="zaire-card p-4 sm:p-5 space-y-4">
         <h2 className="text-sm font-semibold text-(--zaire-text) uppercase tracking-wide">Datos de la visita</h2>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Sucursal */}
           <div className="space-y-1.5">
             <Label>Sucursal *</Label>
@@ -180,7 +180,7 @@ export function VisitForm({ visit, technicians, vehicles, sites, clients, workOr
               </div>
             ) : (
               <Select value={branchId} onValueChange={(v) => { if (v) setValue("branch_id", v); }}>
-                <SelectTrigger>
+                <SelectTrigger className="h-11 sm:h-9">
                   <SelectValue>
                     {(() => { const b = BRANCHES.find((b) => b.id === branchId); return b ? `${b.name} (${b.code})` : "Seleccionar..."; })()}
                   </SelectValue>
@@ -201,7 +201,7 @@ export function VisitForm({ visit, technicians, vehicles, sites, clients, workOr
           <div className="space-y-1.5">
             <Label>Propósito</Label>
             <Select value={purpose} onValueChange={(v) => setValue("purpose", v ?? "")}>
-              <SelectTrigger>
+              <SelectTrigger className="h-11 sm:h-9">
                 <SelectValue placeholder="Seleccionar...">{purpose ? VISIT_PURPOSE_LABELS[purpose as VisitPurpose] : null}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -214,7 +214,7 @@ export function VisitForm({ visit, technicians, vehicles, sites, clients, workOr
           <div className="space-y-1.5">
             <Label>Técnico</Label>
             <Select value={techId} onValueChange={(v) => setValue("technician_id", v ?? NONE)}>
-              <SelectTrigger>
+              <SelectTrigger className="h-11 sm:h-9">
                 <SelectValue placeholder="Sin asignar">{techId === NONE ? "— Sin asignar —" : technicians.find((t) => t.id === techId)?.full_name}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -228,7 +228,7 @@ export function VisitForm({ visit, technicians, vehicles, sites, clients, workOr
           <div className="space-y-1.5">
             <Label>Unidad</Label>
             <Select value={vehicleId} onValueChange={(v) => setValue("vehicle_id", v ?? NONE)}>
-              <SelectTrigger>
+              <SelectTrigger className="h-11 sm:h-9">
                 <SelectValue placeholder="Sin asignar">
                   {vehicleId === NONE ? "— Sin asignar —" : (() => { const ve = vehicles.find((x) => x.id === vehicleId); return ve ? `${ve.plate ?? ""} ${ve.brand ?? ""}`.trim() : null; })()}
                 </SelectValue>
@@ -250,7 +250,7 @@ export function VisitForm({ visit, technicians, vehicles, sites, clients, workOr
           <div className="space-y-1.5">
             <Label>Sitio / Planta</Label>
             <Select value={siteId} onValueChange={(v) => setValue("site_id", v ?? NONE)}>
-              <SelectTrigger>
+              <SelectTrigger className="h-11 sm:h-9">
                 <SelectValue placeholder="Seleccionar...">{siteId === NONE ? "— Sin sitio —" : sites.find((s) => s.id === siteId)?.name}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -263,7 +263,7 @@ export function VisitForm({ visit, technicians, vehicles, sites, clients, workOr
           {/* Fecha agendada */}
           <div className="space-y-1.5">
             <Label htmlFor="scheduled_at">Fecha agendada</Label>
-            <Input id="scheduled_at" type="datetime-local" {...register("scheduled_at")} />
+            <Input id="scheduled_at" type="datetime-local" className="h-11 sm:h-9" {...register("scheduled_at")} />
           </div>
 
           {/* Facturable */}
@@ -283,12 +283,12 @@ export function VisitForm({ visit, technicians, vehicles, sites, clients, workOr
       </div>
 
       {/* Link opcional a OT */}
-      <div className="zaire-card p-5 space-y-3">
+      <div className="zaire-card p-4 sm:p-5 space-y-3">
         <h2 className="text-sm font-semibold text-(--zaire-text) uppercase tracking-wide">Orden de trabajo (opcional)</h2>
         <div className="space-y-1.5 max-w-md">
           <Label>Asociar a una OT existente</Label>
           <Select value={woId} onValueChange={(v) => setValue("work_order_id", v ?? NONE)}>
-            <SelectTrigger>
+            <SelectTrigger className="h-11 sm:h-9">
               <SelectValue placeholder="Sin OT">{woId === NONE ? "— Sin OT —" : ordersForClient.find((w) => w.id === woId)?.order_number}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -302,9 +302,9 @@ export function VisitForm({ visit, technicians, vehicles, sites, clients, workOr
         </div>
       </div>
 
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={() => router.back()}>Cancelar</Button>
-        <Button type="submit" disabled={isSubmitting} className="bg-zaire-navy-mid hover:bg-zaire-navy text-white">
+      <div className="flex flex-col sm:flex-row sm:justify-end gap-2">
+        <Button type="button" variant="outline" onClick={() => router.back()} className="w-full sm:w-auto h-11 sm:h-9">Cancelar</Button>
+        <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto h-11 sm:h-9 bg-zaire-navy-mid hover:bg-zaire-navy text-white">
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {isEdit ? "Guardar cambios" : "Crear visita"}
         </Button>

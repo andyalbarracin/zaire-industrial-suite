@@ -4,7 +4,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -138,6 +138,15 @@ export function Sidebar({ profile }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
+  // Auto-colapsa en pantallas chicas (mobile/tablet) para no comerse el ancho del contenido;
+  // se expande solo al volver a desktop. En escritorio el usuario mantiene el toggle manual.
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const apply = () => setCollapsed(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
   // Solo el módulo de la ruta actual arranca abierto (evita el scroll largo).
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
     const onField = pathname.startsWith(ROUTES.field.home);
