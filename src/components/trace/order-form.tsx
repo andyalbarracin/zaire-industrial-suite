@@ -172,8 +172,13 @@ export function OrderForm({ clients, products, defaultClientId, order, orderItem
     setValue(`items.${index}.product_id`, productId);
     if (productId) {
       const product = products.find((p) => p.id === productId);
-      if (product?.default_unit_price) {
-        setValue(`items.${index}.unit_price`, product.default_unit_price);
+      // Autocompletar el precio de catálogo SOLO si el ítem todavía no tiene un precio
+      // cargado. Nunca pisar lo que el usuario ya escribió. `default_unit_price` puede
+      // venir como string ("0.00") desde Supabase: se compara numéricamente.
+      const defaultPrice = Number(product?.default_unit_price) || 0;
+      const currentPrice = Number(watchedItems[index]?.unit_price) || 0;
+      if (defaultPrice > 0 && currentPrice === 0) {
+        setValue(`items.${index}.unit_price`, defaultPrice);
       }
     }
   }
