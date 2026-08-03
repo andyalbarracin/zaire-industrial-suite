@@ -44,7 +44,7 @@ export default async function DashboardLayout({
   const sevenDaysIso = sevenDaysFromNow.toISOString();
   const crmOn = isModuleEnabled("crm");
 
-  const [{ data: profile }, { data: ordersRaw }, { data: docsRaw }, { data: requestsRaw }, { data: crmTasksRaw }, { data: crmClosesRaw }] = await Promise.all([
+  const [{ data: profile }, { data: ordersRaw }, { data: docsRaw }, { data: requestsRaw }, { data: crmTasksRaw }, { data: crmClosesRaw }, { data: settingsRaw }] = await Promise.all([
     supabase
       .from("profiles")
       .select("id, full_name, email, role, avatar_url, created_at, updated_at")
@@ -91,7 +91,17 @@ export default async function DashboardLayout({
           .not("expected_close_date", "is", null).lte("expected_close_date", sevenDaysStr)
           .order("expected_close_date", { ascending: true }).limit(15)
       : Promise.resolve({ data: [] }),
+    // Identidad de la app (logo/título/subtítulo configurables por cliente)
+    sb.from("company_settings").select("app_logo_url, app_title, app_subtitle, nombre").eq("id", 1).single(),
   ]);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cs = settingsRaw as any;
+  const identity = {
+    logoUrl: (cs?.app_logo_url as string | null) ?? null,
+    title: (cs?.app_title as string | null)?.trim() || "Zaire",
+    subtitle: (cs?.app_subtitle as string | null)?.trim() || (cs?.nombre as string | null)?.trim() || "Suite Industrial",
+  };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const orderNotifs: Notification[] = ((ordersRaw ?? []) as any[]).map((o) => ({
@@ -176,7 +186,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex h-screen overflow-hidden bg-zaire-bg">
-      <Sidebar profile={profile} />
+      <Sidebar profile={profile} identity={identity} />
       <div className="flex flex-col flex-1 overflow-hidden">
         <Header notifications={notifications} />
         <main className="flex-1 overflow-y-auto overflow-x-hidden">

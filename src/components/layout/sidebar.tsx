@@ -130,11 +130,22 @@ const MODULES: NavModule[] = [
   { key: "general", label: "Ajustes", icon: Database, items: NAV_GENERAL },
 ];
 
-interface SidebarProps {
-  profile: Profile | null;
+interface AppIdentity {
+  logoUrl: string | null;
+  title: string;
+  subtitle: string;
 }
 
-export function Sidebar({ profile }: SidebarProps) {
+interface SidebarProps {
+  profile: Profile | null;
+  identity?: AppIdentity;
+}
+
+export function Sidebar({ profile, identity }: SidebarProps) {
+  // Identidad de la app configurable por cliente; fallback al branding de Zaire.
+  const appLogoUrl = identity?.logoUrl ?? null;
+  const appTitle = identity?.title?.trim() || "Zaire";
+  const appSubtitle = identity?.subtitle?.trim() || "Suite Industrial";
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
@@ -199,14 +210,19 @@ export function Sidebar({ profile }: SidebarProps) {
         collapsed ? "w-16" : "w-60"
       )}
     >
-      {/* Logo */}
+      {/* Logo (identidad configurable; fallback a Zaire) */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-zaire-navy-mid">
-        <Activity className="w-7 h-7 text-zaire-light shrink-0" />
+        {appLogoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={appLogoUrl} alt="" className="w-7 h-7 object-contain shrink-0" />
+        ) : (
+          <Activity className="w-7 h-7 text-zaire-light shrink-0" />
+        )}
         {!collapsed && (
-          <div>
-            <span className="font-bold text-lg tracking-tight">Zaire</span>
-            <p className="text-[10px] text-zaire-light opacity-70 leading-tight">
-              Suite Industrial
+          <div className="min-w-0">
+            <span className="font-bold text-lg tracking-tight truncate block">{appTitle}</span>
+            <p className="text-[10px] text-zaire-light opacity-70 leading-tight truncate">
+              {appSubtitle}
             </p>
           </div>
         )}

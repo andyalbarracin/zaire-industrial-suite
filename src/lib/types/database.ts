@@ -186,6 +186,10 @@ export interface CompanySettings {
   web: string | null;
   logo_url: string | null;
   logo_use_in_pdfs: boolean;
+  // Identidad de la app (sidebar / login) — independiente del logo de PDF. Puede ser otro logo.
+  app_logo_url: string | null;
+  app_title: string | null;
+  app_subtitle: string | null;
   updated_at: string;
   updated_by: string | null;
 }

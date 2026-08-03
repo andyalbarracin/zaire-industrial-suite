@@ -45,6 +45,9 @@ export default async function ConfiguracionPage() {
     web: "www.empresa.com",
     logo_url: null,
     logo_use_in_pdfs: false,
+    app_logo_url: null,
+    app_title: null,
+    app_subtitle: null,
     updated_at: new Date().toISOString(),
     updated_by: null,
   };

@@ -7,7 +7,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 
 export const dynamic = "force-dynamic";
 
-const FALLBACK = { nombre: "Empresa", cuit: null, direccion: null, ciudad: null, email: null };
+const FALLBACK = { nombre: "Empresa", cuit: null, direccion: null, ciudad: null, email: null, app_logo_url: null, app_title: null, app_subtitle: null };
 
 export async function GET() {
   try {
@@ -15,7 +15,7 @@ export async function GET() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (sb as any)
       .from("company_settings")
-      .select("nombre, cuit, direccion, ciudad, email")
+      .select("nombre, cuit, direccion, ciudad, email, app_logo_url, app_title, app_subtitle")
       .eq("id", 1)
       .single();
 
