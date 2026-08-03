@@ -3,7 +3,6 @@
 
 import Link from "next/link";
 import { Activity, ArrowLeft } from "lucide-react";
-import { createServiceClient } from "@/lib/supabase/service";
 import { ROUTES } from "@/lib/routes";
 
 export const metadata = {
@@ -11,22 +10,16 @@ export const metadata = {
   description: "Términos de uso y política de privacidad de Zaire",
 };
 
-export const dynamic = "force-dynamic";
+// Datos legales del titular de la marca Zaire (en proceso de registración). Fuente única — editá acá.
+const EMPRESA = {
+  nombre: "Zaire",
+  cuit: "20-32535869-7",
+  direccion: "3320 Luis Pasteur, Castelar / Buenos Aires",
+  email: "hola@zairetech.com",
+};
 
-export default async function TerminosPage() {
-  const sb = createServiceClient();
-  let co: { nombre: string | null; cuit: string | null; direccion: string | null; ciudad: string | null; email: string | null } =
-    { nombre: "Empresa", cuit: null, direccion: null, ciudad: null, email: null };
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (sb as any)
-      .from("company_settings")
-      .select("nombre, cuit, direccion, ciudad, email")
-      .eq("id", 1)
-      .single();
-    if (data) co = { ...co, ...data };
-  } catch {}
-  const nombre = co.nombre ?? "Empresa";
+export default function TerminosPage() {
+  const nombre = EMPRESA.nombre;
   return (
     <div className="min-h-screen bg-[#F7F7F7]">
       {/* Header */}
@@ -69,8 +62,8 @@ export default async function TerminosPage() {
               <p>
                 Zaire es un sistema web de gestión y trazabilidad de órdenes de trabajo desarrollado
                 exclusivamente para uso interno de <strong>{nombre}</strong> y sus usuarios autorizados.
-                El Sistema permite registrar, numerar, seguir y auditar órdenes de trabajo (OT y OTS) conforme
-                a los requerimientos del sistema de gestión de calidad ISO 9001:2015.
+                El Sistema permite registrar, numerar, seguir y auditar órdenes de trabajo (OT y OTS) con
+                trazabilidad completa y respaldo para procesos de auditoría de calidad.
               </p>
             </div>
 
@@ -78,7 +71,7 @@ export default async function TerminosPage() {
               <h2 className="text-lg font-semibold text-gray-900 mb-2">3. Acceso y cuentas de usuario</h2>
               <p>
                 El acceso al Sistema está restringido a empleados y personas debidamente autorizadas por
-                {nombre} Cada usuario es responsable de:
+                {nombre}. Cada usuario es responsable de:
               </p>
               <ul className="list-disc pl-5 space-y-1 mt-2">
                 <li>Mantener la confidencialidad de sus credenciales de acceso</li>
@@ -120,8 +113,8 @@ export default async function TerminosPage() {
               <h2 className="text-lg font-semibold text-gray-900 mb-2">6. Propiedad intelectual</h2>
               <p>
                 El Sistema, incluyendo su código fuente, diseño, estructura de base de datos y documentación,
-                es propiedad de {nombre} Todos los derechos reservados. El Software fue desarrollado
-                a medida para uso interno exclusivo.
+                es propiedad de {nombre}. Todos los derechos reservados y protegidos por la normativa de
+                propiedad intelectual vigente.
               </p>
             </div>
 
@@ -172,10 +165,10 @@ export default async function TerminosPage() {
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-2">1. Responsable del tratamiento</h2>
               <p>
-                <strong>{nombre}</strong><br />
-                {co.cuit && <>CUIT: {co.cuit}<br /></>}
-                {(co.direccion || co.ciudad) && <>{[co.direccion, co.ciudad].filter(Boolean).join(", ")}<br /></>}
-                {co.email && <>Email: {co.email}</>}
+                <strong>{EMPRESA.nombre}</strong><br />
+                CUIT: {EMPRESA.cuit}<br />
+                {EMPRESA.direccion}<br />
+                Email: {EMPRESA.email}
               </p>
             </div>
 
@@ -185,7 +178,7 @@ export default async function TerminosPage() {
               <ul className="list-disc pl-5 space-y-1 mt-2">
                 <li><strong>Datos de cuenta:</strong> nombre completo, dirección de email, contraseña (cifrada)</li>
                 <li><strong>Datos de uso:</strong> acciones realizadas en el Sistema, timestamps, IP de acceso</li>
-                <li><strong>Datos operativos:</strong> información de órdenes de trabajo, clientes, productos ingresados al sistema</li>
+                <li><strong>Datos operativos:</strong> información de órdenes de trabajo, clientes y productos ingresados al Sistema</li>
               </ul>
             </div>
 
@@ -195,7 +188,7 @@ export default async function TerminosPage() {
               <ul className="list-disc pl-5 space-y-1 mt-2">
                 <li>Autenticar y autorizar el acceso al Sistema</li>
                 <li>Gestionar las operaciones de {nombre}</li>
-                <li>Cumplir con los requerimientos de trazabilidad ISO 9001:2015</li>
+                <li>Cumplir con los requerimientos de trazabilidad y auditoría interna</li>
                 <li>Auditoría interna y detección de accesos no autorizados</li>
               </ul>
             </div>
@@ -213,7 +206,7 @@ export default async function TerminosPage() {
               <h2 className="text-lg font-semibold text-gray-900 mb-2">5. Retención de datos</h2>
               <p>
                 Los datos de órdenes de trabajo se conservan indefinidamente como parte del registro histórico
-                de la empresa y los requisitos de auditoría ISO. Los datos de cuenta se eliminan a solicitud
+                de la empresa y los requisitos de auditoría interna. Los datos de cuenta se eliminan a solicitud
                 del empleado o al término de la relación laboral, previa evaluación del impacto en registros
                 existentes.
               </p>
@@ -233,7 +226,7 @@ export default async function TerminosPage() {
               <p>
                 En cumplimiento de la Ley 25.326 de Protección de Datos Personales (Argentina), los usuarios
                 tienen derecho a acceder, rectificar y suprimir sus datos personales. Para ejercer estos
-                derechos, contactar a: <strong>{co.email ?? "—"}</strong>
+                derechos, contactar a: <strong>{EMPRESA.email}</strong>
               </p>
               <p className="mt-2 text-sm text-gray-500">
                 La DIRECCIÓN NACIONAL DE PROTECCIÓN DE DATOS PERSONALES (Órgano de Control de la Ley N° 25.326)

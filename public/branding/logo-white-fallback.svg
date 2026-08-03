@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="48" viewBox="0 0 200 48">
+  <text x="14" y="20" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="white" letter-spacing="2">ZAIRE TRACE</text>
+  <text x="14" y="36" font-family="system-ui, sans-serif" font-size="9" fill="rgba(255,255,255,0.6)" letter-spacing="1">Sistema de Trazabilidad</text>
+  <circle cx="183" cy="24" r="10" fill="none" stroke="white" stroke-width="2"/>
+  <path d="M178 24 L183 19 L188 24 L183 29 Z" fill="white" opacity="0.8"/>
+</svg>
