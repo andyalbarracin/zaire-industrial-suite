@@ -25,12 +25,11 @@ function faviconType(url: string): string | undefined {
 
 // Favicon dinámico: usa el mismo logo que el cliente sube en Preferencias
 // (company_settings.app_logo_url, el del sidebar). Si no hay o la tabla no responde,
-// cae al favicon de Zaire por defecto (app/favicon.ico). Nunca deja la app sin ícono.
+// cae al favicon de Zaire por defecto en /public/favicon.ico. Nunca deja la app sin ícono.
+// Importante: el favicon se maneja SOLO por metadata; NO existe app/favicon.ico, porque esa
+// convención de archivo de Next pisaría el favicon dinámico del cliente.
 export async function generateMetadata(): Promise<Metadata> {
-  const meta: Metadata = {
-    title: "Zaire Trace — Sistema de Trazabilidad",
-    description: "Gestión y trazabilidad de órdenes de trabajo",
-  };
+  let iconUrl = "/favicon.ico"; // fallback estático servido desde /public
   try {
     const sb = createServiceClient();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -39,15 +38,16 @@ export async function generateMetadata(): Promise<Metadata> {
       .select("app_logo_url")
       .eq("id", 1)
       .single();
-    const url: string | null = data?.app_logo_url ?? null;
-    if (url) {
-      const type = faviconType(url);
-      meta.icons = { icon: type ? [{ url, type }] : [{ url }] };
-    }
+    if (data?.app_logo_url) iconUrl = data.app_logo_url as string;
   } catch {
-    // Sin acceso a la tabla → favicon por defecto (app/favicon.ico).
+    // Sin acceso → se mantiene el favicon por defecto.
   }
-  return meta;
+  const type = faviconType(iconUrl);
+  return {
+    title: "Zaire Trace — Sistema de Trazabilidad",
+    description: "Gestión y trazabilidad de órdenes de trabajo",
+    icons: { icon: type ? [{ url: iconUrl, type }] : [{ url: iconUrl }] },
+  };
 }
 
 export default function RootLayout({

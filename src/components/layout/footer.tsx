@@ -6,7 +6,7 @@ export function Footer() {
   return (
     <footer className="mt-8 pt-4 border-t border-(--zaire-border) text-center">
       <p className="text-xs text-(--zaire-text-muted)">
-        © {year} Zaire Industrial Suite — Desarrollado por Zaire Tech. Todos los derechos reservados.
+        © {year} Zaire Industrial Suite V2.0.0 — Desarrollado por Zaire Tech. Todos los derechos reservados.
       </p>
     </footer>
   );
