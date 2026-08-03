@@ -36,7 +36,7 @@ const SLIDES = [
     title: "Una plataforma, muchas capacidades",
     body: "Zaire Industrial es software modular, argentino. Se contrata por módulo: arrancás por el dolor que más te duele hoy, y cada capacidad que sumás potencia a las que ya tenés — con tu marca y en tu propia base.",
     accent: "#576CBC",
-    bullets: ["Órdenes y trazabilidad", "Campo, ventas, stock y equipos", "Todo con tu marca", "Auditable · ISO 9001"],
+    bullets: ["Órdenes y trazabilidad", "Campo, ventas, stock y equipos", "Todo con tu marca", "Registros auditables"],
   },
   {
     icon: ClipboardList,
