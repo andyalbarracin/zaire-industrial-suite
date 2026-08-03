@@ -44,8 +44,10 @@ export async function generateMetadata(): Promise<Metadata> {
   }
   const type = faviconType(iconUrl);
   return {
-    title: "Zaire Trace — Sistema de Trazabilidad",
-    description: "Gestión y trazabilidad de órdenes de trabajo",
+    // Título por defecto (login y páginas sin título propio). Dentro de la app, el layout
+    // del dashboard lo sobreescribe con el nombre del cliente.
+    title: "Zaire Industrial Suite",
+    description: "Suite de gestión industrial",
     icons: { icon: type ? [{ url: iconUrl, type }] : [{ url: iconUrl }] },
   };
 }

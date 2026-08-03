@@ -1,8 +1,10 @@
 // layout.tsx — src/app/(dashboard)/layout.tsx — 2026-05-19
 // Layout principal del dashboard: sidebar + header + contenido
 
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -23,6 +25,26 @@ export type Notification = {
   date_due: string;
   href: string;
 };
+
+// Título de la tab DENTRO de la app: nombre del cliente (Identidad de la app → "Título";
+// si está vacío, el nombre de empresa) + " — Zaire Industrial". El login mantiene el título
+// por defecto del layout raíz ("Zaire Industrial Suite").
+export async function generateMetadata(): Promise<Metadata> {
+  let clientName: string | null = null;
+  try {
+    const sb = createServiceClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data } = await (sb as any)
+      .from("company_settings")
+      .select("app_title, nombre")
+      .eq("id", 1)
+      .single();
+    clientName = (data?.app_title?.trim() || data?.nombre?.trim()) || null;
+  } catch {
+    // Sin acceso → título por defecto.
+  }
+  return { title: clientName ? `${clientName} — Zaire Industrial` : "Zaire Industrial Suite" };
+}
 
 export default async function DashboardLayout({
   children,
