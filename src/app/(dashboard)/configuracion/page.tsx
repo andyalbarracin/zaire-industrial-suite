@@ -92,10 +92,6 @@ export default async function ConfiguracionPage() {
         </div>
       </div>
 
-      {/* Copyright footer — modificar texto aquí si es necesario */}
-      <p className="text-xs text-slate-400 text-center pt-2 pb-1">
-        Zaire 2026 V1.0 &mdash; Desarrollado por Zaire Tech &mdash; Todos los derechos reservados
-      </p>
     </div>
   );
 }

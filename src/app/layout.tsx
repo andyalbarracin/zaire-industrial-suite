@@ -4,6 +4,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { createServiceClient } from "@/lib/supabase/service";
 import "./globals.css";
 
 const inter = Inter({
@@ -11,10 +12,43 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Zaire Trace — Sistema de Trazabilidad",
-  description: "Gestión y trazabilidad de órdenes de trabajo",
-};
+// Tipo MIME del favicon según la extensión del archivo (soporta svg/png/webp/jpg/ico).
+function faviconType(url: string): string | undefined {
+  const clean = url.split("?")[0].toLowerCase();
+  if (clean.endsWith(".svg")) return "image/svg+xml";
+  if (clean.endsWith(".png")) return "image/png";
+  if (clean.endsWith(".webp")) return "image/webp";
+  if (clean.endsWith(".jpg") || clean.endsWith(".jpeg")) return "image/jpeg";
+  if (clean.endsWith(".ico")) return "image/x-icon";
+  return undefined;
+}
+
+// Favicon dinámico: usa el mismo logo que el cliente sube en Preferencias
+// (company_settings.app_logo_url, el del sidebar). Si no hay o la tabla no responde,
+// cae al favicon de Zaire por defecto (app/favicon.ico). Nunca deja la app sin ícono.
+export async function generateMetadata(): Promise<Metadata> {
+  const meta: Metadata = {
+    title: "Zaire Trace — Sistema de Trazabilidad",
+    description: "Gestión y trazabilidad de órdenes de trabajo",
+  };
+  try {
+    const sb = createServiceClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data } = await (sb as any)
+      .from("company_settings")
+      .select("app_logo_url")
+      .eq("id", 1)
+      .single();
+    const url: string | null = data?.app_logo_url ?? null;
+    if (url) {
+      const type = faviconType(url);
+      meta.icons = { icon: type ? [{ url, type }] : [{ url }] };
+    }
+  } catch {
+    // Sin acceso a la tabla → favicon por defecto (app/favicon.ico).
+  }
+  return meta;
+}
 
 export default function RootLayout({
   children,
