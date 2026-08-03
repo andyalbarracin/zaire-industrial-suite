@@ -4,7 +4,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { createServiceClient } from "@/lib/supabase/service";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -26,24 +25,42 @@ export type Notification = {
   href: string;
 };
 
-// Título de la tab DENTRO de la app: nombre del cliente (Identidad de la app → "Título";
-// si está vacío, el nombre de empresa) + " — Zaire Industrial". El login mantiene el título
-// por defecto del layout raíz ("Zaire Industrial Suite").
+// Tipo MIME del favicon según la extensión del archivo (svg/png/webp/jpg/ico).
+function faviconType(url: string): string | undefined {
+  const clean = url.split("?")[0].toLowerCase();
+  if (clean.endsWith(".svg")) return "image/svg+xml";
+  if (clean.endsWith(".png")) return "image/png";
+  if (clean.endsWith(".webp")) return "image/webp";
+  if (clean.endsWith(".jpg") || clean.endsWith(".jpeg")) return "image/jpeg";
+  if (clean.endsWith(".ico")) return "image/x-icon";
+  return undefined;
+}
+
+// Identidad de la tab DENTRO de la app (título + favicon), leída con el cliente AUTENTICADO
+// (el mismo que usa el sidebar y sí pasa el RLS de company_settings). Título: "Título" de
+// Identidad de la app (fallback al nombre de empresa) + " — Zaire Industrial". Favicon: el
+// app_logo_url del cliente; si no hay, hereda el de Zaire por defecto del layout raíz.
 export async function generateMetadata(): Promise<Metadata> {
-  let clientName: string | null = null;
+  const meta: Metadata = { title: "Zaire Industrial Suite" };
   try {
-    const sb = createServiceClient();
+    const supabase = await createClient();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (sb as any)
+    const { data } = await (supabase as any)
       .from("company_settings")
-      .select("app_title, nombre")
+      .select("app_logo_url, app_title, nombre")
       .eq("id", 1)
       .single();
-    clientName = (data?.app_title?.trim() || data?.nombre?.trim()) || null;
+    const clientName = (data?.app_title?.trim() || data?.nombre?.trim()) || null;
+    if (clientName) meta.title = `${clientName} — Zaire Industrial`;
+    const logo: string | null = data?.app_logo_url ?? null;
+    if (logo) {
+      const type = faviconType(logo);
+      meta.icons = { icon: type ? [{ url: logo, type }] : [{ url: logo }] };
+    }
   } catch {
-    // Sin acceso → título por defecto.
+    // Sin sesión/acceso → título y favicon por defecto (heredados del layout raíz).
   }
-  return { title: clientName ? `${clientName} — Zaire Industrial` : "Zaire Industrial Suite" };
+  return meta;
 }
 
 export default async function DashboardLayout({
