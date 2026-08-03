@@ -110,7 +110,7 @@ export function AppIdentitySettings({ settings }: AppIdentitySettingsProps) {
         <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
           {uploading ? (<><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Subiendo...</>) : (<><Upload className="w-3.5 h-3.5 mr-1.5" /> {logoUrl ? "Reemplazar" : "Subir logo"}</>)}
         </Button>
-        <p className="text-xs text-(--zaire-text-muted)">PNG, JPG, SVG o WEBP · máx. 30 MB · ideal fondo transparente. Es independiente del logo de los PDF (se configura en Gestión).</p>
+        <p className="text-xs text-(--zaire-text-muted)">PNG, JPG, SVG o WEBP · máx. 30 MB · ideal fondo transparente. Es independiente del logo de los PDF (se configura en Ajustes).</p>
       </div>
 
       {/* Título y subtítulo */}

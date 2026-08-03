@@ -72,7 +72,7 @@ const NAV_GENERAL: NavItem[] = [
   { href: ROUTES.clientes, label: "Clientes", icon: Users },
   { href: ROUTES.historial, label: "Historial", icon: History },
   { href: ROUTES.preferencias, label: "Preferencias", icon: SlidersHorizontal },
-  { href: ROUTES.configuracion, label: "Gestión", icon: Settings, adminOnly: true },
+  { href: ROUTES.configuracion, label: "Ajustes", icon: Settings, adminOnly: true },
 ];
 
 const NAV_CRM: NavItem[] = [
@@ -127,7 +127,7 @@ const MODULES: NavModule[] = [
   { key: "crm", label: "Zaire CRM", icon: Briefcase, items: NAV_CRM },
   { key: "stock", label: "Zaire Stock", icon: Boxes, items: NAV_STOCK },
   { key: "assets", label: "Zaire Assets", icon: Cog, items: NAV_ASSETS },
-  { key: "general", label: "Ajustes", icon: Database, items: NAV_GENERAL },
+  { key: "general", label: "General", icon: Database, items: NAV_GENERAL },
 ];
 
 interface AppIdentity {

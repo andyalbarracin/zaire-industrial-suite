@@ -55,7 +55,7 @@ export default async function ConfiguracionPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-(--zaire-text)">Gestión</h1>
+        <h1 className="text-2xl font-bold text-(--zaire-text)">Ajustes</h1>
         <p className="text-sm text-(--zaire-text-muted) mt-0.5">Configuración de la empresa · solo administradores</p>
       </div>
 

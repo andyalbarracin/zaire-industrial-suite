@@ -108,7 +108,7 @@ export const ROUTE_LABELS: Record<string, string> = {
   clientes: "Clientes",
   productos: "Productos",
   historial: "Historial",
-  configuracion: "Gestión",
+  configuracion: "Ajustes",
   preferencias: "Preferencias",
   // Field (los segmentos sin acento salen bien por el fallback que capitaliza)
   field: "Zaire Field",
