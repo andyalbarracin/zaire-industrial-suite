@@ -50,9 +50,23 @@ export function formatDate(date: string | null | undefined): string {
   return format(parseLocalDate(date), "dd/MM/yyyy", { locale: es });
 }
 
+// Formatea un timestamp SIEMPRE en hora de Argentina (America/Argentina/Buenos_Aires),
+// sin depender de la zona horaria del entorno. Así el resultado es idéntico en
+// Server Components (host en UTC) y Client Components (navegador del usuario).
 export function formatDateTime(date: string | null | undefined): string {
   if (!date) return "—";
-  return format(new Date(date), "dd/MM/yyyy HH:mm", { locale: es });
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "—";
+  const parts = new Intl.DateTimeFormat("es-AR", {
+    timeZone: "America/Argentina/Buenos_Aires",
+    day: "2-digit", month: "2-digit", year: "numeric",
+    hour: "2-digit", minute: "2-digit", hour12: false,
+  }).formatToParts(d).reduce<Record<string, string>>((acc, p) => {
+    acc[p.type] = p.value;
+    return acc;
+  }, {});
+  const hour = parts.hour === "24" ? "00" : parts.hour;
+  return `${parts.day}/${parts.month}/${parts.year} ${hour}:${parts.minute}`;
 }
 
 export function formatRelativeTime(date: string): string {

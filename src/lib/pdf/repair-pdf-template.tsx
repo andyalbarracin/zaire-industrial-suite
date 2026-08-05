@@ -74,10 +74,10 @@ const S = StyleSheet.create({
   th: { color: "#FFFFFF", fontSize: 6.5, fontFamily: "Helvetica-Bold", textTransform: "uppercase" },
   td: { fontSize: 7.5, color: "#0F172A" },
   cItem: { flex: 1 },
-  cMaterial: { width: 55, textAlign: "center" },
-  cReparado: { width: 45, textAlign: "center" },
-  cNuevo: { width: 45, textAlign: "center" },
-  cCant: { width: 35, textAlign: "center" },
+  cMaterial: { width: 55, textAlign: "center", borderLeftWidth: 1, borderLeftColor: "#E2E8F0" },
+  cReparado: { width: 45, textAlign: "center", borderLeftWidth: 1, borderLeftColor: "#E2E8F0" },
+  cNuevo: { width: 45, textAlign: "center", borderLeftWidth: 1, borderLeftColor: "#E2E8F0" },
+  cCant: { width: 35, textAlign: "center", borderLeftWidth: 1, borderLeftColor: "#E2E8F0" },
 
   // Pressure tests
   testsBox: { flexDirection: "row", gap: 6, marginBottom: 5 },
@@ -134,7 +134,6 @@ function ItemPage({ order, item, co }: { order: RepairPdfProps["order"]; item: R
   const modelo = item.modelo ?? item.products?.model ?? "—";
   const medida = item.medida ? `${item.medida} ${item.unidad_medida ?? ""}`.trim() : "—";
   const materiales = [item.materiales_caras, item.materiales_orings].filter(Boolean).join(" / ") || "—";
-  const today = format(new Date(), "dd/MM/yyyy", { locale: es });
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _currency = order.currency as Currency;
 
@@ -161,9 +160,9 @@ function ItemPage({ order, item, co }: { order: RepairPdfProps["order"]; item: R
         </View>
         {/* Derecha: siempre RC 010-00 + título + Vigencia */}
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={S.docCode}>RC 010-00</Text>
+          <Text style={S.docCode}>RC 010-01</Text>
           <Text style={S.docTitle}>PLANILLA DE REPARACIÓN</Text>
-          <Text style={S.docVigencia}>Vigencia: {today}</Text>
+          <Text style={S.docVigencia}>Vigencia: 06/2026</Text>
         </View>
       </View>
 
@@ -289,7 +288,7 @@ function ItemPage({ order, item, co }: { order: RepairPdfProps["order"]; item: R
 
       {/* Page footer */}
       <View style={S.pageFooter} fixed>
-        <Text style={S.footerText}>Formulario RC010-00 — {BRANDING.systemName}</Text>
+        <Text style={S.footerText}>Formulario RC010-01 — {BRANDING.systemName}</Text>
         <Text style={S.footerText}>Generado el {format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}</Text>
       </View>
     </Page>

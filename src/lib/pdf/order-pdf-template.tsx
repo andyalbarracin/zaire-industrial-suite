@@ -40,7 +40,7 @@ const S = StyleSheet.create({
   // Info grid
   infoGrid: { flexDirection: "row", gap: 6, marginBottom: 10 },
   infoBox: { flex: 1, borderWidth: 1, borderColor: "#E2E8F0", borderRadius: 3, padding: "5 7" },
-  infoLabel: { fontSize: 6.5, color: "#94A3B8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2 },
+  infoLabel: { fontSize: 6.5, fontFamily: "Helvetica-Bold", color: "#475569", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2 },
   infoValue: { fontSize: 8.5, fontFamily: "Helvetica-Bold", color: "#0F172A" },
 
   // Table
@@ -133,7 +133,6 @@ export function OrderPdfDocument({ order, items, companyInfo }: OrderPdfProps & 
   const isOTS = order.order_type === "OTS";
   const allRemitted = items.length > 0 && items.every((i) => i.is_remitted);
   const allInvoiced = items.length > 0 && items.every((i) => i.is_invoiced);
-  const today = format(new Date(), "dd/MM/yyyy", { locale: es });
 
   return (
     <Document>
@@ -160,8 +159,8 @@ export function OrderPdfDocument({ order, items, companyInfo }: OrderPdfProps & 
           </View>
           {/* Derecha: siempre RC 009-00 + Vigencia */}
           <View style={S.headerRight}>
-            <Text style={S.docCode}>RC 009-00</Text>
-            <Text style={S.docVigencia}>Vigencia: {today}</Text>
+            <Text style={S.docCode}>RC 009-01</Text>
+            <Text style={S.docVigencia}>Vigencia: 06/2026</Text>
           </View>
         </View>
 
@@ -274,7 +273,7 @@ export function OrderPdfDocument({ order, items, companyInfo }: OrderPdfProps & 
 
         {/* Page footer */}
         <View style={S.pageFooter} fixed>
-          <Text style={S.footerText}>Formulario RC009-00 — {BRANDING.systemName}</Text>
+          <Text style={S.footerText}>Formulario RC009-01 — {BRANDING.systemName}</Text>
           <Text style={S.footerText}>Generado el {format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}</Text>
         </View>
       </Page>
