@@ -126,7 +126,7 @@ export async function runImport(entity: SyncEntity, since?: Date): Promise<SyncR
     creados = resCrear.creados;
     truncado = truncado || resCrear.truncado;
 
-    const resActualizar = await actualizar(sb, entity, aActualizar, errores, limite);
+    const resActualizar = await actualizar(sb, entity, provider, aActualizar, errores, limite);
     actualizados = resActualizar.actualizados;
     truncado = truncado || resActualizar.truncado;
   } catch (e) {
@@ -253,7 +253,7 @@ async function guardarMapeos(
 
 /** Actualiza uno por uno: después de la primera corrida son pocos (el resto se saltea). */
 async function actualizar(
-  sb: any, entity: SyncEntity,
+  sb: any, entity: SyncEntity, provider: string,
   items: (Preparado & { id_zaire: string })[], errores: SyncRunError[], limite: number
 ): Promise<{ actualizados: number; truncado: boolean }> {
   const tabla = TABLA[entity];
@@ -273,6 +273,7 @@ async function actualizar(
     const { error: e } = await sb
       .from("zc_external_ids")
       .update({ external_write_date: p.external_write_date })
+      .eq("provider", provider)
       .eq("entity", entity)
       .eq("id_zaire", p.id_zaire);
 
