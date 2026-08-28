@@ -26,8 +26,16 @@ import {
 /** Presupuesto de lectura. El resto del tiempo de la request queda para escribir en Supabase. */
 const PRESUPUESTO_LECTURA_MS = 30_000;
 
-const CAMPOS_PARTNER = ["id", "name", "vat", "email", "phone", "mobile", "street", "street2", "city", "write_date"];
+// Campos que existen en cualquier Odoo con Contactos instalado.
+const CAMPOS_PARTNER = ["id", "name", "vat", "email", "phone", "street", "street2", "city", "write_date"];
 const CAMPOS_PRODUCTO = ["id", "default_code", "name", "list_price", "uom_id", "currency_id", "write_date"];
+
+// Campos que dependen de qué apps tenga instaladas la instancia, o de su versión.
+// Pedir un campo inexistente en `fields` hace fallar el search_read entero, y filtrar
+// por un campo inexistente también: hay que preguntar antes (ver camposDisponibles).
+//   · customer_rank → lo agrega el módulo `sale`. Sin Ventas instalado no existe.
+//   · mobile        → Odoo 19 lo unificó dentro de `phone`.
+const PARTNER_OPCIONALES = ["customer_rank", "mobile"];
 
 export class OdooAdapter implements ConnectorAdapter {
   readonly provider = "odoo" as const;
@@ -50,22 +58,32 @@ export class OdooAdapter implements ConnectorAdapter {
   }
 
   async fetchCustomers(since?: Date): Promise<FetchResult<CanonicalCustomer>> {
-    // customer_rank > 0 es el marcador estándar de Odoo 13+ para "es cliente".
-    // Deja afuera proveedores puros, empleados y contactos que no facturan.
-    const domain: OdooDomain = [
-      ["customer_rank", ">", 0],
-      ["active", "=", true],
-      ...filtroIncremental(since),
-    ];
+    const hay = await this.camposDisponibles("res.partner", PARTNER_OPCIONALES);
+    const warnings: string[] = [];
+
+    const fields = [...CAMPOS_PARTNER, ...(hay.has("mobile") ? ["mobile"] : [])];
+
+    // customer_rank > 0 es el marcador estándar de Odoo para "es cliente": deja afuera
+    // proveedores puros, empleados y contactos que no facturan. Solo existe si está
+    // instalado el módulo Ventas; sin él se traen todos los contactos y se avisa.
+    const domain: OdooDomain = [["active", "=", true], ...filtroIncremental(since)];
+    if (hay.has("customer_rank")) {
+      domain.push(["customer_rank", ">", 0]);
+    } else {
+      warnings.push(
+        "Esta instancia de Odoo no tiene el campo customer_rank (falta la app Ventas): " +
+          "se importan TODOS los contactos, no solo los marcados como clientes."
+      );
+    }
 
     const { records, truncated } = await this.client.searchReadPaginado(
       "res.partner",
       domain,
-      CAMPOS_PARTNER,
+      fields,
       Date.now() + PRESUPUESTO_LECTURA_MS
     );
 
-    return { records: records.map(aClienteCanonico), truncated, warnings: [] };
+    return { records: records.map(aClienteCanonico), truncated, warnings };
   }
 
   async fetchProducts(since?: Date): Promise<FetchResult<CanonicalProduct>> {
@@ -73,14 +91,41 @@ export class OdooAdapter implements ConnectorAdapter {
     // así que traer variantes multiplicaría filas sin aportar información.
     const domain: OdooDomain = [["active", "=", true], ...filtroIncremental(since)];
 
-    const { records, truncated } = await this.client.searchReadPaginado(
-      "product.template",
-      domain,
-      CAMPOS_PRODUCTO,
-      Date.now() + PRESUPUESTO_LECTURA_MS
-    );
+    let records;
+    let truncated;
+    try {
+      ({ records, truncated } = await this.client.searchReadPaginado(
+        "product.template",
+        domain,
+        CAMPOS_PRODUCTO,
+        Date.now() + PRESUPUESTO_LECTURA_MS
+      ));
+    } catch (e) {
+      // El modelo product.template lo aporta el módulo `product`, que llega con Ventas
+      // o Inventario. Sin ninguna de esas apps el error crudo de Odoo no orienta a nadie.
+      if (/product\.template/.test((e as Error).message)) {
+        throw new Error(
+          "Esta instancia de Odoo no tiene productos: instalá la app Ventas o Inventario " +
+            "para que exista el modelo product.template."
+        );
+      }
+      throw e;
+    }
 
     return { records: records.map(aProductoCanonico), truncated, warnings: [] };
+  }
+
+  /**
+   * Qué campos opcionales existen realmente en este Odoo.
+   * Hace falta porque pedir un campo inexistente —o filtrar por él— hace fallar el
+   * search_read completo, y la disponibilidad depende de las apps instaladas y de la
+   * versión. Es una sola llamada extra por importación.
+   */
+  private async camposDisponibles(modelo: string, candidatos: string[]): Promise<Set<string>> {
+    const definicion = await this.client.executeKw<Record<string, unknown>>(modelo, "fields_get", [], {
+      attributes: ["type"],
+    });
+    return new Set(candidatos.filter((c) => c in definicion));
   }
 }
 
