@@ -9,7 +9,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Send, ExternalLink, AlertTriangle } from "lucide-react";
+import { Loader2, Send, ExternalLink, AlertTriangle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
@@ -20,17 +20,21 @@ interface PushToOdooButtonProps {
   externalId: string | null;
   /** Un envío anterior quedó incompleto: hace falta revisión humana. */
   needsReview: boolean;
+  /** La OT cambió en Zaire después del último envío: lo que hay en Odoo quedó viejo. */
+  stale: boolean;
   /** Base del sistema externo, para armar el link directo. */
   externalBaseUrl: string | null;
 }
 
 export function PushToOdooButton({
-  orderId, orderNumber, externalId, needsReview, externalBaseUrl,
+  orderId, orderNumber, externalId, needsReview, stale, externalBaseUrl,
 }: PushToOdooButtonProps) {
   const router = useRouter();
   const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState<string | null>(externalId);
   const [trabado, setTrabado] = useState(needsReview);
+  // Se apaga apenas se reenvía: lo de Odoo pasa a estar al día.
+  const [desactualizado, setDesactualizado] = useState(stale);
 
   async function enviar() {
     setEnviando(true);
@@ -45,6 +49,7 @@ export function PushToOdooButton({
       if (data.ok) {
         setEnviado(data.external_id);
         setTrabado(false);
+        setDesactualizado(false);
         if (data.adopted) toast.warning(data.message);
         else toast.success(`${orderNumber}: ${data.message}`);
         // El envío salió, pero con una salvedad que conviene que se lea aparte.
@@ -90,10 +95,23 @@ export function PushToOdooButton({
             </a>
           </Button>
         )}
-        <Button variant="outline" size="sm" onClick={enviar} disabled={enviando} title="Actualiza la oportunidad existente; no crea otra">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={enviar}
+          disabled={enviando}
+          className={desactualizado ? "text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700" : undefined}
+          title={
+            desactualizado
+              ? "La OT cambió después del último envío. Actualiza la oportunidad existente; no crea otra."
+              : "Actualiza la oportunidad existente; no crea otra"
+          }
+        >
           {enviando
             ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Actualizando…</>
-            : <><Send className="w-3.5 h-3.5 mr-1.5" /> Actualizar en Odoo</>}
+            : desactualizado
+              ? <><RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Actualizar en Odoo · hay cambios</>
+              : <><Send className="w-3.5 h-3.5 mr-1.5" /> Actualizar en Odoo</>}
         </Button>
       </div>
     );

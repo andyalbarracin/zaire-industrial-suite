@@ -96,13 +96,16 @@ export async function pushWorkOrder(orderId: string): Promise<PushWorkOrderResul
   }
 
   // ---------- 2. Armar el paquete desde la OT ----------
-  const wo = await construirCanonical(sb, provider, orderId);
-  if ("error" in wo) return { ok: false, message: wo.error };
+  const armado = await construirCanonical(sb, provider, orderId);
+  if ("error" in armado) return { ok: false, message: armado.error };
+  const { wo, contenidoAt } = armado;
 
   // ---------- 3. Camino A: ya está mapeada → ACTUALIZAR, jamás crear ----------
   if (mapeo) {
     try {
       const r = await adapter.pushWorkOrder(wo, mapeo.external_id);
+      // Se anota QUÉ VERSIÓN de la OT se mandó, para poder detectar después si cambió.
+      await sb.from("zc_external_ids").update({ external_write_date: contenidoAt }).eq("id", mapeo.id);
       await registrarCorrida(sb, provider, user?.id, "ok", 0, 1, r.warning ?? `Actualizada la oportunidad ${r.external_id}`);
       return {
         ok: true, external_id: r.external_id, created: false, warning: r.warning ?? null,
@@ -151,7 +154,7 @@ export async function pushWorkOrder(orderId: string): Promise<PushWorkOrderResul
   // ---------- 6. Confirmar la reserva con el id real ----------
   const { error: confirmError } = await sb
     .from("zc_external_ids")
-    .update({ external_id: r.external_id, external_write_date: new Date().toISOString() })
+    .update({ external_id: r.external_id, external_write_date: contenidoAt })
     .eq("id", reservaId);
 
   if (confirmError) {
@@ -182,28 +185,43 @@ export async function pushWorkOrder(orderId: string): Promise<PushWorkOrderResul
   };
 }
 
-/** ¿Esta OT ya fue enviada? Para que el botón sepa qué mostrar. */
+/**
+ * ¿Esta OT ya fue enviada, y sigue igual que cuando se envió?
+ *
+ * `stale` compara la versión que se mandó (guardada en external_write_date) contra el
+ * estado actual de la OT. Es lo que permite avisar "esto cambió desde que lo enviaste"
+ * en vez de dejar que la oportunidad de Odoo quede vieja sin que nadie se entere.
+ */
 export async function getWorkOrderPushState(
   orderId: string
-): Promise<{ sent: boolean; externalId: string | null; needsReview: boolean }> {
+): Promise<{ sent: boolean; externalId: string | null; needsReview: boolean; stale: boolean }> {
+  const vacio = { sent: false, externalId: null, needsReview: false, stale: false };
   try {
     const supabase = await createClient();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as any)
+    const sb = supabase as any;
+
+    const { data } = await sb
       .from("zc_external_ids")
-      .select("external_id")
+      .select("external_id, external_write_date")
       .eq("provider", getIntegrationConfig().provider)
       .eq("entity", "work_order")
       .eq("id_zaire", orderId)
       .maybeSingle();
 
     const ext = (data?.external_id as string | undefined) ?? null;
-    if (!ext) return { sent: false, externalId: null, needsReview: false };
-    if (ext.startsWith(PENDIENTE)) return { sent: false, externalId: null, needsReview: true };
-    return { sent: true, externalId: ext, needsReview: false };
+    if (!ext) return vacio;
+    if (ext.startsWith(PENDIENTE)) return { ...vacio, needsReview: true };
+
+    const enviadoAt = (data?.external_write_date as string | null) ?? null;
+    const ahoraAt = await contenidoActualizadoEn(sb, orderId);
+    // Sin marca de referencia no se puede afirmar que cambió: no se avisa nada.
+    const stale = Boolean(enviadoAt && ahoraAt && new Date(ahoraAt) > new Date(enviadoAt));
+
+    return { sent: true, externalId: ext, needsReview: false, stale };
   } catch {
     // Las tablas zc_ pueden no existir en esta base. El botón simplemente no se muestra.
-    return { sent: false, externalId: null, needsReview: false };
+    return vacio;
   }
 }
 
@@ -211,13 +229,31 @@ export async function getWorkOrderPushState(
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+/**
+ * Marca de "última vez que cambió algo de esta OT".
+ * Contempla la cabecera Y los ítems: `work_order_items` tiene su propio trigger de
+ * updated_at y NO toca el updated_at de la orden, así que agregar o repreciar un ítem
+ * no se vería mirando solo la cabecera.
+ */
+async function contenidoActualizadoEn(sb: any, orderId: string): Promise<string | null> {
+  const [{ data: orden }, { data: items }] = await Promise.all([
+    sb.from("work_orders").select("updated_at").eq("id", orderId).maybeSingle(),
+    sb.from("work_order_items").select("updated_at").eq("work_order_id", orderId)
+      .order("updated_at", { ascending: false }).limit(1),
+  ]);
+
+  const fechas = [orden?.updated_at, items?.[0]?.updated_at].filter(Boolean) as string[];
+  if (fechas.length === 0) return null;
+  return fechas.reduce((a, b) => (new Date(a) > new Date(b) ? a : b));
+}
+
 /** Arma el paquete canónico leyendo la OT, sus ítems y el mapeo del cliente. */
 async function construirCanonical(
   sb: any, provider: string, orderId: string
-): Promise<CanonicalWorkOrder | { error: string }> {
+): Promise<{ wo: CanonicalWorkOrder; contenidoAt: string | null } | { error: string }> {
   const { data: order } = await sb
     .from("work_orders")
-    .select("id, order_number, order_type, currency, total, date_due, general_notes, client_id, clients(id, business_name)")
+    .select("id, order_number, order_type, currency, total, date_due, general_notes, updated_at, client_id, clients(id, business_name)")
     .eq("id", orderId)
     .is("deleted_at", null)
     .single();
@@ -226,7 +262,7 @@ async function construirCanonical(
 
   const { data: items } = await sb
     .from("work_order_items")
-    .select("item_number, quantity, custom_description, unit_price, total_price, products(name, code)")
+    .select("item_number, quantity, custom_description, unit_price, total_price, updated_at, products(name, code)")
     .eq("work_order_id", orderId)
     .order("item_number");
 
@@ -259,17 +295,24 @@ async function construirCanonical(
     `<p><b>Total: ${moneda} ${fmt(order.total)}</b></p>` +
     (order.general_notes ? `<p>${escapar(order.general_notes)}</p>` : "");
 
+  // La versión que se está mandando, para poder detectar cambios posteriores.
+  const fechas = [order.updated_at, ...(items ?? []).map((i: any) => i.updated_at)].filter(Boolean) as string[];
+  const contenidoAt = fechas.length > 0 ? fechas.reduce((a, b) => (new Date(a) > new Date(b) ? a : b)) : null;
+
   return {
-    id_zaire: order.id,
-    // Estable e inequívoca: es lo que permite reencontrarla en el ERP si se pierde el mapeo.
-    referencia: `Zaire Trace ${order.order_number}`,
-    titulo: `${order.order_number}${nombreCliente ? ` · ${nombreCliente}` : ""}`,
-    cliente_external_id: clienteExternalId,
-    cliente_nombre: nombreCliente,
-    importe: Number(order.total) || 0,
-    moneda,
-    fecha_estimada: (order.date_due as string | null) ?? null,
-    detalle,
+    wo: {
+      id_zaire: order.id,
+      // Estable e inequívoca: es lo que permite reencontrarla en el ERP si se pierde el mapeo.
+      referencia: `Zaire Trace ${order.order_number}`,
+      titulo: `${order.order_number}${nombreCliente ? ` · ${nombreCliente}` : ""}`,
+      cliente_external_id: clienteExternalId,
+      cliente_nombre: nombreCliente,
+      importe: Number(order.total) || 0,
+      moneda,
+      fecha_estimada: (order.date_due as string | null) ?? null,
+      detalle,
+    },
+    contenidoAt,
   };
 }
 

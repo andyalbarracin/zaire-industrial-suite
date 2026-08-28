@@ -90,7 +90,7 @@ interface OrderDetailProps {
   currentProfile: Pick<Profile, "id" | "role" | "full_name"> | null;
   attachments: Attachment[];
   /** Zaire Connect. null si la integración está deshabilitada en este deployment. */
-  integration: { sent: boolean; externalId: string | null; needsReview: boolean; baseUrl: string | null } | null;
+  integration: { sent: boolean; externalId: string | null; needsReview: boolean; stale: boolean; baseUrl: string | null } | null;
 }
 
 export function OrderDetail({ order, items: initialItems, history, currentProfile, attachments, integration }: OrderDetailProps) {
@@ -223,6 +223,7 @@ export function OrderDetail({ order, items: initialItems, history, currentProfil
               orderNumber={order.order_number}
               externalId={integration.externalId}
               needsReview={integration.needsReview}
+              stale={integration.stale}
               externalBaseUrl={integration.baseUrl}
             />
           )}
