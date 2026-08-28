@@ -4,14 +4,14 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { bloquearSiNoAutorizado, checkRateLimit } from "@/lib/integration/guard";
-import type { SyncEntity } from "@/lib/integration/types";
+import type { ImportEntity } from "@/lib/integration/types";
 
 export const dynamic = "force-dynamic";
 // Una importación grande necesita más que el default: lectura paginada de Odoo
 // (throttleada a ~60 req/min) más las escrituras en Supabase.
 export const maxDuration = 60;
 
-const ENTIDADES: SyncEntity[] = ["customer", "product"];
+const ENTIDADES: ImportEntity[] = ["customer", "product"];
 
 export async function POST(request: NextRequest) {
   const ip = request.headers.get("x-forwarded-for") ?? "unknown";
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
   if (bloqueo) return bloqueo;
 
   const body = await request.json().catch(() => null);
-  const entity = body?.entity as SyncEntity | undefined;
+  const entity = body?.entity as ImportEntity | undefined;
   if (!entity || !ENTIDADES.includes(entity)) {
     return NextResponse.json({ error: `Entidad inválida. Esperaba una de: ${ENTIDADES.join(", ")}` }, { status: 400 });
   }

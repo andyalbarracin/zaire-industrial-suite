@@ -5,8 +5,15 @@
 
 import type { IntegrationProvider } from "./config";
 
-/** Entidades que Connect sabe sincronizar. Fase 1: clientes y productos. */
-export type SyncEntity = "customer" | "product";
+/** Entidades que Connect sabe sincronizar, en cualquier dirección. */
+export type SyncEntity = "customer" | "product" | "work_order";
+
+/**
+ * Subconjunto que se IMPORTA (sistema externo → Zaire).
+ * `work_order` queda afuera a propósito: las OT solo viajan de Zaire hacia afuera.
+ * Tenerlo como tipo aparte hace que el compilador rechace pedir "importar OTs".
+ */
+export type ImportEntity = "customer" | "product";
 
 // ---------- Modelo canónico ----------
 // Deliberadamente mínimo: solo lo que Zaire puede guardar hoy. Sumar campos acá
@@ -35,6 +42,41 @@ export interface CanonicalProduct {
   unidad?: string | null;
 }
 
+/**
+ * Una OT/OTS lista para enviar al sistema externo. Es el único tipo de la capa que
+ * viaja de Zaire hacia afuera.
+ *
+ * `referencia` es la clave de la búsqueda defensiva: antes de crear nada, el adaptador
+ * busca en el sistema externo si ya existe algo con esta referencia. Es la segunda
+ * línea contra duplicar (la primera es el índice único de zc_external_ids).
+ */
+export interface CanonicalWorkOrder {
+  /** Id de la OT en Zaire. */
+  id_zaire: string;
+  /** Marca inequívoca y estable, ej. "Zaire Trace OT-2026-00123". */
+  referencia: string;
+  titulo: string;
+  /** Id del cliente EN EL SISTEMA EXTERNO. Null si ese cliente no vino de una importación. */
+  cliente_external_id: string | null;
+  cliente_nombre: string | null;
+  importe: number;
+  moneda: string;
+  fecha_estimada: string | null;
+  /** Detalle en HTML con las líneas de la OT. */
+  detalle: string;
+}
+
+export interface PushResult {
+  /** Id del registro en el sistema externo. */
+  external_id: string;
+  /** true = se creó uno nuevo · false = se actualizó uno que ya existía. */
+  created: boolean;
+  /** true si se encontró por `referencia` en vez de por el mapeo local. */
+  adopted?: boolean;
+  /** Aviso no fatal: se envió, pero con alguna salvedad (ej. el cliente ya no existe). */
+  warning?: string | null;
+}
+
 // ---------- Contrato de adaptador ----------
 
 export interface TestConnectionResult {
@@ -55,9 +97,19 @@ export interface ConnectorAdapter {
   fetchCustomers(since?: Date): Promise<FetchResult<CanonicalCustomer>>;
   fetchProducts(since?: Date): Promise<FetchResult<CanonicalProduct>>;
 
+  /**
+   * Envía una OT/OTS al sistema externo. Opcional: un adaptador puede ser solo lectura.
+   *
+   * CONTRATO OBLIGATORIO para quien lo implemente:
+   *   · Si viene `existingExternalId`, ACTUALIZAR ese registro. Nunca crear otro.
+   *   · Si no viene, BUSCAR PRIMERO por `wo.referencia`. Si aparece, actualizar ese y
+   *     devolver `adopted: true`. Crear solo si la búsqueda no encontró nada.
+   * Duplicar una OT en el ERP del cliente es un error con consecuencias económicas.
+   */
+  pushWorkOrder?(wo: CanonicalWorkOrder, existingExternalId?: string): Promise<PushResult>;
+
   // Previsto para fases futuras — NO implementar todavía:
   // fetchStock?(since?: Date): Promise<FetchResult<CanonicalStock>>;
-  // pushBillable?(order: CanonicalOrder): Promise<PushResult>;
 }
 
 /**

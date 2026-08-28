@@ -8,14 +8,14 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2, XCircle, Loader2, RefreshCw, Users, Package } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import type { SyncEntity, SyncRun, SyncRunResult, SyncRunStatus, TestConnectionResult } from "@/lib/integration/types";
+import type { ImportEntity, SyncRun, SyncRunResult, SyncRunStatus, TestConnectionResult } from "@/lib/integration/types";
 
 interface IntegrationPanelProps {
   provider: string;
   lastRuns: SyncRun[];
 }
 
-const ETIQUETA: Record<SyncEntity, string> = { customer: "Clientes", product: "Productos" };
+const ETIQUETA: Record<ImportEntity, string> = { customer: "Clientes", product: "Productos" };
 
 async function consultarConexion(): Promise<TestConnectionResult> {
   try {
@@ -41,9 +41,9 @@ export function IntegrationPanel({ provider, lastRuns }: IntegrationPanelProps) 
   const router = useRouter();
   const [conexion, setConexion] = useState<TestConnectionResult | null>(null);
   const [probando, setProbando] = useState(true);
-  const [importando, setImportando] = useState<SyncEntity | null>(null);
+  const [importando, setImportando] = useState<ImportEntity | null>(null);
   // Corridas hechas en esta sesión; pisan a las que vinieron por props.
-  const [recientes, setRecientes] = useState<Partial<Record<SyncEntity, SyncRunResult>>>({});
+  const [recientes, setRecientes] = useState<Partial<Record<ImportEntity, SyncRunResult>>>({});
 
   // Sondeo inicial. El estado se toca recién con la respuesta, no de forma síncrona.
   useEffect(() => {
@@ -62,7 +62,7 @@ export function IntegrationPanel({ provider, lastRuns }: IntegrationPanelProps) 
     setProbando(false);
   }
 
-  async function importar(entity: SyncEntity) {
+  async function importar(entity: ImportEntity) {
     setImportando(entity);
     try {
       const res = await fetch("/api/integration/import", {
@@ -123,7 +123,7 @@ export function IntegrationPanel({ provider, lastRuns }: IntegrationPanelProps) 
 
       {/* Importaciones */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {(["customer", "product"] as SyncEntity[]).map((entity) => {
+        {(["customer", "product"] as ImportEntity[]).map((entity) => {
           const resumen = resumir(recientes[entity], lastRuns.find((r) => r.entity === entity));
           const Icono = entity === "customer" ? Users : Package;
 

@@ -8,8 +8,10 @@ import { getOdooConfig } from "../../config";
 import type {
   CanonicalCustomer,
   CanonicalProduct,
+  CanonicalWorkOrder,
   ConnectorAdapter,
   FetchResult,
+  PushResult,
   TestConnectionResult,
 } from "../../types";
 import {
@@ -113,6 +115,91 @@ export class OdooAdapter implements ConnectorAdapter {
     }
 
     return { records: records.map(aProductoCanonico), truncated, warnings: [] };
+  }
+
+  /**
+   * Envía una OT como oportunidad (`crm.lead`) de Odoo.
+   *
+   * Se usa `crm.lead` y no `sale.order` a propósito: `sale.order` exige la app Ventas,
+   * mientras que `crm.lead` está disponible con el CRM solo. Un cliente que tenga Ventas
+   * puede querer un presupuesto formal — eso sería otro método, no este.
+   *
+   * El campo `referred` guarda la referencia de Zaire. Es lo que permite reencontrar la
+   * oportunidad en Odoo si el mapeo local se perdiera, y por eso NUNCA hay que sacarlo.
+   */
+  async pushWorkOrder(wo: CanonicalWorkOrder, existingExternalId?: string): Promise<PushResult> {
+    const { partnerId, warning } = await this.resolverContacto(wo.cliente_external_id);
+
+    const valores = {
+      name: wo.titulo,
+      type: "opportunity",
+      expected_revenue: wo.importe,
+      description: wo.detalle,
+      referred: wo.referencia,
+      ...(wo.fecha_estimada ? { date_deadline: wo.fecha_estimada } : {}),
+      ...(partnerId !== null ? { partner_id: partnerId } : {}),
+    };
+
+    // Ya sabemos cuál es: actualizar. Este camino jamás crea.
+    if (existingExternalId) {
+      await this.client.executeKw("crm.lead", "write", [[Number(existingExternalId)], valores]);
+      return { external_id: existingExternalId, created: false, warning };
+    }
+
+    // DEFENSA 3 — ¿ya existe en Odoo algo con esta referencia? Cubre el caso de que el
+    // mapeo de Zaire se haya perdido (base restaurada, borrado manual) mientras la
+    // oportunidad sigue viva en Odoo. Sin esto, ahí se duplicaría.
+    const existentes = await this.client.executeKw<{ id: number }[]>(
+      "crm.lead",
+      "search_read",
+      [[["referred", "=", wo.referencia]]],
+      { fields: ["id"], limit: 1 }
+    );
+
+    if (existentes.length > 0) {
+      const id = String(existentes[0].id);
+      await this.client.executeKw("crm.lead", "write", [[existentes[0].id], valores]);
+      return { external_id: id, created: false, adopted: true, warning };
+    }
+
+    const nuevoId = await this.client.executeKw<number>("crm.lead", "create", [valores]);
+    return { external_id: String(nuevoId), created: true, warning };
+  }
+
+  /**
+   * Confirma que el contacto sigue existiendo en Odoo antes de referenciarlo.
+   *
+   * Sin esto, un contacto borrado en Odoo hace fallar el envío entero con un mensaje
+   * de Odoo que despista por completo: "The operation cannot be completed: Another
+   * model is using the record you are trying to delete. The troublemaker is: 'Lead'".
+   * No habla de borrar nada: es como Odoo dice "ese id de contacto no existe".
+   *
+   * Se usa `active_test: false` para que un contacto ARCHIVADO cuente como existente
+   * (archivar en Odoo no es borrar, y el vínculo sigue siendo válido).
+   */
+  private async resolverContacto(
+    externalId: string | null
+  ): Promise<{ partnerId: number | null; warning: string | null }> {
+    if (!externalId) return { partnerId: null, warning: null };
+
+    const id = Number(externalId);
+    if (!Number.isFinite(id)) return { partnerId: null, warning: null };
+
+    const existe = await this.client.executeKw<number>(
+      "res.partner",
+      "search_count",
+      [[["id", "=", id]]],
+      { context: { active_test: false } }
+    );
+
+    if (existe > 0) return { partnerId: id, warning: null };
+
+    return {
+      partnerId: null,
+      warning:
+        `El cliente ya no existe en Odoo (id ${externalId}): se envió sin vincularlo al contacto. ` +
+        `Volvé a importar clientes para actualizar la correspondencia.`,
+    };
   }
 
   /**

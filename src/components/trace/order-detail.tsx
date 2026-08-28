@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { PushToOdooButton } from "@/components/integration/push-to-odoo-button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -88,9 +89,11 @@ interface OrderDetailProps {
   products: Pick<Product, "id" | "code" | "name" | "brand" | "model" | "category" | "unit" | "default_currency" | "default_unit_price">[];
   currentProfile: Pick<Profile, "id" | "role" | "full_name"> | null;
   attachments: Attachment[];
+  /** Zaire Connect. null si la integración está deshabilitada en este deployment. */
+  integration: { sent: boolean; externalId: string | null; needsReview: boolean; baseUrl: string | null } | null;
 }
 
-export function OrderDetail({ order, items: initialItems, history, currentProfile, attachments }: OrderDetailProps) {
+export function OrderDetail({ order, items: initialItems, history, currentProfile, attachments, integration }: OrderDetailProps) {
   const totalArs = initialItems.reduce((sum, i) => sum + (i.total_price_ars ?? 0), 0);
   const router = useRouter();
   const [currentStatus, setCurrentStatus] = useState(order.status as OrderStatus);
@@ -214,6 +217,15 @@ export function OrderDetail({ order, items: initialItems, history, currentProfil
           )}
           <ConsumeFromOrder orderId={order.id} items={initialItems} />
           <RegisterAssetService refType="ot" refId={order.id} defaultCost={order.total} defaultDescription={`OT ${order.order_number}`} />
+          {integration && (
+            <PushToOdooButton
+              orderId={order.id}
+              orderNumber={order.order_number}
+              externalId={integration.externalId}
+              needsReview={integration.needsReview}
+              externalBaseUrl={integration.baseUrl}
+            />
+          )}
         </div>
       </div>
 

@@ -4,6 +4,8 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { OrderDetail } from "@/components/trace/order-detail";
+import { getExternalBaseUrl, isIntegrationEnabled } from "@/lib/integration/config";
+import { getWorkOrderPushState } from "@/lib/integration/push-service";
 
 export const dynamic = "force-dynamic";
 
@@ -73,6 +75,11 @@ export default async function OrderDetailPage({
     .eq("id", user?.id ?? "")
     .single();
 
+  // Zaire Connect: sin la integración habilitada no se consulta nada ni se pasa nada.
+  const integration = isIntegrationEnabled()
+    ? { ...(await getWorkOrderPushState(id)), baseUrl: getExternalBaseUrl() }
+    : null;
+
   return (
     <OrderDetail
       order={order as never}
@@ -82,6 +89,7 @@ export default async function OrderDetailPage({
       products={products ?? []}
       currentProfile={profile}
       attachments={(attachmentsRaw ?? []) as never}
+      integration={integration}
     />
   );
 }

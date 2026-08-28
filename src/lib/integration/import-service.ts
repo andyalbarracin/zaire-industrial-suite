@@ -18,7 +18,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getIntegrationConfig } from "./config";
 import { huboCambio, toClientRow, toProductRow, type ClientImportRow, type ProductImportRow } from "./mapping";
 import { getAdapter } from "./registry";
-import type { SyncEntity, SyncRunError, SyncRunResult, SyncRunStatus } from "./types";
+import type { ImportEntity, SyncRunError, SyncRunResult, SyncRunStatus } from "./types";
 
 /** Presupuesto total de escritura. La lectura tiene el suyo dentro del adaptador. */
 const PRESUPUESTO_ESCRITURA_MS = 20_000;
@@ -29,7 +29,7 @@ const TAMANO_LOTE_LECTURA = 500;
 /** Cuántos errores se guardan con detalle en la bitácora. */
 const MAX_ERRORES_DETALLADOS = 20;
 
-const TABLA: Record<SyncEntity, "clients" | "products"> = {
+const TABLA: Record<ImportEntity, "clients" | "products"> = {
   customer: "clients",
   product: "products",
 };
@@ -44,7 +44,7 @@ interface Preparado {
  * Importa una entidad desde el sistema externo configurado.
  * Siempre deja una fila en zc_sync_runs, incluso si todo falla: sin fallos silenciosos.
  */
-export async function runImport(entity: SyncEntity, since?: Date): Promise<SyncRunResult> {
+export async function runImport(entity: ImportEntity, since?: Date): Promise<SyncRunResult> {
   // Cliente con la sesión del admin que disparó la importación: sus escrituras cumplen
   // las policies de clients/products (auth.uid() IS NOT NULL) sin bypassear RLS.
   const supabase = await createClient();
@@ -159,7 +159,7 @@ interface Mapeo { id_zaire: string; external_write_date: string | null }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-async function leerMapeos(sb: any, provider: string, entity: SyncEntity, ids: string[]): Promise<Map<string, Mapeo>> {
+async function leerMapeos(sb: any, provider: string, entity: ImportEntity, ids: string[]): Promise<Map<string, Mapeo>> {
   const mapa = new Map<string, Mapeo>();
 
   for (let i = 0; i < ids.length; i += TAMANO_LOTE_LECTURA) {
@@ -191,7 +191,7 @@ async function leerMapeos(sb: any, provider: string, entity: SyncEntity, ids: st
  * (típicamente un choque contra products_code_unique).
  */
 async function crear(
-  sb: any, entity: SyncEntity, provider: string,
+  sb: any, entity: ImportEntity, provider: string,
   items: Preparado[], errores: SyncRunError[], limite: number
 ): Promise<{ creados: number; truncado: boolean }> {
   const tabla = TABLA[entity];
@@ -232,7 +232,7 @@ async function crearUnoAUno(
 
 /** Guarda la correspondencia externo ↔ Zaire. Sin esto la próxima corrida duplicaría. */
 async function guardarMapeos(
-  sb: any, provider: string, entity: SyncEntity,
+  sb: any, provider: string, entity: ImportEntity,
   items: (Preparado & { id: string })[], errores: SyncRunError[]
 ): Promise<void> {
   const filas = items.map((p) => ({
@@ -253,7 +253,7 @@ async function guardarMapeos(
 
 /** Actualiza uno por uno: después de la primera corrida son pocos (el resto se saltea). */
 async function actualizar(
-  sb: any, entity: SyncEntity, provider: string,
+  sb: any, entity: ImportEntity, provider: string,
   items: (Preparado & { id_zaire: string })[], errores: SyncRunError[], limite: number
 ): Promise<{ actualizados: number; truncado: boolean }> {
   const tabla = TABLA[entity];

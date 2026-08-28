@@ -27,6 +27,15 @@ export function getIntegrationConfig(): { provider: IntegrationProvider; syncMod
   return { provider, syncMode };
 }
 
+/**
+ * URL base del sistema externo, solo para armar links en la UI.
+ * A diferencia de getOdooConfig(), no lanza: si no está configurada, no hay link y listo.
+ */
+export function getExternalBaseUrl(): string | null {
+  const url = process.env.ODOO_URL?.trim();
+  return url ? url.replace(/\/+$/, "") : null;
+}
+
 export interface OdooConfig {
   url: string;
   db: string;
