@@ -74,10 +74,10 @@ const S = StyleSheet.create({
   th: { color: "#FFFFFF", fontSize: 6.5, fontFamily: "Helvetica-Bold", textTransform: "uppercase" },
   td: { fontSize: 7.5, color: "#0F172A" },
   cItem: { flex: 1 },
-  cMaterial: { width: 55, textAlign: "center", borderLeftWidth: 1, borderLeftColor: "#E2E8F0" },
-  cReparado: { width: 45, textAlign: "center", borderLeftWidth: 1, borderLeftColor: "#E2E8F0" },
-  cNuevo: { width: 45, textAlign: "center", borderLeftWidth: 1, borderLeftColor: "#E2E8F0" },
-  cCant: { width: 35, textAlign: "center", borderLeftWidth: 1, borderLeftColor: "#E2E8F0" },
+  cMaterial: { width: 55, textAlign: "center", borderLeftWidth: 1, borderLeftColor: "rgba(11, 36, 71, 0.7)" },
+  cReparado: { width: 45, textAlign: "center", borderLeftWidth: 1, borderLeftColor: "rgba(11, 36, 71, 0.7)" },
+  cNuevo: { width: 45, textAlign: "center", borderLeftWidth: 1, borderLeftColor: "rgba(11, 36, 71, 0.7)" },
+  cCant: { width: 35, textAlign: "center", borderLeftWidth: 1, borderLeftColor: "rgba(11, 36, 71, 0.7)" },
 
   // Pressure tests
   testsBox: { flexDirection: "row", gap: 6, marginBottom: 5 },
