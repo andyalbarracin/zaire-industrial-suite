@@ -5,6 +5,8 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { EMPRESA_INFO } from "@/lib/constants";
 import { BRANDING } from "@/lib/branding";
+import { resolveAmount } from "@/lib/trace/amounts";
+import type { Currency } from "@/lib/types/database";
 
 const S = StyleSheet.create({
   page: { fontFamily: "Helvetica", fontSize: 8, padding: 32, color: "#0F172A" },
@@ -62,7 +64,7 @@ export type TrazabilidadReportData = {
   order: {
     order_number: string; order_type: string; status: string;
     date_in: string; date_due: string | null; currency: string;
-    total: number; branch_code: string; general_notes: string | null;
+    total: number; total_ars?: number; branch_code: string; general_notes: string | null;
     client_name: string; client_tax_id: string | null;
     client_code: string | null; client_contact: string | null;
   };
@@ -71,6 +73,7 @@ export type TrazabilidadReportData = {
     description: string; serial_number: string | null;
     equipment_number: string | null; marca: string | null; medida: string | null;
     unit_price: number; total_price: number;
+    unit_price_ars?: number; total_price_ars?: number;
     is_quoted: boolean; is_remitted: boolean; is_delivered: boolean; is_invoiced: boolean;
   }>;
   history: Array<{
@@ -118,7 +121,7 @@ export function TrazabilidadDocument({ data }: { data: TrazabilidadReportData })
           ))}
         </View>
         <View style={S.grid2}>
-          {[["Fecha ingreso", fmtDate(order.date_in)], ["Vencimiento", fmtDate(order.date_due)], ["Moneda", order.currency], ["Total", fmtPrice(order.total, order.currency)]].map(([l, v]) => (
+          {[["Fecha ingreso", fmtDate(order.date_in)], ["Vencimiento", fmtDate(order.date_due)], ["Moneda", order.currency], ["Total", (() => { const t = resolveAmount(order.total, order.total_ars ?? 0, order.currency as Currency); return fmtPrice(t.amount, t.currency); })()]].map(([l, v]) => (
             <View key={l} style={S.box}>
               <Text style={S.boxLabel}>{l}</Text><Text style={S.boxVal}>{v}</Text>
             </View>
@@ -152,19 +155,24 @@ export function TrazabilidadDocument({ data }: { data: TrazabilidadReportData })
             <Text style={[S.th, S.cTotal]}>Total</Text>
             <Text style={[S.th, S.cState]}>C/R/E/F</Text>
           </View>
-          {items.map((it, i) => (
+          {items.map((it, i) => {
+            // Importes en la moneda que corresponda (la orden puede estar cargada en ARS o en USD).
+            const unit = resolveAmount(it.unit_price, it.unit_price_ars ?? 0, order.currency as Currency);
+            const line = resolveAmount(it.total_price, it.total_price_ars ?? 0, order.currency as Currency);
+            return (
             <View key={it.item_number} style={[S.tableRow, i % 2 === 1 ? S.tableRowAlt : {}]}>
               <Text style={[S.td, S.cNum]}>{it.item_number}</Text>
               <Text style={[S.td, S.cDesc]}>{it.description}</Text>
               <Text style={[S.td, S.cSerie]}>{it.serial_number ?? "—"}{it.equipment_number ? ` / ${it.equipment_number}` : ""}</Text>
               <Text style={[S.td, S.cMarca]}>{it.marca ?? "—"}</Text>
-              <Text style={[S.td, S.cPrice]}>{fmtPrice(it.unit_price, order.currency)}</Text>
-              <Text style={[S.td, S.cTotal]}>{fmtPrice(it.total_price, order.currency)}</Text>
+              <Text style={[S.td, S.cPrice]}>{fmtPrice(unit.amount, unit.currency)}</Text>
+              <Text style={[S.td, S.cTotal]}>{fmtPrice(line.amount, line.currency)}</Text>
               <Text style={[S.td, S.cState]}>
                 {[it.is_quoted ? "✓" : "✗", it.is_remitted ? "✓" : "✗", it.is_delivered ? "✓" : "✗", it.is_invoiced ? "✓" : "✗"].join(" ")}
               </Text>
             </View>
-          ))}
+            );
+          })}
         </View>
 
         {/* Timeline */}

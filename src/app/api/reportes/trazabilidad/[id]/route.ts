@@ -20,13 +20,16 @@ export async function GET(
   const sb = supabase as any;
 
   const [{ data: ord }, { data: itms }, { data: hist }, { data: aud }] = await Promise.all([
+    // Importes en sus DOS monedas (columnas USD + _ars); el template elige cuál mostrar
+    // con resolveAmount(). Ver src/lib/trace/amounts.ts.
     sb.from("work_orders").select(`
-      id, order_number, order_type, status, date_in, date_due, currency, total, branch_id, general_notes,
+      id, order_number, order_type, status, date_in, date_due, currency, total, total_ars, branch_id, general_notes,
       clients(business_name, tax_id, contact_name, client_code)
     `).eq("id", id).single(),
     sb.from("work_order_items").select(`
       item_number, quantity, custom_description, serial_number, equipment_number,
-      marca, medida, unit_price, total_price, is_quoted, is_remitted, is_delivered, is_invoiced,
+      marca, medida, unit_price, total_price, unit_price_ars, total_price_ars,
+      is_quoted, is_remitted, is_delivered, is_invoiced,
       products(name, code)
     `).eq("work_order_id", id).order("item_number"),
     sb.from("work_order_status_history").select(`
@@ -49,6 +52,7 @@ export async function GET(
       date_due: ord.date_due,
       currency: ord.currency,
       total: ord.total,
+      total_ars: ord.total_ars,
       branch_code: branch?.code ?? ord.branch_id ?? "—",
       general_notes: ord.general_notes,
       client_name: ord.clients?.business_name ?? "—",
@@ -67,6 +71,8 @@ export async function GET(
       medida: it.medida,
       unit_price: it.unit_price,
       total_price: it.total_price,
+      unit_price_ars: it.unit_price_ars,
+      total_price_ars: it.total_price_ars,
       is_quoted: it.is_quoted,
       is_remitted: it.is_remitted,
       is_delivered: it.is_delivered,

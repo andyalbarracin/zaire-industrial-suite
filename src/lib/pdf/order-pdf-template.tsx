@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { EMPRESA_INFO } from "@/lib/constants";
 import { BRANDING } from "@/lib/branding";
+import { resolveAmount } from "@/lib/trace/amounts";
 import { formatCurrency } from "@/lib/utils";
 import type { Currency } from "@/lib/types/database";
 
@@ -94,7 +95,9 @@ interface OrderPdfProps {
   order: {
     order_number: string; order_type: string; status: string;
     date_in: string; date_due: string | null; currency: string;
-    subtotal: number; total: number; general_notes: string | null; created_at: string;
+    subtotal: number; total: number;
+    subtotal_ars?: number; total_ars?: number;
+    general_notes: string | null; created_at: string;
     orden_compra?: string | null; remito_salida?: string | null;
     clients: {
       business_name: string; tax_id: string | null; contact_name: string | null;
@@ -105,6 +108,7 @@ interface OrderPdfProps {
     item_number: number; quantity: number; custom_description: string | null;
     serial_number: string | null; equipment_number: string | null;
     additional_observation: string | null; unit_price: number; total_price: number;
+    unit_price_ars?: number; total_price_ars?: number;
     is_remitted?: boolean; is_invoiced?: boolean;
     origen_abastecimiento?: string | null;
     modelo?: string | null; marca?: string | null;
@@ -133,6 +137,19 @@ export function OrderPdfDocument({ order, items, companyInfo }: OrderPdfProps & 
   const isOTS = order.order_type === "OTS";
   const allRemitted = items.length > 0 && items.every((i) => i.is_remitted);
   const allInvoiced = items.length > 0 && items.every((i) => i.is_invoiced);
+
+  // Totales en cada moneda. Se toma el total guardado en la orden y, si viniera en 0, se cae a la
+  // suma de los ítems (mismo criterio que la tabla de órdenes de la web) para cubrir órdenes cuyo
+  // total de cabecera haya quedado desactualizado.
+  const sumItems = (pick: (i: OrderPdfProps["items"][number]) => number) =>
+    items.reduce((sum, i) => sum + (Number(pick(i)) || 0), 0);
+  const totalUsd = Number(order.total) || sumItems((i) => i.total_price);
+  const totalArs = Number(order.total_ars) || sumItems((i) => i.total_price_ars ?? 0);
+  const subtotalUsd = Number(order.subtotal) || totalUsd;
+  const subtotalArs = Number(order.subtotal_ars) || totalArs;
+
+  const subtotalShown = resolveAmount(subtotalUsd, subtotalArs, currency);
+  const totalShown = resolveAmount(totalUsd, totalArs, currency);
 
   return (
     <Document>
@@ -215,6 +232,9 @@ export function OrderPdfDocument({ order, items, companyInfo }: OrderPdfProps & 
               : item.is_remitted ? "R"
               : item.is_invoiced ? "F"
               : "—";
+            // Importes en la moneda que corresponda (la orden puede estar cargada en ARS o en USD).
+            const unit = resolveAmount(item.unit_price, item.unit_price_ars ?? 0, currency);
+            const line = resolveAmount(item.total_price, item.total_price_ars ?? 0, currency);
             return (
               <View key={i} style={[S.tableRow, i % 2 === 1 ? S.tableRowAlt : {}]}>
                 <Text style={[S.td, S.cItem]}>{item.item_number}</Text>
@@ -231,24 +251,24 @@ export function OrderPdfDocument({ order, items, companyInfo }: OrderPdfProps & 
                 <Text style={[S.td, S.cCodCliente]}>{order.clients?.client_code ?? "—"}</Text>
                 <Text style={[S.td, S.cOrigen]}>{item.origen_abastecimiento ?? "—"}</Text>
                 <Text style={[S.td, S.cFechaEnt]}>{fmtDate(order.date_due)}</Text>
-                <Text style={[S.td, S.cUnitario]}>{formatCurrency(item.unit_price, currency)}</Text>
-                <Text style={[S.td, S.cTotal]}>{formatCurrency(item.total_price, currency)}</Text>
+                <Text style={[S.td, S.cUnitario]}>{formatCurrency(unit.amount, unit.currency)}</Text>
+                <Text style={[S.td, S.cTotal]}>{formatCurrency(line.amount, line.currency)}</Text>
                 <Text style={[S.td, S.cRtoFac]}>{rtoFac}</Text>
               </View>
             );
           })}
         </View>
 
-        {/* Totals */}
+        {/* Totals — misma resolución de moneda que los ítems (ver resolveAmount) */}
         <View style={S.totalsRow}>
           <View style={S.totalsBox}>
             <View style={S.totalLine}>
               <Text style={S.totalLabel}>Subtotal</Text>
-              <Text style={S.totalValue}>{formatCurrency(order.subtotal, currency)}</Text>
+              <Text style={S.totalValue}>{formatCurrency(subtotalShown.amount, subtotalShown.currency)}</Text>
             </View>
             <View style={S.totalFinalLine}>
               <Text style={S.totalFinalLabel}>TOTAL</Text>
-              <Text style={S.totalFinalValue}>{formatCurrency(order.total, currency)}</Text>
+              <Text style={S.totalFinalValue}>{formatCurrency(totalShown.amount, totalShown.currency)}</Text>
             </View>
           </View>
         </View>
