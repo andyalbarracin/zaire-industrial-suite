@@ -12,6 +12,7 @@ import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { OrderTypeBadge } from "./order-status-badge";
 import { ROUTES } from "@/lib/routes";
 import { ORDER_STATUSES, ORDER_STATUS_LABELS, STATUS_TRANSITIONS } from "@/lib/trace/constants";
+import { resolveAmount } from "@/lib/trace/amounts";
 import { BRANCHES } from "@/lib/constants";
 import { formatDate, formatCurrency, cn } from "@/lib/utils";
 import type { OrderStatus, OrderType, Currency } from "@/lib/types/database";
@@ -124,6 +125,10 @@ export function OrdersKanban({ orders, currentProfile }: OrdersKanbanProps) {
                     list.map((o) => {
                       const b = BRANCHES.find((x) => x.id === o.branch_id);
                       const isDragging = dragging?.id === o.id;
+                      // Importe en la moneda que corresponda: el total en pesos se arma con los
+                      // ítems (igual que la tabla de órdenes), porque la cabecera solo guarda USD.
+                      const totalArs = (o.work_order_items ?? []).reduce((s, i) => s + (i.total_price_ars ?? 0), 0);
+                      const cardAmount = resolveAmount(o.total, totalArs, o.currency as Currency);
                       return (
                         <div
                           key={o.id}
@@ -153,7 +158,7 @@ export function OrdersKanban({ orders, currentProfile }: OrdersKanbanProps) {
                               {b && <span className="font-bold text-slate-600 dark:text-slate-300">{b.code}</span>}
                               <span>{formatDate(o.date_in)}</span>
                             </span>
-                            <span className="font-semibold text-(--zaire-text) tabular-nums">{formatCurrency(o.total, o.currency as Currency)}</span>
+                            <span className="font-semibold text-(--zaire-text) tabular-nums">{formatCurrency(cardAmount.amount, cardAmount.currency)}</span>
                           </div>
                         </div>
                       );
