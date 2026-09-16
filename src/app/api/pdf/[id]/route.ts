@@ -40,14 +40,17 @@ export async function GET(
   const sb = supabase as any;
 
   const [{ data: orderRaw }, { data: itemsRaw }, { data: settingsRaw }] = await Promise.all([
+    // Los importes viajan en sus DOS monedas (columnas USD + columnas _ars); el template
+    // elige cuál mostrar con resolveAmount(). Ver src/lib/trace/amounts.ts.
     sb.from("work_orders").select(`
       id, order_number, order_type, status, date_in, date_due,
-      currency, subtotal, total, general_notes, orden_compra, remito_salida, created_at,
+      currency, subtotal, total, subtotal_ars, total_ars, general_notes, orden_compra, remito_salida, created_at,
       clients(business_name, tax_id, contact_name, email, phone, address, city, client_code)
     `).eq("id", id).single(),
     sb.from("work_order_items").select(`
       item_number, quantity, custom_description, serial_number,
       equipment_number, additional_observation, unit_price, total_price,
+      unit_price_ars, total_price_ars,
       is_remitted, is_invoiced, origen_abastecimiento,
       modelo, marca, medida, unidad_medida,
       products(code, name, brand)
