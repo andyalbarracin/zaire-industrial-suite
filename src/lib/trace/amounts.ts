@@ -36,3 +36,34 @@ export function resolveAmount(usd: number, ars: number, orderCurrency: Currency)
 
   return { amount: 0, currency: orderCurrency };
 }
+
+/** Totales de un conjunto de órdenes, con cada moneda por separado. Nunca se suman entre sí. */
+export interface DualTotal {
+  usd: number;
+  ars: number;
+}
+
+/**
+ * Suma importes de MUCHAS órdenes manteniendo las dos monedas separadas.
+ *
+ * Es el caso opuesto a `resolveAmount()`, que elige UN importe para UNA orden. Acá no se puede
+ * elegir: un conjunto de órdenes puede tener unas en pesos y otras en dólares, y **sumarlas en un
+ * solo número sería un error contable** (mezclaría monedas sin tipo de cambio). Por eso esta
+ * función devuelve siempre el par, y quien la use está obligado a mostrar los dos totales.
+ *
+ * Importante — de dónde sacar los montos: el monto confiable está en los **ítems**
+ * (`total_price` / `total_price_ars`), no en las columnas de la cabecera de la orden. Las órdenes
+ * generadas desde una cotización del CRM cargan bien la moneda en los ítems pero dejan
+ * `total_ars` de la cabecera en 0 (ver components/crm/quote-generate-ot.tsx), así que sumar por
+ * cabecera subdeclara los pesos. Los reportes financieros de Trace ya suman por ítems; esta
+ * función mantiene ese mismo criterio.
+ */
+export function sumDualTotals<T>(rows: T[], usdOf: (row: T) => number, arsOf: (row: T) => number): DualTotal {
+  return rows.reduce<DualTotal>(
+    (acc, row) => ({
+      usd: acc.usd + (Number(usdOf(row)) || 0),
+      ars: acc.ars + (Number(arsOf(row)) || 0),
+    }),
+    { usd: 0, ars: 0 },
+  );
+}

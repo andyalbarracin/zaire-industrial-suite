@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { IntegridadAuditoriaDocument } from "@/lib/pdf/report-auditoria-template";
 import { BRANCHES } from "@/lib/constants";
+import { sumDualTotals } from "@/lib/trace/amounts";
 import React from "react";
 
 export async function GET(request: NextRequest) {
@@ -16,9 +17,11 @@ export async function GET(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // Los importes se traen de los ÍTEMS, en sus dos monedas: es la fuente confiable (la cabecera
+  // de la orden no siempre tiene total_ars — ver nota en lib/trace/amounts.ts).
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let q = (supabase as any).from("work_orders")
-    .select("order_number, order_type, status, total")
+    .select("order_number, order_type, status, total, work_order_items(total_price, total_price_ars)")
     .like("order_number", `%-${year}-%`);
 
   if (branch !== "all") {
@@ -30,6 +33,17 @@ export async function GET(request: NextRequest) {
   const all = orders ?? [];
 
   const numbers = all.map((o: { order_number: string }) => o.order_number).filter(Boolean);
+
+  // Importe de una orden = suma de sus ítems, por moneda.
+  type OrderRow = { status: string; work_order_items?: { total_price: number; total_price_ars: number }[] };
+  const itemsUsd = (o: OrderRow) => (o.work_order_items ?? []).reduce((s, i) => s + (Number(i.total_price) || 0), 0);
+  const itemsArs = (o: OrderRow) => (o.work_order_items ?? []).reduce((s, i) => s + (Number(i.total_price_ars) || 0), 0);
+
+  const facturadas = all.filter((o: OrderRow) => o.status === "facturada");
+  const pendientes = all.filter((o: OrderRow) => !["facturada", "cancelada"].includes(o.status));
+  const facturado = sumDualTotals(facturadas, itemsUsd, itemsArs);
+  const pendiente = sumDualTotals(pendientes, itemsUsd, itemsArs);
+
   const data = {
     year, branch,
     total: all.length,
@@ -38,8 +52,10 @@ export async function GET(request: NextRequest) {
     facturadas: all.filter((o: { status: string }) => o.status === "facturada").length,
     canceladas: all.filter((o: { status: string }) => o.status === "cancelada").length,
     activas: all.filter((o: { status: string }) => !["facturada", "cancelada"].includes(o.status)).length,
-    totalFacturadoUsd: all.filter((o: { status: string }) => o.status === "facturada").reduce((s: number, o: { total: number }) => s + (o.total ?? 0), 0),
-    totalPendienteUsd: all.filter((o: { status: string }) => !["facturada", "cancelada"].includes(o.status)).reduce((s: number, o: { total: number }) => s + (o.total ?? 0), 0),
+    totalFacturadoUsd: facturado.usd,
+    totalFacturadoArs: facturado.ars,
+    totalPendienteUsd: pendiente.usd,
+    totalPendienteArs: pendiente.ars,
     hasDuplicates: new Set(numbers).size < numbers.length,
     hasNoNumber: all.some((o: { order_number: string }) => !o.order_number),
   };

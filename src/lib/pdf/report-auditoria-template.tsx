@@ -171,9 +171,14 @@ export type IntegridadReportData = {
   year: string; branch: string;
   total: number; ot: number; ots: number;
   facturadas: number; canceladas: number; activas: number;
-  totalFacturadoUsd: number; totalPendienteUsd: number;
+  // Los importes van por moneda y NO se suman entre sí (ver lib/trace/amounts.ts).
+  totalFacturadoUsd: number; totalFacturadoArs: number;
+  totalPendienteUsd: number; totalPendienteArs: number;
   hasDuplicates: boolean; hasNoNumber: boolean;
 };
+
+const fmtUsd = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
+const fmtArs = (n: number) => new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(n);
 
 const cChkLabel = { flex: 1 };
 const cChkIcon = { width: 20 };
@@ -212,21 +217,33 @@ export function IntegridadAuditoriaDocument({ data }: { data: IntegridadReportDa
           ))}
         </View>
 
-        <Text style={S.sectionTitle}>Estado financiero (USD)</Text>
+        {/* Estado financiero: cada moneda se informa por separado. Las OT pueden estar en pesos o
+            en dólares y no existe tipo de cambio en el sistema, así que sumarlas en un único
+            número sería incorrecto para una auditoría. */}
+        <Text style={S.sectionTitle}>Estado financiero</Text>
         <View style={{ flexDirection: "row", gap: 8, marginBottom: 10 }}>
           <View style={[S.summaryBoxGreen, { flex: 1, padding: "6 10", alignItems: "flex-start" }]}>
             <Text style={{ fontSize: 7, color: "#16A34A", fontFamily: "Helvetica-Bold" }}>FACTURADO</Text>
-            <Text style={{ fontSize: 14, fontFamily: "Helvetica-Bold", color: "#16A34A" }}>
-              {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(data.totalFacturadoUsd)}
+            <Text style={{ fontSize: 13, fontFamily: "Helvetica-Bold", color: "#16A34A" }}>
+              {fmtArs(data.totalFacturadoArs)}
+            </Text>
+            <Text style={{ fontSize: 10, fontFamily: "Helvetica-Bold", color: "#16A34A", marginTop: 1 }}>
+              {fmtUsd(data.totalFacturadoUsd)}
             </Text>
           </View>
           <View style={{ flex: 1, borderWidth: 1, borderColor: "#FDE68A", backgroundColor: "#FFFBEB", borderRadius: 3, padding: "6 10" }}>
             <Text style={{ fontSize: 7, color: "#D97706", fontFamily: "Helvetica-Bold" }}>PENDIENTE</Text>
-            <Text style={{ fontSize: 14, fontFamily: "Helvetica-Bold", color: "#D97706" }}>
-              {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(data.totalPendienteUsd)}
+            <Text style={{ fontSize: 13, fontFamily: "Helvetica-Bold", color: "#D97706" }}>
+              {fmtArs(data.totalPendienteArs)}
+            </Text>
+            <Text style={{ fontSize: 10, fontFamily: "Helvetica-Bold", color: "#D97706", marginTop: 1 }}>
+              {fmtUsd(data.totalPendienteUsd)}
             </Text>
           </View>
         </View>
+        <Text style={{ fontSize: 6.5, color: "#94A3B8", marginTop: -6, marginBottom: 10 }}>
+          Importes informados por moneda, sin conversión entre ellas.
+        </Text>
 
         <Text style={S.sectionTitle}>Verificación de integridad</Text>
         {[
