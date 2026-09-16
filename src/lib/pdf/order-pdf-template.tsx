@@ -52,17 +52,23 @@ const S = StyleSheet.create({
   th: { color: "#FFFFFF", fontSize: 6.5, fontFamily: "Helvetica-Bold", textTransform: "uppercase" },
   td: { fontSize: 7.5 },
 
-  // Column widths
+  // Anchos de columna (en puntos). La tabla vive en A4 apaisada con padding 30 → 781.89pt útiles.
+  // Las columnas de ancho fijo suman 416pt y DESCRIPCION (flex:1) absorbe el resto (~360pt), que
+  // sobra para las descripciones reales (~200pt). El `paddingRight` abre un canal entre columnas:
+  // la fila no tiene separación propia, así que sin él los textos quedan pegados al vecino.
+  // Cada ancho contempla el texto más largo que puede caer en esa columna: el encabezado
+  // "PO/NP/STOCK" (44.8pt) y "COD. CLIENTE" (45.9pt), y montos en pesos de hasta 8 dígitos
+  // ("$ 12.345.678,00" = 54.2pt) en las dos columnas de importe.
   cItem: { width: 20 },
   cCant: { width: 22 },
-  cDesc: { flex: 1 },
-  cCodigo: { width: 48 },
-  cCodCliente: { width: 48 },
-  cOrigen: { width: 42 },
-  cFechaEnt: { width: 48 },
-  cUnitario: { width: 48, textAlign: "right" },
-  cTotal: { width: 52, textAlign: "right" },
-  cRtoFac: { width: 28, textAlign: "center" },
+  cDesc: { flex: 1, paddingRight: 6 },
+  cCodigo: { width: 48, paddingRight: 4 },
+  cCodCliente: { width: 54, paddingRight: 4 },
+  cOrigen: { width: 56, paddingRight: 4 },
+  cFechaEnt: { width: 52, paddingRight: 4 },
+  cUnitario: { width: 64, textAlign: "right", paddingRight: 4 },
+  cTotal: { width: 66, textAlign: "right", paddingRight: 4 },
+  cRtoFac: { width: 34, textAlign: "center" },
 
   // Totals
   totalsRow: { flexDirection: "row", justifyContent: "flex-end", marginBottom: 8 },
