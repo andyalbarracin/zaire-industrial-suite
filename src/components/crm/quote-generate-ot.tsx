@@ -45,7 +45,12 @@ export function QuoteGenerateOt({ quote, currentProfile }: { quote: CrmQuote; cu
     const { data: newOrder, error: orderError } = await sb.from("work_orders").insert({
       order_number: orderNumber, order_type: "OT", branch_id: BRANCH,
       client_id: quote.client_id, date_in: today, status: "ingresada", currency: quote.currency,
-      subtotal: quote.subtotal, total: quote.total,
+      // El importe va en las columnas de SU moneda, igual que los ítems de abajo: las órdenes
+      // guardan pesos y dólares en columnas separadas. Antes el total entraba siempre en las
+      // columnas de USD, así que una cotización en pesos generaba una OT con el monto en la
+      // columna equivocada y total_ars en 0.
+      subtotal: isArs ? 0 : quote.subtotal, total: isArs ? 0 : quote.total,
+      subtotal_ars: isArs ? quote.subtotal : 0, total_ars: isArs ? quote.total : 0,
       general_notes: `Generada desde la cotización ${quote.quote_number ?? ""} (Zaire CRM).`,
       created_by: currentProfile?.id ?? null,
     }).select("id").single();

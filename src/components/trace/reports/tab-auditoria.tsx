@@ -12,7 +12,8 @@ import { createClient } from "@/lib/supabase/client";
 import { cn, formatDate, formatDateTime, formatCurrency } from "@/lib/utils";
 import { BRANCHES } from "@/lib/constants";
 import { ORDER_STATUS_LABELS } from "@/lib/trace/constants";
-import type { OrderStatus } from "@/lib/types/database";
+import { resolveAmount, sumDualTotals, type DualTotal } from "@/lib/trace/amounts";
+import type { OrderStatus, Currency } from "@/lib/types/database";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -266,6 +267,7 @@ type TrazOrder = {
   date_due: string | null;
   currency: string;
   total: number;
+  total_ars: number;
   branch_id: string | null;
   general_notes: string | null;
   clients: { business_name: string; tax_id: string | null; contact_name: string | null; client_code: string | null } | null;
@@ -284,6 +286,8 @@ type TrazItem = {
   materiales_orings: string | null;
   unit_price: number;
   total_price: number;
+  unit_price_ars: number;
+  total_price_ars: number;
   is_quoted: boolean;
   is_remitted: boolean;
   is_delivered: boolean;
@@ -339,13 +343,14 @@ function TrazabilidadCard() {
     const s = sb as any;
     const [{ data: ord }, { data: itms }, { data: hist }, { data: aud }] = await Promise.all([
       s.from("work_orders").select(`
-        id, order_number, order_type, status, date_in, date_due, currency, total, branch_id, general_notes,
+        id, order_number, order_type, status, date_in, date_due, currency, total, total_ars, branch_id, general_notes,
         clients(business_name, tax_id, contact_name, client_code)
       `).eq("id", selected.id).single(),
       s.from("work_order_items").select(`
         item_number, quantity, custom_description, serial_number, equipment_number,
         marca, medida, unidad_medida, materiales_caras, materiales_orings,
-        unit_price, total_price, is_quoted, is_remitted, is_delivered, is_invoiced,
+        unit_price, total_price, unit_price_ars, total_price_ars,
+        is_quoted, is_remitted, is_delivered, is_invoiced,
         products(name, code)
       `).eq("work_order_id", selected.id).order("item_number"),
       s.from("work_order_status_history").select(`
@@ -414,7 +419,13 @@ function TrazabilidadCard() {
                 ["Ingreso", formatDate(order.date_in)],
                 ["Vencimiento", formatDate(order.date_due)],
                 ["Moneda", order.currency],
-                ["Total", formatCurrency(order.total, order.currency as "USD" | "ARS")],
+                ["Total", (() => {
+                  // Total en la moneda real de la orden; el de pesos se arma con los ítems
+                  // porque la cabecera no siempre tiene total_ars (ver lib/trace/amounts.ts).
+                  const arsItems = (items ?? []).reduce((s, i) => s + (i.total_price_ars ?? 0), 0);
+                  const t = resolveAmount(order.total, order.total_ars || arsItems, order.currency as Currency);
+                  return formatCurrency(t.amount, t.currency);
+                })()],
               ].map(([l, v]) => (
                 <div key={l}>
                   <p className="text-xs text-(--zaire-text-muted)">{l}</p>
@@ -458,8 +469,8 @@ function TrazabilidadCard() {
                       <td className="px-3 py-2 max-w-32 truncate">{it.products?.name ?? it.custom_description ?? "—"}</td>
                       <td className="px-3 py-2 font-mono">{it.serial_number ?? "—"}</td>
                       <td className="px-3 py-2">{[it.marca, it.medida ? `${it.medida}${it.unidad_medida ?? ""}` : null].filter(Boolean).join(" · ") || "—"}</td>
-                      <td className="px-3 py-2">{formatCurrency(it.unit_price, order.currency as "USD"|"ARS")}</td>
-                      <td className="px-3 py-2 font-medium">{formatCurrency(it.total_price, order.currency as "USD"|"ARS")}</td>
+                      <td className="px-3 py-2">{(() => { const u = resolveAmount(it.unit_price, it.unit_price_ars, order.currency as Currency); return formatCurrency(u.amount, u.currency); })()}</td>
+                      <td className="px-3 py-2 font-medium">{(() => { const t = resolveAmount(it.total_price, it.total_price_ars, order.currency as Currency); return formatCurrency(t.amount, t.currency); })()}</td>
                       <td className="px-3 py-2">
                         <div className="flex gap-1">
                           {[["C", it.is_quoted], ["R", it.is_remitted], ["E", it.is_delivered], ["F", it.is_invoiced]].map(([l, v]) => (
@@ -543,7 +554,8 @@ function TrazabilidadCard() {
 type IntegrityData = {
   total: number; ots_count: number; ot_count: number;
   facturadas: number; canceladas: number; activas: number;
-  totalFacturadoUsd: number; totalPendienteUsd: number;
+  // Importes por moneda, nunca sumados entre sí (ver lib/trace/amounts.ts).
+  facturado: DualTotal; pendiente: DualTotal;
   hasDuplicates: boolean; hasNoNumber: boolean;
 };
 
@@ -575,7 +587,11 @@ function IntegridadCard() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const s = sb as any;
 
-    let q = s.from("work_orders").select("order_number, order_type, status, total").like("order_number", `%-${year}-%`);
+    // Importes desde los ÍTEMS, en las dos monedas: la cabecera no siempre tiene total_ars
+    // (ver lib/trace/amounts.ts). Mismo criterio que el PDF del informe de integridad.
+    let q = s.from("work_orders")
+      .select("order_number, order_type, status, total, work_order_items(total_price, total_price_ars)")
+      .like("order_number", `%-${year}-%`);
     if (branch !== "all") {
       const code = BRANCHES.find(b => b.id === branch)?.code ?? branch.toUpperCase();
       q = q.like("order_number", `%-${year}-${code}%`);
@@ -589,15 +605,18 @@ function IntegridadCard() {
     const facturadas = all.filter((o: { status: string }) => o.status === "facturada").length;
     const canceladas = all.filter((o: { status: string }) => o.status === "cancelada").length;
     const activas = all.filter((o: { status: string }) => !["facturada", "cancelada"].includes(o.status)).length;
-    const totalFacturadoUsd = all.filter((o: { status: string }) => o.status === "facturada").reduce((s: number, o: { total: number }) => s + (o.total ?? 0), 0);
-    const totalPendienteUsd = all.filter((o: { status: string }) => !["facturada", "cancelada"].includes(o.status)).reduce((s: number, o: { total: number }) => s + (o.total ?? 0), 0);
+    type IntegridadRow = { status: string; work_order_items?: { total_price: number; total_price_ars: number }[] };
+    const itemsUsd = (o: IntegridadRow) => (o.work_order_items ?? []).reduce((acc, i) => acc + (Number(i.total_price) || 0), 0);
+    const itemsArs = (o: IntegridadRow) => (o.work_order_items ?? []).reduce((acc, i) => acc + (Number(i.total_price_ars) || 0), 0);
+    const facturado = sumDualTotals(all.filter((o: IntegridadRow) => o.status === "facturada"), itemsUsd, itemsArs);
+    const pendiente = sumDualTotals(all.filter((o: IntegridadRow) => !["facturada", "cancelada"].includes(o.status)), itemsUsd, itemsArs);
 
     setData({
       total: all.length,
       ot_count: all.filter((o: { order_type: string }) => o.order_type === "OT").length,
       ots_count: all.filter((o: { order_type: string }) => o.order_type === "OTS").length,
       facturadas, canceladas, activas,
-      totalFacturadoUsd, totalPendienteUsd,
+      facturado, pendiente,
       hasDuplicates, hasNoNumber,
     });
     setLoading(false);
@@ -655,9 +674,20 @@ function IntegridadCard() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="bg-subtle rounded-lg border border-(--zaire-border) p-4">
-              <p className="text-xs font-semibold text-(--zaire-text-muted) uppercase mb-2">Financiero USD</p>
-              <p className="text-sm">Facturado: <span className="font-bold text-green-700 dark:text-green-300">{formatCurrency(data.totalFacturadoUsd, "USD")}</span></p>
-              <p className="text-sm mt-1">Pendiente: <span className="font-bold text-amber-700 dark:text-amber-300">{formatCurrency(data.totalPendienteUsd, "USD")}</span></p>
+              <p className="text-xs font-semibold text-(--zaire-text-muted) uppercase mb-2">Financiero</p>
+              <p className="text-sm">
+                Facturado:{" "}
+                <span className="font-bold text-green-700 dark:text-green-300">{formatCurrency(data.facturado.ars, "ARS")}</span>
+                {" · "}
+                <span className="font-bold text-green-700 dark:text-green-300">{formatCurrency(data.facturado.usd, "USD")}</span>
+              </p>
+              <p className="text-sm mt-1">
+                Pendiente:{" "}
+                <span className="font-bold text-amber-700 dark:text-amber-300">{formatCurrency(data.pendiente.ars, "ARS")}</span>
+                {" · "}
+                <span className="font-bold text-amber-700 dark:text-amber-300">{formatCurrency(data.pendiente.usd, "USD")}</span>
+              </p>
+              <p className="text-xs text-(--zaire-text-muted) mt-1.5">Por moneda, sin conversión entre ellas.</p>
             </div>
             <div className="space-y-2">
               <CheckRow label="Sin registros sin número" ok={!data.hasNoNumber} />
