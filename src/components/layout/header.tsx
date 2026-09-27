@@ -126,7 +126,7 @@ export function Header({ notifications }: HeaderProps) {
           ref={searchRef}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar órdenes, clientes..."
+          placeholder="Buscar por orden, TAG, serie, cliente..."
           className="flex-1 bg-transparent border-none outline-none text-sm text-(--zaire-text) placeholder:text-(--zaire-text-muted) min-w-0"
         />
         {shortcutHint && (

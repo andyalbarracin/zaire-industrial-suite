@@ -27,7 +27,7 @@ export default async function BuscarPage({ searchParams }: { searchParams: Promi
           name="q"
           defaultValue={term}
           autoFocus
-          placeholder="Buscar en toda la suite (clientes, órdenes, leads, oportunidades, cotizaciones, visitas...)"
+          placeholder="Buscar en toda la suite: número de orden, TAG o serie de un equipo, cliente, leads, cotizaciones, visitas..."
           className="w-full h-11 pl-10 pr-4 rounded-xl border border-(--zaire-border) bg-panel text-sm text-(--zaire-text) focus:outline-none focus:ring-2 focus:ring-zaire-blue/40"
         />
       </form>

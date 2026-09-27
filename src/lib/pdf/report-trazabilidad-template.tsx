@@ -3,7 +3,7 @@
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { EMPRESA_INFO } from "@/lib/constants";
+import type { CompanyInfo } from "@/lib/company";
 import { BRANDING } from "@/lib/branding";
 import { resolveAmount } from "@/lib/trace/amounts";
 import type { Currency } from "@/lib/types/database";
@@ -91,8 +91,10 @@ function fmtPrice(amount: number, currency: string) {
   return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(amount);
 }
 
-export function TrazabilidadDocument({ data }: { data: TrazabilidadReportData }) {
+export function TrazabilidadDocument({ data, companyInfo }: { data: TrazabilidadReportData; companyInfo: CompanyInfo }) {
   const { order, items, history, audit } = data;
+  const domicilio = [companyInfo.direccion, companyInfo.ciudad].filter(Boolean).join(" — ");
+  const fiscal = [companyInfo.cuit ? `CUIT: ${companyInfo.cuit}` : null, companyInfo.email].filter(Boolean).join(" · ");
 
   return (
     <Document>
@@ -100,9 +102,10 @@ export function TrazabilidadDocument({ data }: { data: TrazabilidadReportData })
         {/* Header */}
         <View style={S.header}>
           <View style={{ flex: 1 }}>
-            <Text style={S.companyName}>{EMPRESA_INFO.nombre}</Text>
-            <Text style={S.companyInfo}>{EMPRESA_INFO.direccion} — {EMPRESA_INFO.ciudad}</Text>
-            <Text style={S.companyInfo}>CUIT: {EMPRESA_INFO.cuit} · {EMPRESA_INFO.email}</Text>
+            {/* Datos de empresa desde company_settings (lib/company.ts), nunca constantes de demo. */}
+            <Text style={S.companyName}>{companyInfo.nombre}</Text>
+            {!!domicilio && <Text style={S.companyInfo}>{domicilio}</Text>}
+            {!!fiscal && <Text style={S.companyInfo}>{fiscal}</Text>}
           </View>
           <View style={S.docRight}>
             <Text style={S.docType}>INFORME DE AUDITORÍA — TRAZABILIDAD</Text>
@@ -216,7 +219,7 @@ export function TrazabilidadDocument({ data }: { data: TrazabilidadReportData })
         {/* Footer */}
         <View style={S.footer} fixed>
           <Text style={S.footerText}>Generado el {genDate()} — {BRANDING.systemName}</Text>
-          <Text style={S.footerText}>Documento de auditoría — {EMPRESA_INFO.nombre}</Text>
+          <Text style={S.footerText}>Documento de auditoría — {companyInfo.nombre}</Text>
         </View>
       </Page>
     </Document>

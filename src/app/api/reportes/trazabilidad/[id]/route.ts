@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { TrazabilidadDocument } from "@/lib/pdf/report-trazabilidad-template";
+import { getCompanyInfo } from "@/lib/company";
 import { BRANCHES } from "@/lib/constants";
 import React from "react";
 
@@ -19,7 +20,7 @@ export async function GET(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = supabase as any;
 
-  const [{ data: ord }, { data: itms }, { data: hist }, { data: aud }] = await Promise.all([
+  const [{ data: ord }, { data: itms }, { data: hist }, { data: aud }, companyInfo] = await Promise.all([
     // Importes en sus DOS monedas (columnas USD + _ars); el template elige cuál mostrar
     // con resolveAmount(). Ver src/lib/trace/amounts.ts.
     sb.from("work_orders").select(`
@@ -37,6 +38,7 @@ export async function GET(
     `).eq("work_order_id", id).order("created_at"),
     sb.from("audit_logs").select("action, description, user_name, created_at")
       .eq("entity_id", id).order("created_at"),
+    getCompanyInfo(),
   ]);
 
   if (!ord) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -97,7 +99,7 @@ export async function GET(
 
   const buffer = await renderToBuffer(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    React.createElement(TrazabilidadDocument, { data }) as any
+    React.createElement(TrazabilidadDocument, { data, companyInfo }) as any
   );
 
   return new NextResponse(buffer as unknown as BodyInit, {

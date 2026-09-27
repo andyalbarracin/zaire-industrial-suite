@@ -12,23 +12,22 @@ import { createClient } from "@/lib/supabase/client";
 import { cn, formatDate, formatDateTime, formatCurrency } from "@/lib/utils";
 import { BRANCHES } from "@/lib/constants";
 import { ORDER_STATUS_LABELS } from "@/lib/trace/constants";
+import { buildSequenceReport, branchLikePatterns, type SequenceRow, type SequenceGap } from "@/lib/trace/sequence";
 import { resolveAmount, sumDualTotals, type DualTotal } from "@/lib/trace/amounts";
 import type { OrderStatus, Currency } from "@/lib/types/database";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-// Extrae sucursal NORMALIZADA + secuencia. OTS usa prefijo "SR" (SRBB), pero el
-// contador es por sucursal y compartido entre OT y OTS → SRBB y BB son la MISMA
-// sucursal (BB). Agrupar por esta sucursal evita huecos falsos cross-sucursal.
-function parseOrder(orderNumber: string): { branch: string; seq: number } | null {
-  const m = orderNumber.match(/^OTS?-\d{4}-([A-Z]+?)(\d+)$/);
-  if (!m) return null;
-  const code = m[1];
-  const branch = code.startsWith("SR") ? code.slice(2) : code;
-  return { branch, seq: parseInt(m[2], 10) };
-}
-
 function currentYear() { return new Date().getFullYear(); }
+
+// Aviso (no bloqueo) cuando la empresa sigue sin configurar: el informe se exporta igual.
+function AvisoEmpresa() {
+  return (
+    <p className="text-xs text-amber-700 dark:text-amber-300 flex items-center gap-1">
+      <AlertTriangle className="w-3 h-3 shrink-0" /> Sin datos de empresa
+    </p>
+  );
+}
 
 // ─── Report Card wrapper ─────────────────────────────────────────────────────
 
@@ -58,66 +57,42 @@ function ReportCard({ icon: Icon, title, description, children }: {
 // 4.1 — Verificación de Secuencia Correlativa
 // ═══════════════════════════════════════════════════════════════════════════════
 
-type SeqRow = { order_number: string; status: string; branch: string; seq: number };
-type SeqGap = { missing: number; around: string };
-
-function SecuenciaCard() {
+function SecuenciaCard({ companyConfigured }: { companyConfigured: boolean }) {
   const [year, setYear] = useState(String(currentYear()));
   const [branch, setBranch] = useState("all");
   const [type, setType] = useState("all");
   const [loading, setLoading] = useState(false);
-  const [rows, setRows] = useState<SeqRow[] | null>(null);
-  const [gaps, setGaps] = useState<SeqGap[]>([]);
+  const [rows, setRows] = useState<SequenceRow[] | null>(null);
+  const [gaps, setGaps] = useState<SequenceGap[]>([]);
+  const [series, setSeries] = useState<{ series: string; count: number }[]>([]);
 
   async function generate() {
     setLoading(true);
     const sb = createClient();
+    // Las órdenes dadas de baja no entran en un informe de auditoría.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let q = (sb as any).from("work_orders")
       .select("order_number, status")
+      .is("deleted_at", null)
       .like("order_number", `%-${year}-%`)
       .order("order_number");
 
     if (branch !== "all") {
+      // Las OTS llevan el prefijo "SR" antes del código de sucursal: sin el `or` quedaban afuera.
       const code = BRANCHES.find(b => b.id === branch)?.code ?? branch.toUpperCase();
-      q = q.like("order_number", `%-${year}-${code}%`);
+      q = q.or(branchLikePatterns(year, code).map(p => `order_number.like.${p}`).join(","));
     }
     if (type !== "all") {
       q = q.like("order_number", `${type}-%`);
     }
 
     const { data } = await q;
-    // Parsear sucursal + secuencia y AGRUPAR por sucursal (evita huecos falsos entre sucursales)
-    const parsed: SeqRow[] = (data ?? [])
-      .map((r: { order_number: string; status: string }) => {
-        const p = parseOrder(r.order_number);
-        return p ? { order_number: r.order_number, status: r.status, branch: p.branch, seq: p.seq } : null;
-      })
-      .filter((r: SeqRow | null): r is SeqRow => r !== null);
+    // Mismo cálculo que el PDF (lib/trace/sequence.ts): series independientes por tipo + sucursal.
+    const report = buildSequenceReport(data ?? []);
 
-    const byBranch = new Map<string, SeqRow[]>();
-    for (const r of parsed) {
-      const list = byBranch.get(r.branch) ?? [];
-      list.push(r);
-      byBranch.set(r.branch, list);
-    }
-
-    const foundGaps: SeqGap[] = [];
-    const orderedRows: SeqRow[] = [];
-    for (const [br, list] of Array.from(byBranch.entries()).sort((a, b) => a[0].localeCompare(b[0]))) {
-      list.sort((a, b) => a.seq - b.seq);
-      for (let i = 1; i < list.length; i++) {
-        if (list[i].seq - list[i - 1].seq > 1) {
-          for (let g = list[i - 1].seq + 1; g < list[i].seq; g++) {
-            foundGaps.push({ missing: g, around: `${br}: entre ${list[i - 1].order_number} y ${list[i].order_number}` });
-          }
-        }
-      }
-      orderedRows.push(...list);
-    }
-
-    setRows(orderedRows);
-    setGaps(foundGaps);
+    setRows(report.rows);
+    setGaps(report.gaps);
+    setSeries(report.countBySeries);
     setLoading(false);
   }
 
@@ -209,41 +184,43 @@ function SecuenciaCard() {
             <table className="w-full text-sm">
               <thead className="bg-subtle border-b border-(--zaire-border) sticky top-0">
                 <tr>
-                  {["Nro. Orden", "Estado", "Secuencia", "Verificación"].map(h => (
+                  {["Nro. Orden", "Serie", "Estado", "Secuencia", "Verificación"].map(h => (
                     <th key={h} className="px-3 py-2 text-left text-xs font-medium text-(--zaire-text-muted) uppercase">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-(--zaire-border)">
-                {rows.map((r, i) => {
-                  // Comparar solo dentro de la MISMA sucursal
-                  const samePrev = i > 0 && rows[i - 1].branch === r.branch;
-                  const ok = samePrev && r.seq === rows[i - 1].seq + 1;
-                  return (
-                    <tr key={r.order_number} className="hover:bg-subtle">
-                      <td className="px-3 py-2 font-mono text-sm font-medium">{r.order_number}</td>
-                      <td className="px-3 py-2 text-xs text-(--zaire-text-muted)">{ORDER_STATUS_LABELS[r.status as OrderStatus] ?? r.status}</td>
-                      <td className="px-3 py-2 font-mono text-xs">{String(r.seq).padStart(4, "0")}</td>
-                      <td className="px-3 py-2">
-                        {!samePrev ? (
-                          <span className="text-xs text-blue-600 dark:text-blue-300">Inicio</span>
-                        ) : ok ? (
-                          <span className="text-xs text-green-600 dark:text-green-300 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" />Correlativo</span>
-                        ) : (
-                          <span className="text-xs text-red-600 dark:text-red-300 flex items-center gap-1"><AlertTriangle className="w-3 h-3" />Salto detectado</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
+                {rows.map(r => (
+                  <tr key={r.order_number} className="hover:bg-subtle">
+                    <td className="px-3 py-2 font-mono text-sm font-medium">{r.order_number}</td>
+                    <td className="px-3 py-2 font-mono text-xs text-(--zaire-text-muted)">{r.series}</td>
+                    <td className="px-3 py-2 text-xs text-(--zaire-text-muted)">{ORDER_STATUS_LABELS[r.status as OrderStatus] ?? r.status}</td>
+                    <td className="px-3 py-2 font-mono text-xs">{String(r.seq).padStart(4, "0")}</td>
+                    <td className="px-3 py-2">
+                      {r.check === "inicio" ? (
+                        <span className="text-xs text-blue-600 dark:text-blue-300">Inicio</span>
+                      ) : r.check === "correlativo" ? (
+                        <span className="text-xs text-green-600 dark:text-green-300 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" />Correlativo</span>
+                      ) : (
+                        <span className="text-xs text-red-600 dark:text-red-300 flex items-center gap-1"><AlertTriangle className="w-3 h-3" />Salto detectado</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
+
+          <p className="text-xs text-(--zaire-text-muted)">
+            La numeración es independiente por serie (tipo + sucursal) y cada una reinicia en 1:{" "}
+            {series.map(s => `${s.series} (${s.count})`).join("  ·  ")}
+          </p>
 
           <div className="flex items-center gap-2 justify-end pt-1 border-t border-(--zaire-border)">
             <p className="text-xs text-(--zaire-text-muted) flex-1">
               Resumen: {rows.length} órdenes · {gaps.length} huecos · {canceladas} canceladas
             </p>
+            {!companyConfigured && <AvisoEmpresa />}
             <Button variant="outline" size="sm" onClick={exportPdf} className="gap-1.5">
               <Download className="w-3.5 h-3.5" /> Exportar PDF
             </Button>
@@ -310,7 +287,7 @@ type TrazAudit = {
   created_at: string;
 };
 
-function TrazabilidadCard() {
+function TrazabilidadCard({ companyConfigured }: { companyConfigured: boolean }) {
   const [search, setSearch] = useState("");
   const [suggestions, setSuggestions] = useState<{ id: string; order_number: string }[]>([]);
   const [selected, setSelected] = useState<{ id: string; order_number: string } | null>(null);
@@ -536,7 +513,8 @@ function TrazabilidadCard() {
             </div>
           )}
 
-          <div className="flex justify-end pt-1 border-t border-(--zaire-border)">
+          <div className="flex items-center gap-2 justify-end pt-1 border-t border-(--zaire-border)">
+            {!companyConfigured && <AvisoEmpresa />}
             <Button variant="outline" size="sm" onClick={exportPdf} className="gap-1.5">
               <Download className="w-3.5 h-3.5" /> Exportar PDF
             </Button>
@@ -557,6 +535,8 @@ type IntegrityData = {
   // Importes por moneda, nunca sumados entre sí (ver lib/trace/amounts.ts).
   facturado: DualTotal; pendiente: DualTotal;
   hasDuplicates: boolean; hasNoNumber: boolean;
+  // Órdenes con baja lógica dentro del filtro. NO entran en los totales de arriba.
+  dadasDeBaja: number;
 };
 
 type CheckRowProps = { label: string; ok: boolean; detail?: string };
@@ -575,7 +555,7 @@ function CheckRow({ label, ok, detail }: CheckRowProps) {
   );
 }
 
-function IntegridadCard() {
+function IntegridadCard({ companyConfigured }: { companyConfigured: boolean }) {
   const [year, setYear] = useState(String(currentYear()));
   const [branch, setBranch] = useState("all");
   const [loading, setLoading] = useState(false);
@@ -591,12 +571,21 @@ function IntegridadCard() {
     // (ver lib/trace/amounts.ts). Mismo criterio que el PDF del informe de integridad.
     let q = s.from("work_orders")
       .select("order_number, order_type, status, total, work_order_items(total_price, total_price_ars)")
+      .is("deleted_at", null)
+      .like("order_number", `%-${year}-%`);
+    // Las bajas lógicas se cuentan aparte para que el check de soft delete verifique de verdad.
+    let qBajas = s.from("work_orders")
+      .select("order_number", { count: "exact", head: true })
+      .not("deleted_at", "is", null)
       .like("order_number", `%-${year}-%`);
     if (branch !== "all") {
+      // Las OTS llevan el prefijo "SR" antes del código de sucursal: sin el `or` quedaban afuera.
       const code = BRANCHES.find(b => b.id === branch)?.code ?? branch.toUpperCase();
-      q = q.like("order_number", `%-${year}-${code}%`);
+      const filtro = branchLikePatterns(year, code).map(p => `order_number.like.${p}`).join(",");
+      q = q.or(filtro);
+      qBajas = qBajas.or(filtro);
     }
-    const { data: orders } = await q;
+    const [{ data: orders }, { count: bajas }] = await Promise.all([q, qBajas]);
     const all = orders ?? [];
 
     const numbers = all.map((o: { order_number: string }) => o.order_number).filter(Boolean);
@@ -618,6 +607,7 @@ function IntegridadCard() {
       facturadas, canceladas, activas,
       facturado, pendiente,
       hasDuplicates, hasNoNumber,
+      dadasDeBaja: bajas ?? 0,
     });
     setLoading(false);
   }
@@ -659,8 +649,8 @@ function IntegridadCard() {
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
             {[
               ["Total", data.total, "slate"],
-              ["OTs", data.ot_count, "blue"],
-              ["OTSs", data.ots_count, "orange"],
+              ["OT", data.ot_count, "blue"],
+              ["OTS", data.ots_count, "orange"],
               ["Facturadas", data.facturadas, "green"],
               ["Activas", data.activas, "indigo"],
               ["Canceladas", data.canceladas, "red"],
@@ -675,27 +665,41 @@ function IntegridadCard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="bg-subtle rounded-lg border border-(--zaire-border) p-4">
               <p className="text-xs font-semibold text-(--zaire-text-muted) uppercase mb-2">Financiero</p>
+              {/* Las dos monedas usan el símbolo "$", así que van rotuladas: sin el rótulo no se
+                  sabe cuál es cuál. */}
               <p className="text-sm">
                 Facturado:{" "}
-                <span className="font-bold text-green-700 dark:text-green-300">{formatCurrency(data.facturado.ars, "ARS")}</span>
+                <span className="font-bold text-green-700 dark:text-green-300">ARS {formatCurrency(data.facturado.ars, "ARS")}</span>
                 {" · "}
-                <span className="font-bold text-green-700 dark:text-green-300">{formatCurrency(data.facturado.usd, "USD")}</span>
+                <span className="font-bold text-green-700 dark:text-green-300">USD {formatCurrency(data.facturado.usd, "USD")}</span>
               </p>
               <p className="text-sm mt-1">
                 Pendiente:{" "}
-                <span className="font-bold text-amber-700 dark:text-amber-300">{formatCurrency(data.pendiente.ars, "ARS")}</span>
+                <span className="font-bold text-amber-700 dark:text-amber-300">ARS {formatCurrency(data.pendiente.ars, "ARS")}</span>
                 {" · "}
-                <span className="font-bold text-amber-700 dark:text-amber-300">{formatCurrency(data.pendiente.usd, "USD")}</span>
+                <span className="font-bold text-amber-700 dark:text-amber-300">USD {formatCurrency(data.pendiente.usd, "USD")}</span>
               </p>
               <p className="text-xs text-(--zaire-text-muted) mt-1.5">Por moneda, sin conversión entre ellas.</p>
             </div>
             <div className="space-y-2">
               <CheckRow label="Sin registros sin número" ok={!data.hasNoNumber} />
               <CheckRow label="Sin números duplicados" ok={!data.hasDuplicates} />
-              <CheckRow label="Soft delete verificado" ok={true} detail="Ningún registro eliminado físicamente" />
+              <CheckRow
+                label="Soft delete verificado"
+                ok={true}
+                detail={data.dadasDeBaja === 0
+                  ? "Ninguna orden dada de baja ni eliminada físicamente"
+                  : `${data.dadasDeBaja} con baja lógica · ninguna eliminada físicamente`}
+              />
             </div>
           </div>
-          <div className="flex justify-end pt-1 border-t border-(--zaire-border)">
+          <p className="text-xs text-(--zaire-text-muted)">
+            Facturadas = órdenes en estado «facturada». El año filtra por el año del número de orden,
+            no por la fecha de ingreso. No se incluyen las órdenes dadas de baja.
+          </p>
+
+          <div className="flex items-center gap-2 justify-end pt-1 border-t border-(--zaire-border)">
+            {!companyConfigured && <AvisoEmpresa />}
             <Button variant="outline" size="sm" onClick={exportPdf} className="gap-1.5">
               <Download className="w-3.5 h-3.5" /> Exportar PDF
             </Button>
@@ -710,12 +714,12 @@ function IntegridadCard() {
 // Export
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export function TabAuditoria() {
+export function TabAuditoria({ companyConfigured }: { companyConfigured: boolean }) {
   return (
     <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-      <SecuenciaCard />
-      <TrazabilidadCard />
-      <IntegridadCard />
+      <SecuenciaCard companyConfigured={companyConfigured} />
+      <TrazabilidadCard companyConfigured={companyConfigured} />
+      <IntegridadCard companyConfigured={companyConfigured} />
     </div>
   );
 }
