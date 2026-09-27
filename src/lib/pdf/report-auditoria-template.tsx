@@ -3,7 +3,8 @@
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { EMPRESA_INFO } from "@/lib/constants";
+import type { CompanyInfo } from "@/lib/company";
+import type { SequenceRow, SequenceGap, SequenceCheck } from "@/lib/trace/sequence";
 import { BRANDING } from "@/lib/branding";
 
 const S = StyleSheet.create({
@@ -41,6 +42,7 @@ const S = StyleSheet.create({
   checkIcon: { fontSize: 9, fontFamily: "Helvetica-Bold" },
   // Section
   sectionTitle: { fontSize: 7.5, fontFamily: "Helvetica-Bold", color: "#0B2447", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4, marginTop: 8 },
+  criteria: { fontSize: 6.5, color: "#64748B", marginTop: 1.5, lineHeight: 1.3 },
   // Footer
   footer: { position: "absolute", bottom: 18, left: 32, right: 32, borderTopWidth: 1, borderTopColor: "#E2E8F0", paddingTop: 4, flexDirection: "row", justifyContent: "space-between" },
   footerText: { fontSize: 6, color: "#94A3B8" },
@@ -54,19 +56,60 @@ const S = StyleSheet.create({
 
 const genDate = () => format(new Date(), "dd/MM/yyyy HH:mm", { locale: es });
 
+// Encabezado y pie de los dos informes. Los datos de empresa llegan SIEMPRE por props desde
+// company_settings (lib/company.ts); antes se imprimía la constante EMPRESA_INFO y por eso los
+// informes salían con los datos de la empresa de demostración.
+function DocHeader({ co, subtitle, filtro }: { co: CompanyInfo; subtitle: string; filtro: string }) {
+  const domicilio = [co.direccion, co.ciudad].filter(Boolean).join(" — ");
+  const fiscal = [co.cuit ? `CUIT: ${co.cuit}` : null, co.email].filter(Boolean).join(" · ");
+  return (
+    <View style={S.header}>
+      <View style={{ flex: 1 }}>
+        <Text style={S.companyName}>{co.nombre}</Text>
+        {!!domicilio && <Text style={S.companyInfo}>{domicilio}</Text>}
+        {!!fiscal && <Text style={S.companyInfo}>{fiscal}</Text>}
+      </View>
+      <View style={S.docRight}>
+        <Text style={S.docType}>INFORME DE AUDITORÍA</Text>
+        <Text style={S.docSubtitle}>{subtitle}</Text>
+        <Text style={S.docDate}>{filtro}</Text>
+      </View>
+    </View>
+  );
+}
+
+function DocFooter({ co }: { co: CompanyInfo }) {
+  return (
+    <View style={S.footer} fixed>
+      <Text style={S.footerText}>Generado el {genDate()} — {BRANDING.systemName}</Text>
+      <Text style={S.footerText}>Documento de auditoría — {co.nombre}</Text>
+    </View>
+  );
+}
+
 // ── Columnas de tabla secuencia ──────────────────────────────────────────────
-const cOrd = { width: 120 };
+const cOrd = { width: 118 };
+const cSerie = { width: 62 };
 const cSeq = { width: 45, textAlign: "right" as const };
 const cSta = { flex: 1 };
 const cVer = { width: 80 };
 
 export type SecuenciaReportData = {
   year: string; branch: string; type: string;
-  rows: { order_number: string; status: string; seq: number }[];
-  gaps: { missing: number; around: string }[];
+  // `series` y `check` los calcula lib/trace/sequence.ts, la MISMA función que produce los huecos
+  // del resumen. El template solo dibuja: así el detalle no puede contradecir al encabezado.
+  rows: SequenceRow[];
+  gaps: SequenceGap[];
+  countBySeries: { series: string; count: number }[];
 };
 
-export function SecuenciaAuditoriaDocument({ data }: { data: SecuenciaReportData }) {
+const CHECK_LABEL: Record<SequenceCheck, string> = {
+  inicio: "Inicio",
+  correlativo: "✓ Correlativo",
+  salto: "⚠ Salto",
+};
+
+export function SecuenciaAuditoriaDocument({ data, companyInfo }: { data: SecuenciaReportData; companyInfo: CompanyInfo }) {
   const canceladas = data.rows.filter(r => r.status === "cancelada").length;
   const filtroText = [
     `Año: ${data.year}`,
@@ -77,19 +120,7 @@ export function SecuenciaAuditoriaDocument({ data }: { data: SecuenciaReportData
   return (
     <Document>
       <Page size="A4" style={S.page}>
-        {/* Header */}
-        <View style={S.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={S.companyName}>{EMPRESA_INFO.nombre}</Text>
-            <Text style={S.companyInfo}>{EMPRESA_INFO.direccion} — {EMPRESA_INFO.ciudad}</Text>
-            <Text style={S.companyInfo}>CUIT: {EMPRESA_INFO.cuit} · {EMPRESA_INFO.email}</Text>
-          </View>
-          <View style={S.docRight}>
-            <Text style={S.docType}>INFORME DE AUDITORÍA</Text>
-            <Text style={S.docSubtitle}>Verificación de Secuencia Correlativa</Text>
-            <Text style={S.docDate}>{filtroText}</Text>
-          </View>
-        </View>
+        <DocHeader co={companyInfo} subtitle="Verificación de Secuencia Correlativa" filtro={filtroText} />
 
         {/* Summary */}
         <View style={S.summaryRow}>
@@ -130,34 +161,32 @@ export function SecuenciaAuditoriaDocument({ data }: { data: SecuenciaReportData
 
         {/* Table */}
         <Text style={S.sectionTitle}>Detalle de órdenes</Text>
-        <View style={S.tableWrap}>
+        <Text style={S.criteria}>
+          La numeración es independiente por serie (tipo de orden + sucursal), así que cada serie reinicia
+          en 1 y se verifica por separado. Series de este informe: {data.countBySeries.map(s => `${s.series} (${s.count})`).join("  ·  ")}.
+        </Text>
+        <View style={[S.tableWrap, { marginTop: 4 }]}>
           <View style={S.tableHead}>
             <Text style={[S.th, cOrd]}>Nro. Orden</Text>
+            <Text style={[S.th, cSerie]}>Serie</Text>
             <Text style={[S.th, cSta]}>Estado</Text>
             <Text style={[S.th, cSeq]}>Secuencia</Text>
             <Text style={[S.th, cVer]}>Verificación</Text>
           </View>
-          {data.rows.map((r, i) => {
-            const prev = i > 0 ? data.rows[i - 1].seq : r.seq - 1;
-            const ok = r.seq === prev + 1;
-            return (
-              <View key={r.order_number} style={[S.tableRow, i % 2 === 1 ? S.tableRowAlt : {}]}>
-                <Text style={[S.td, cOrd]}>{r.order_number}</Text>
-                <Text style={[S.td, cSta]}>{r.status}</Text>
-                <Text style={[S.td, cSeq]}>{String(r.seq).padStart(4, "0")}</Text>
-                <Text style={[i === 0 ? { ...S.td, color: "#3B82F6" } : ok ? S.tdGreen : S.tdRed, cVer]}>
-                  {i === 0 ? "Inicio" : ok ? "✓ Correlativo" : "⚠ Salto"}
-                </Text>
-              </View>
-            );
-          })}
+          {data.rows.map((r, i) => (
+            <View key={r.order_number} style={[S.tableRow, i % 2 === 1 ? S.tableRowAlt : {}]}>
+              <Text style={[S.td, cOrd]}>{r.order_number}</Text>
+              <Text style={[S.td, cSerie]}>{r.series}</Text>
+              <Text style={[S.td, cSta]}>{r.status}</Text>
+              <Text style={[S.td, cSeq]}>{String(r.seq).padStart(4, "0")}</Text>
+              <Text style={[r.check === "inicio" ? { ...S.td, color: "#3B82F6" } : r.check === "correlativo" ? S.tdGreen : S.tdRed, cVer]}>
+                {CHECK_LABEL[r.check]}
+              </Text>
+            </View>
+          ))}
         </View>
 
-        {/* Footer */}
-        <View style={S.footer} fixed>
-          <Text style={S.footerText}>Generado el {genDate()} — {BRANDING.systemName}</Text>
-          <Text style={S.footerText}>Documento de auditoría — {EMPRESA_INFO.nombre}</Text>
-        </View>
+        <DocFooter co={companyInfo} />
       </Page>
     </Document>
   );
@@ -175,6 +204,8 @@ export type IntegridadReportData = {
   totalFacturadoUsd: number; totalFacturadoArs: number;
   totalPendienteUsd: number; totalPendienteArs: number;
   hasDuplicates: boolean; hasNoNumber: boolean;
+  // Órdenes con baja lógica (deleted_at) dentro del filtro. NO se cuentan en los totales de arriba.
+  dadasDeBaja: number;
 };
 
 const fmtUsd = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
@@ -183,7 +214,7 @@ const fmtArs = (n: number) => new Intl.NumberFormat("es-AR", { style: "currency"
 const cChkLabel = { flex: 1 };
 const cChkIcon = { width: 20 };
 
-export function IntegridadAuditoriaDocument({ data }: { data: IntegridadReportData }) {
+export function IntegridadAuditoriaDocument({ data, companyInfo }: { data: IntegridadReportData; companyInfo: CompanyInfo }) {
   const filtroText = [
     `Año: ${data.year}`,
     data.branch !== "all" ? `Sucursal: ${data.branch.toUpperCase()}` : "Todas las sucursales",
@@ -192,22 +223,13 @@ export function IntegridadAuditoriaDocument({ data }: { data: IntegridadReportDa
   return (
     <Document>
       <Page size="A4" style={S.page}>
-        <View style={S.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={S.companyName}>{EMPRESA_INFO.nombre}</Text>
-            <Text style={S.companyInfo}>{EMPRESA_INFO.direccion} — {EMPRESA_INFO.ciudad}</Text>
-            <Text style={S.companyInfo}>CUIT: {EMPRESA_INFO.cuit} · {EMPRESA_INFO.email}</Text>
-          </View>
-          <View style={S.docRight}>
-            <Text style={S.docType}>INFORME DE AUDITORÍA</Text>
-            <Text style={S.docSubtitle}>Informe de Integridad</Text>
-            <Text style={S.docDate}>{filtroText}</Text>
-          </View>
-        </View>
+        <DocHeader co={companyInfo} subtitle="Informe de Integridad" filtro={filtroText} />
 
+        {/* Las etiquetas se imprimen en mayúsculas (S.summaryLabel), así que NO pueden llevar la
+            "s" de plural en minúscula: "OTs" salía impreso como "OTS" y "OTSs" como "OTSS". */}
         <View style={S.summaryRow}>
           {[
-            ["Total", data.total], ["OTs", data.ot], ["OTSs", data.ots],
+            ["Total", data.total], ["OT", data.ot], ["OTS", data.ots],
             ["Facturadas", data.facturadas], ["Activas", data.activas], ["Canceladas", data.canceladas],
           ].map(([l, v]) => (
             <View key={String(l)} style={S.summaryBox}>
@@ -225,19 +247,19 @@ export function IntegridadAuditoriaDocument({ data }: { data: IntegridadReportDa
           <View style={[S.summaryBoxGreen, { flex: 1, padding: "6 10", alignItems: "flex-start" }]}>
             <Text style={{ fontSize: 7, color: "#16A34A", fontFamily: "Helvetica-Bold" }}>FACTURADO</Text>
             <Text style={{ fontSize: 13, fontFamily: "Helvetica-Bold", color: "#16A34A" }}>
-              {fmtArs(data.totalFacturadoArs)}
+              ARS {fmtArs(data.totalFacturadoArs)}
             </Text>
             <Text style={{ fontSize: 10, fontFamily: "Helvetica-Bold", color: "#16A34A", marginTop: 1 }}>
-              {fmtUsd(data.totalFacturadoUsd)}
+              USD {fmtUsd(data.totalFacturadoUsd)}
             </Text>
           </View>
           <View style={{ flex: 1, borderWidth: 1, borderColor: "#FDE68A", backgroundColor: "#FFFBEB", borderRadius: 3, padding: "6 10" }}>
             <Text style={{ fontSize: 7, color: "#D97706", fontFamily: "Helvetica-Bold" }}>PENDIENTE</Text>
             <Text style={{ fontSize: 13, fontFamily: "Helvetica-Bold", color: "#D97706" }}>
-              {fmtArs(data.totalPendienteArs)}
+              ARS {fmtArs(data.totalPendienteArs)}
             </Text>
             <Text style={{ fontSize: 10, fontFamily: "Helvetica-Bold", color: "#D97706", marginTop: 1 }}>
-              {fmtUsd(data.totalPendienteUsd)}
+              USD {fmtUsd(data.totalPendienteUsd)}
             </Text>
           </View>
         </View>
@@ -249,7 +271,14 @@ export function IntegridadAuditoriaDocument({ data }: { data: IntegridadReportDa
         {[
           { label: "Sin registros sin número de orden", ok: !data.hasNoNumber },
           { label: "Sin números de orden duplicados", ok: !data.hasDuplicates },
-          { label: "Soft delete verificado — ningún registro eliminado físicamente", ok: true },
+          {
+            // Check REAL: se cuentan las órdenes con deleted_at dentro del mismo filtro. Antes esta
+            // fila estaba fijada en ✓ sin verificar nada.
+            label: data.dadasDeBaja === 0
+              ? "Soft delete verificado — ninguna orden dada de baja ni eliminada físicamente"
+              : `Soft delete verificado — ${data.dadasDeBaja} orden(es) con baja lógica, ninguna eliminada físicamente`,
+            ok: true,
+          },
         ].map(({ label, ok }) => (
           <View key={label} style={[S.checkRow, ok ? S.checkRowOk : S.checkRowFail]}>
             <Text style={[S.checkLabel, { color: ok ? "#16A34A" : "#DC2626" }, cChkLabel]}>{label}</Text>
@@ -257,10 +286,15 @@ export function IntegridadAuditoriaDocument({ data }: { data: IntegridadReportDa
           </View>
         ))}
 
-        <View style={S.footer} fixed>
-          <Text style={S.footerText}>Generado el {genDate()} — {BRANDING.systemName}</Text>
-          <Text style={S.footerText}>Documento de auditoría — {EMPRESA_INFO.nombre}</Text>
-        </View>
+        {/* Criterios del informe, escritos en el propio documento: un auditor tiene que poder
+            reproducir los números sin preguntar. */}
+        <Text style={S.sectionTitle}>Criterios aplicados</Text>
+        <Text style={S.criteria}>· Facturadas = órdenes cuyo estado es «facturada». Activas = todas las que no están facturadas ni canceladas.</Text>
+        <Text style={S.criteria}>· El filtro de año toma el año del número de orden (OT-{data.year}-…), no la fecha de ingreso.</Text>
+        <Text style={S.criteria}>· No se incluyen las órdenes dadas de baja; se informan por separado en la verificación de integridad.</Text>
+        <Text style={S.criteria}>· Los importes se calculan sobre los ítems de cada orden y se informan por moneda, sin conversión entre ellas.</Text>
+
+        <DocFooter co={companyInfo} />
       </Page>
     </Document>
   );

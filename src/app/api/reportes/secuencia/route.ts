@@ -4,19 +4,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { SecuenciaAuditoriaDocument } from "@/lib/pdf/report-auditoria-template";
+import { getCompanyInfo } from "@/lib/company";
+import { buildSequenceReport, branchLikePatterns } from "@/lib/trace/sequence";
 import { BRANCHES } from "@/lib/constants";
 import React from "react";
-
-// Sucursal NORMALIZADA + secuencia. OTS usa prefijo "SR"; el contador es por sucursal
-// compartido entre OT y OTS → SRBB y BB son la misma sucursal (BB). Agrupar por sucursal
-// evita reportar huecos falsos entre sucursales independientes.
-function parseOrder(orderNumber: string): { branch: string; seq: number } | null {
-  const m = orderNumber.match(/^OTS?-\d{4}-([A-Z]+?)(\d+)$/);
-  if (!m) return null;
-  const code = m[1];
-  const branch = code.startsWith("SR") ? code.slice(2) : code;
-  return { branch, seq: parseInt(m[2], 10) };
-}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -28,54 +19,37 @@ export async function GET(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // Las órdenes dadas de baja no entran en un informe de auditoría (mismo criterio que los
+  // reportes operativos y financieros, que ya filtran deleted_at).
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let q = (supabase as any).from("work_orders")
     .select("order_number, status")
+    .is("deleted_at", null)
     .like("order_number", `%-${year}-%`)
     .order("order_number");
 
   if (branch !== "all") {
+    // Las OTS llevan el prefijo "SR" antes del código de sucursal, así que hace falta el `or`:
+    // un único LIKE '%-2026-BB%' dejaba afuera todas las OTS de esa sucursal.
     const code = BRANCHES.find(b => b.id === branch)?.code ?? branch.toUpperCase();
-    q = q.like("order_number", `%-${year}-${code}%`);
+    q = q.or(branchLikePatterns(year, code).map(p => `order_number.like.${p}`).join(","));
   }
   if (type !== "all") {
     q = q.like("order_number", `${type}-%`);
   }
 
-  const { data } = await q;
-  type Row = { order_number: string; status: string; branch: string; seq: number };
-  const parsed: Row[] = (data ?? [])
-    .map((r: { order_number: string; status: string }) => {
-      const p = parseOrder(r.order_number);
-      return p ? { order_number: r.order_number, status: r.status, branch: p.branch, seq: p.seq } : null;
-    })
-    .filter((r: Row | null): r is Row => r !== null);
+  const [{ data }, companyInfo] = await Promise.all([q, getCompanyInfo()]);
 
-  // Agrupar por sucursal y detectar huecos DENTRO de cada una
-  const byBranch = new Map<string, Row[]>();
-  for (const r of parsed) {
-    const list = byBranch.get(r.branch) ?? [];
-    list.push(r);
-    byBranch.set(r.branch, list);
-  }
-
-  const gaps: { missing: number; around: string }[] = [];
-  const rows: Row[] = [];
-  for (const [br, list] of Array.from(byBranch.entries()).sort((a, b) => a[0].localeCompare(b[0]))) {
-    list.sort((a, b) => a.seq - b.seq);
-    for (let i = 1; i < list.length; i++) {
-      if (list[i].seq - list[i - 1].seq > 1) {
-        for (let g = list[i - 1].seq + 1; g < list[i].seq; g++) {
-          gaps.push({ missing: g, around: `${br}: entre ${list[i - 1].order_number} y ${list[i].order_number}` });
-        }
-      }
-    }
-    rows.push(...list);
-  }
+  // Series, huecos y marca por fila salen del MISMO cálculo (lib/trace/sequence.ts), para que el
+  // resumen y el detalle no puedan contradecirse.
+  const { rows, gaps, countBySeries } = buildSequenceReport(data ?? []);
 
   const buffer = await renderToBuffer(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    React.createElement(SecuenciaAuditoriaDocument, { data: { year, branch, type, rows, gaps } }) as any
+    React.createElement(SecuenciaAuditoriaDocument, {
+      data: { year, branch, type, rows, gaps, countBySeries },
+      companyInfo,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    }) as any
   );
 
   return new NextResponse(buffer as unknown as BodyInit, {

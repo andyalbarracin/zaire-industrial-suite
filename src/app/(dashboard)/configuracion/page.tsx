@@ -5,6 +5,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ROUTES } from "@/lib/routes";
 import { CompanySettingsForm } from "@/components/settings/company-settings-form";
+import { IntegrationPanel } from "@/components/integration/integration-panel";
+import { getIntegrationConfig, isIntegrationEnabled } from "@/lib/integration/config";
+import { getLastRuns } from "@/lib/integration/runs";
 import type { Profile, CompanySettings } from "@/lib/types/database";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +35,11 @@ export default async function ConfiguracionPage() {
 
   const settings = settingsRaw as CompanySettings | null;
   const users = usersRaw as Pick<Profile, "id" | "full_name" | "email" | "role" | "created_at">[] | null;
+
+  // Zaire Connect: solo si el deployment tiene la integración habilitada. Con el flag
+  // apagado no se consulta nada ni se renderiza nada (ver lib/integration/config.ts).
+  const integrationEnabled = isIntegrationEnabled();
+  const integrationRuns = integrationEnabled ? await getLastRuns() : [];
 
   // Fallback si aún no existe la fila en company_settings
   const settingsFallback: CompanySettings = settings ?? {
@@ -91,6 +99,16 @@ export default async function ConfiguracionPage() {
           </div>
         </div>
       </div>
+
+      {integrationEnabled && (
+        <div className="zaire-card p-6">
+          <h2 className="font-semibold text-(--zaire-text) mb-1">Integración</h2>
+          <p className="text-sm text-(--zaire-text-muted) mb-5">
+            Importación de clientes y productos desde el sistema externo configurado
+          </p>
+          <IntegrationPanel provider={getIntegrationConfig().provider} lastRuns={integrationRuns} />
+        </div>
+      )}
 
     </div>
   );

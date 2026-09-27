@@ -74,6 +74,29 @@ type OrderFormData = z.infer<typeof orderSchema>;
 // Convierte a número seguro: strings de Supabase ("0.00"), vacíos e inválidos → 0 (nunca NaN).
 const toNum = (v: unknown): number => Number(v) || 0;
 
+/**
+ * Aviso —no validación— para una fecha de ingreso sospechosa. Es deliberadamente PERMISIVO: se
+ * cargan órdenes históricas que venían de otro sistema, así que una fecha vieja es legítima y no
+ * se puede bloquear. Solo se avisa de lo que no puede ser correcto: un año anterior a 2000 (en la
+ * base hay una orden facturada cargada con fecha del año 0006) o una fecha futura.
+ * Devuelve null si la fecha no tiene nada raro.
+ */
+function dateInWarningFor(value: string | undefined): string | null {
+  if (!value) return null;
+  const [y, m, d] = value.split("-").map(Number);
+  if (!y || !m || !d) return null;
+
+  if (y < 2000) return "Año poco probable. Revisá la fecha antes de guardar; si es correcta, ignorá este aviso.";
+
+  // Comparación a medianoche local, igual que el resto de las fechas de la app (ver lib/utils.ts).
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (new Date(y, m - 1, d).getTime() > today.getTime()) {
+    return "La fecha de ingreso es futura. Revisala antes de guardar; si es correcta, ignorá este aviso.";
+  }
+  return null;
+}
+
 interface OrderFormProps {
   clients: Pick<Client, "id" | "business_name" | "tax_id">[];
   products: Pick<Product, "id" | "code" | "name" | "brand" | "model" | "category" | "unit" | "default_currency" | "default_unit_price">[];
@@ -167,6 +190,7 @@ export function OrderForm({ clients, products, defaultClientId, order, orderItem
   const branchId = watch("branch_id");
   const currency = watch("currency") as Currency;
   const watchedItems = watch("items");
+  const dateInWarning = dateInWarningFor(watch("date_in"));
 
   const totalUsd = watchedItems.reduce((sum, item) => sum + toNum(item.quantity) * toNum(item.unit_price), 0);
   const totalArs = watchedItems.reduce((sum, item) => sum + toNum(item.quantity) * toNum(item.unit_price_ars), 0);
@@ -389,8 +413,13 @@ export function OrderForm({ clients, products, defaultClientId, order, orderItem
 
           <div className="space-y-1.5">
             <Label>Fecha de ingreso *</Label>
+            {/* Sin `min`/`max`: acotar el input bloquearía la carga de órdenes históricas, que es
+                legítima. El aviso de abajo se puede ignorar y guardar igual. */}
             <Input type="date" {...register("date_in")} />
             {errors.date_in && <p className="text-xs text-red-600 dark:text-red-300">{errors.date_in.message}</p>}
+            {!errors.date_in && dateInWarning && (
+              <p className="text-xs text-red-600 dark:text-red-300">{dateInWarning}</p>
+            )}
           </div>
 
           <div className="space-y-1.5">
