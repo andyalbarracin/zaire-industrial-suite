@@ -41,16 +41,19 @@ export default async function ConfiguracionPage() {
   const integrationEnabled = isIntegrationEnabled();
   const integrationRuns = integrationEnabled ? await getLastRuns() : [];
 
-  // Fallback si aún no existe la fila en company_settings
+  // Fallback si aún no existe la fila en company_settings. Va VACÍO a propósito: antes traía
+  // datos de una empresa de demostración y el formulario los ofrecía como si fueran propios, así
+  // que alcanzaba con guardar para dejarlos cargados en la base. El nombre vacío además hace que
+  // la validación del formulario exija completarlo.
   const settingsFallback: CompanySettings = settings ?? {
     id: 1,
-    nombre: "Empresa Demo S.A.",
-    cuit: "30-00000000-0",
-    direccion: "Dirección 1234",
-    ciudad: "Buenos Aires, Argentina",
-    telefono: "+54 11 0000-0000",
-    email: "demo@empresa.com",
-    web: "www.empresa.com",
+    nombre: "",
+    cuit: null,
+    direccion: null,
+    ciudad: null,
+    telefono: null,
+    email: null,
+    web: null,
     logo_url: null,
     logo_use_in_pdfs: false,
     app_logo_url: null,

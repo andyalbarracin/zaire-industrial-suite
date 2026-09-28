@@ -5,6 +5,7 @@ import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { BRANDING } from "@/lib/branding";
+import type { CompanyInfo } from "@/lib/company";
 import type { StockReport, NameValue } from "@/lib/stock/reports";
 
 function money(n: number, cur = "ARS"): string {
@@ -16,6 +17,9 @@ const S = StyleSheet.create({
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10, paddingBottom: 8, borderBottomWidth: 2, borderBottomColor: "#0B2447" },
   brand: { fontSize: 14, fontFamily: "Helvetica-Bold", color: "#0B2447" },
   brandSub: { fontSize: 8, color: "#64748B", marginTop: 1 },
+  companyInfo: { fontSize: 6.5, color: "#64748B", marginTop: 1 },
+  docRight: { alignItems: "flex-end" as const },
+  docModule: { fontSize: 8, fontFamily: "Helvetica-Bold", color: "#0B2447", textAlign: "right" },
   docCode: { fontSize: 8, color: "#64748B", textAlign: "right" },
   kpis: { flexDirection: "row", gap: 6, marginBottom: 10, flexWrap: "wrap" },
   kpi: { borderWidth: 1, borderColor: "#E2E8F0", borderRadius: 3, padding: "5 8", width: "23%" },
@@ -44,16 +48,25 @@ function Table({ title, rows, isMoney, currency }: { title: string; rows: NameVa
   );
 }
 
-export function StockReportDocument({ rep }: { rep: StockReport }) {
+export function StockReportDocument({ rep, companyInfo }: { rep: StockReport; companyInfo: CompanyInfo }) {
+  const domicilio = [companyInfo.direccion, companyInfo.ciudad].filter(Boolean).join(" — ");
+  const fiscal = [companyInfo.cuit ? `CUIT: ${companyInfo.cuit}` : null, companyInfo.email].filter(Boolean).join(" · ");
   return (
     <Document>
       <Page size="A4" style={S.page}>
+        {/* La empresa emisora encabeza el documento; el módulo va a la derecha. Antes acá se
+            imprimía BRANDING.systemName, que vale "Zaire Trace" y anunciaba el módulo equivocado. */}
         <View style={S.header}>
           <View>
-            <Text style={S.brand}>{BRANDING.systemName}</Text>
-            <Text style={S.brandSub}>Zaire Stock — Reporte de inventario</Text>
+            <Text style={S.brand}>{companyInfo.nombre}</Text>
+            {!!domicilio && <Text style={S.companyInfo}>{domicilio}</Text>}
+            {!!fiscal && <Text style={S.companyInfo}>{fiscal}</Text>}
           </View>
-          <Text style={S.docCode}>Generado el {format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}</Text>
+          <View style={S.docRight}>
+            <Text style={S.docModule}>{BRANDING.modules.stock.toUpperCase()}</Text>
+            <Text style={S.brandSub}>Reporte de inventario</Text>
+            <Text style={S.docCode}>Generado el {format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}</Text>
+          </View>
         </View>
 
         <View style={S.kpis}>
@@ -88,7 +101,7 @@ export function StockReportDocument({ rep }: { rep: StockReport }) {
 
         <Table title="Top productos consumidos (unidades)" rows={rep.topConsumed} />
 
-        <Text style={S.footer} fixed>{BRANDING.systemName} · Reporte generado automáticamente · Valuación por costo promedio ponderado (WAC)</Text>
+        <Text style={S.footer} fixed>{companyInfo.nombre} · {BRANDING.modules.stock} — Valuación por costo promedio ponderado (WAC)</Text>
       </Page>
     </Document>
   );

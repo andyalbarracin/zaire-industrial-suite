@@ -49,7 +49,9 @@ const s = StyleSheet.create({
 
 export function QuotePdfDocument({ quote, items, companyInfo, photos = [] }: { quote: Any; items: Any[]; companyInfo: Any; photos?: { url: string; caption: string }[] }) {
   const cur = quote.currency as string;
-  const company = companyInfo?.nombre ?? BRANDING.companyName;
+  // La ruta resuelve los datos con getCompanyInfo(), que ya trae un fallback neutro si la empresa
+  // no está configurada. Antes acá se caía a BRANDING.companyName, que es un nombre de demo.
+  const company = companyInfo.nombre;
   const fmtDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString("es-AR") : "—");
 
   return (
