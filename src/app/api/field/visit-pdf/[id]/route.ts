@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getCompanyInfo } from "@/lib/company";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { VisitPdfDocument, type VisitPdfData } from "@/lib/pdf/visit-pdf-template";
 import { BRANCHES } from "@/lib/constants";
@@ -36,9 +37,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .eq("id", id).is("deleted_at", null).maybeSingle();
   if (!visit) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const [{ data: report }, { data: events }] = await Promise.all([
+  const [{ data: report }, { data: events }, companyInfo] = await Promise.all([
     sb.from("field_visit_reports").select("equipment_tag, serial_number, medida, unidad_medida, marca, modelo, materiales_caras, materiales_orings, findings, recommendations, requires_repair").eq("visit_id", id).maybeSingle(),
     sb.from("field_visit_events").select("event_type, occurred_at, description").eq("visit_id", id).order("occurred_at", { ascending: true }),
+    getCompanyInfo(),
   ]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -61,7 +63,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const buffer = await renderToBuffer(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    React.createElement(VisitPdfDocument, { data }) as any
+    React.createElement(VisitPdfDocument, { data, companyInfo }) as any
   );
 
   return new NextResponse(buffer as unknown as BodyInit, {

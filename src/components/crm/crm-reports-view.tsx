@@ -1,13 +1,13 @@
 "use client";
 // crm-reports-view.tsx — src/components/crm/crm-reports-view.tsx — 2026-07-18
-// Analítica de ventas del CRM: KPIs + gráficos (recharts) + export XLS/CSV.
+// Analítica de ventas del CRM: KPIs + gráficos (recharts) + export XLS/CSV/PDF.
 
 import { useMemo } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   PieChart, Pie, Cell, Legend,
 } from "recharts";
-import { Download } from "lucide-react";
+import { Download, FileText } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
 import { computeCrmReports } from "@/lib/crm/reports";
@@ -50,6 +50,7 @@ export function CrmReportsView({ opportunities, leads, stages, profiles }: CrmRe
       <div className="flex justify-end gap-2">
         <Button variant="outline" size="sm" onClick={exportXLS} className="h-9"><Download className="w-4 h-4 mr-1.5" /> XLS</Button>
         <Button variant="outline" size="sm" onClick={exportCSV} className="h-9"><Download className="w-4 h-4 mr-1.5" /> CSV</Button>
+        <Button asChild variant="outline" size="sm" className="h-9"><a href="/api/crm/reportes-pdf" target="_blank" rel="noopener noreferrer"><FileText className="w-4 h-4 mr-1.5" /> PDF</a></Button>
       </div>
 
       {/* KPIs */}

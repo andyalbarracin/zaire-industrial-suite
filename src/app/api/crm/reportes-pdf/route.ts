@@ -1,13 +1,13 @@
-// route.ts — src/app/api/assets/reportes-pdf/route.ts — 2026-07-20
-// Genera el PDF de reportes de Zaire Assets (flota + costo/TCO + confiabilidad + riesgo).
+// route.ts — src/app/api/crm/reportes-pdf/route.ts — 2026-09-27
+// Genera el PDF de reportes de Zaire CRM (conversión, pipeline, ganado por mes, rendimiento).
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCompanyInfo } from "@/lib/company";
 import { renderToBuffer } from "@react-pdf/renderer";
-import { AssetReportDocument } from "@/lib/pdf/asset-report-template";
-import { computeAssetReports } from "@/lib/assets/reports";
-import { getAssets, getAllAssetEvents } from "@/lib/assets/queries";
+import { CrmReportDocument } from "@/lib/pdf/crm-report-template";
+import { computeCrmReports } from "@/lib/crm/reports";
+import { getOpportunities, getLeads, getPipelineStages } from "@/lib/crm/queries";
 import { isModuleEnabled } from "@/lib/modules";
 import React from "react";
 
@@ -28,20 +28,32 @@ export async function GET(request: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!isModuleEnabled("assets")) return NextResponse.json({ error: "Módulo no habilitado" }, { status: 404 });
+  if (!isModuleEnabled("crm")) return NextResponse.json({ error: "Módulo no habilitado" }, { status: 404 });
 
-  const [assets, events, companyInfo] = await Promise.all([getAssets(), getAllAssetEvents(), getCompanyInfo()]);
-  const rep = computeAssetReports(assets, events);
+  // Mismas fuentes que la pantalla de reportes del CRM, para que el PDF informe exactamente lo
+  // mismo que se ve en pantalla (ver app/(dashboard)/crm/reportes/page.tsx).
+  const [opportunities, leads, stages, { data: profiles }, companyInfo] = await Promise.all([
+    getOpportunities(),
+    getLeads(),
+    getPipelineStages(),
+    supabase.from("profiles").select("id, full_name").order("full_name"),
+    getCompanyInfo(),
+  ]);
+
+  const rep = computeCrmReports(
+    opportunities, leads, stages,
+    (profiles ?? []) as { id: string; full_name: string }[],
+  );
 
   const buffer = await renderToBuffer(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    React.createElement(AssetReportDocument, { rep, companyInfo }) as any
+    React.createElement(CrmReportDocument, { rep, companyInfo }) as any
   );
 
   return new NextResponse(buffer as unknown as BodyInit, {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `inline; filename="Zaire_Assets_Reportes.pdf"`,
+      "Content-Disposition": `inline; filename="Zaire_CRM_Reportes.pdf"`,
     },
   });
 }

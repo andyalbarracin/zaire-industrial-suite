@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getCompanyInfo } from "@/lib/company";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { QuotePdfDocument } from "@/lib/pdf/quote-pdf-template";
 import React from "react";
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = supabase as any;
 
-  const [{ data: quoteRaw }, { data: settingsRaw }, { data: attsRaw }] = await Promise.all([
+  const [{ data: quoteRaw }, companyInfo, { data: attsRaw }] = await Promise.all([
     sb.from("crm_quotes")
       .select(`
         id, quote_number, title, status, currency, valid_until, terms, notes,
@@ -45,7 +46,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       .eq("id", id)
       .is("deleted_at", null)
       .maybeSingle(),
-    sb.from("company_settings").select("id, nombre, cuit, direccion, ciudad, telefono, email, web").eq("id", 1).maybeSingle(),
+    getCompanyInfo(),
     sb.from("crm_attachments").select("storage_path, file_name, file_type, category").eq("entity_type", "quote").eq("entity_id", id).is("deleted_at", null).order("created_at"),
   ]);
 
@@ -55,7 +56,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const items = ((quote.items ?? []) as any[]).sort((a, b) => a.item_number - b.item_number);
-  const companyInfo = settingsRaw ?? null;
 
   // Fotos adjuntas (solo imágenes) → signed URLs para el anexo del PDF.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

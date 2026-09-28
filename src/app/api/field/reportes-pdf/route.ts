@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getCompanyInfo } from "@/lib/company";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { ReportsPdfDocument } from "@/lib/pdf/reports-pdf-template";
 import { computeFieldReports } from "@/lib/field/reports";
@@ -27,12 +28,12 @@ export async function GET(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const [visits, expenses] = await Promise.all([getVisits(), getExpenses()]);
+  const [visits, expenses, companyInfo] = await Promise.all([getVisits(), getExpenses(), getCompanyInfo()]);
   const rep = computeFieldReports(visits, expenses);
 
   const buffer = await renderToBuffer(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    React.createElement(ReportsPdfDocument, { rep }) as any
+    React.createElement(ReportsPdfDocument, { rep, companyInfo }) as any
   );
 
   return new NextResponse(buffer as unknown as BodyInit, {

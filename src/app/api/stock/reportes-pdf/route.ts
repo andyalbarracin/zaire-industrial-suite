@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getCompanyInfo } from "@/lib/company";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { StockReportDocument } from "@/lib/pdf/stock-report-template";
 import { computeStockReports } from "@/lib/stock/reports";
@@ -29,12 +30,12 @@ export async function GET(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!isModuleEnabled("stock")) return NextResponse.json({ error: "Módulo no habilitado" }, { status: 404 });
 
-  const [levels, movements] = await Promise.all([getStockLevels(), getStockMovements(1000)]);
+  const [levels, movements, companyInfo] = await Promise.all([getStockLevels(), getStockMovements(1000), getCompanyInfo()]);
   const rep = computeStockReports(levels, movements);
 
   const buffer = await renderToBuffer(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    React.createElement(StockReportDocument, { rep }) as any
+    React.createElement(StockReportDocument, { rep, companyInfo }) as any
   );
 
   return new NextResponse(buffer as unknown as BodyInit, {
