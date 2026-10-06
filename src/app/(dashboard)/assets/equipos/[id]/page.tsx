@@ -34,9 +34,10 @@ export default async function AssetFichaPage({ params }: { params: Promise<{ id:
     .from("products")
     .select("id, code, name, description, category, brand, model, unit, default_currency, default_unit_price, is_active, notes, created_at, updated_at")
     .eq("is_active", true).order("name");
-  const rel = computeReliability(events, asset.installed_at);
+  const rel = computeReliability({ events, installedAt: asset.installed_at });
   const health = asset.health ?? 100;
-  const tco = rel.costByCurrency.length ? rel.costByCurrency.map((c) => formatCurrency(c.value, c.name as Currency)).join(" · ") : formatCurrency(0, "ARS");
+  // El TCO de la ficha es el acumulado de toda la hoja de vida; los KPIs son del período.
+  const tco = rel.costByCurrencyAllTime.length ? rel.costByCurrencyAllTime.map((c) => formatCurrency(c.value, c.name as Currency)).join(" · ") : formatCurrency(0, "ARS");
 
   return (
     <div className="space-y-6">
@@ -76,7 +77,7 @@ export default async function AssetFichaPage({ params }: { params: Promise<{ id:
             <Field label="Garantía hasta" value={asset.warranty_until ? formatDate(asset.warranty_until) : "—"} />
             <Field label="Vida útil" value={asset.expected_life_years != null ? `${asset.expected_life_years} años` : "—"} />
             <Field label="Ubicación" value={asset.address ?? "—"} />
-            <Field label="Fallas (total)" value={String(rel.failureCount)} />
+            <Field label="Fallas (período)" value={String(rel.failures)} />
           </div>
           {asset.notes && <p className="text-sm text-(--zaire-text-muted) border-t border-(--zaire-border) pt-3">{asset.notes}</p>}
           {asset.latitude != null && asset.longitude != null && (
