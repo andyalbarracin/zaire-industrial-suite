@@ -38,6 +38,12 @@ export interface Asset {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  // ---- Parámetros de confiabilidad (F1a). OPCIONALES a propósito: una base sin migrar
+  // no devuelve estas columnas, y el motor lo tolera (cae a su fuente por defecto).
+  regimen_horas_dia?: number | null;   // horas/día que opera → convierte calendario en tiempo operativo
+  valor_reposicion?: number | null;    // ¿sigue conviniendo repararlo?
+  mtbf_referencia?: number | null;     // cada cuánto DEBERÍA fallar (arranque en frío)
+  mtbr_referencia?: number | null;     // cada cuánto DEBERÍA intervenirse
   // Joins / calculados
   client?: Client | null;
   health?: number;                     // 0-100, calculado on-read
@@ -56,6 +62,16 @@ export interface AssetEvent {
   downtime_hours: number | null;
   created_by: string | null;
   created_at: string;
+  // ---- Taxonomía de confiabilidad (F1a). OPCIONALES: `null` significa "sin clasificar"
+  // (distinto de `false`, que es "verificado que no"). El motor las deriva de `type`
+  // cuando vienen null, así que funciona igual antes y después de la migración.
+  es_falla?: boolean | null;
+  es_intervencion_fisica?: boolean | null;
+  modo_de_falla?: string | null;         // sello, rodamiento, acople… (texto libre, sin CHECK)
+  out_of_service_start?: string | null;  // ventana de fuera de servicio: el motor la prefiere
+  out_of_service_end?: string | null;    //   sobre downtime_hours cuando las dos están cargadas
+  source?: string | null;                // manual | ot | visita | inferido (sin CHECK)
+  ref_item_id?: string | null;           // ref SUAVE al ítem de la OT (sin FK a Trace)
 }
 
 export interface AssetDocument {

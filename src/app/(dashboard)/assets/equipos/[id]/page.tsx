@@ -34,7 +34,13 @@ export default async function AssetFichaPage({ params }: { params: Promise<{ id:
     .from("products")
     .select("id, code, name, description, category, brand, model, unit, default_currency, default_unit_price, is_active, notes, created_at, updated_at")
     .eq("is_active", true).order("name");
-  const rel = computeReliability({ events, installedAt: asset.installed_at });
+  // `regimen_horas_dia` puede no existir en la base de un tenant sin migrar: llega undefined
+  // y el motor cae a calendario puro, declarándolo en `operatingSource`.
+  const rel = computeReliability({
+    events,
+    installedAt: asset.installed_at,
+    regimeHoursPerDay: asset.regimen_horas_dia ?? null,
+  });
   const health = asset.health ?? 100;
   // El TCO de la ficha es el acumulado de toda la hoja de vida; los KPIs son del período.
   const tco = rel.costByCurrencyAllTime.length ? rel.costByCurrencyAllTime.map((c) => formatCurrency(c.value, c.name as Currency)).join(" · ") : formatCurrency(0, "ARS");

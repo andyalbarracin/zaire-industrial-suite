@@ -264,6 +264,123 @@ describe("MTTR y disponibilidad", () => {
   });
 });
 
+describe("ventana de fuera de servicio: le gana a downtime_hours", () => {
+  const window = { periodStart: "2025-01-01", periodEnd: "2026-01-01", regimeHoursPerDay: 24 } as const;
+  const relleno = ev({ event_date: "2025-09-01", type: "servicio" }); // para llegar a 2 intervenciones
+
+  it("con las dos fechas cargadas usa la diferencia e ignora downtime_hours", () => {
+    const r = computeReliability({
+      ...window,
+      events: [
+        ev({
+          event_date: "2025-06-01", type: "falla", downtime_hours: 999,
+          out_of_service_start: "2025-06-01T08:00:00Z",
+          out_of_service_end:   "2025-06-03T08:00:00Z",
+        }),
+        relleno,
+      ],
+    });
+    expect(r.downtimeHours).toBe(48);
+    expect(r.downtimeSource).toBe("fechas");
+  });
+
+  it("sin fechas sigue usando downtime_hours", () => {
+    const r = computeReliability({
+      ...window,
+      events: [ev({ event_date: "2025-06-01", type: "falla", downtime_hours: 10 }), relleno],
+    });
+    expect(r.downtimeHours).toBe(10);
+    expect(r.downtimeSource).toBe("manual");
+  });
+
+  it("mezcla las dos fuentes y lo declara", () => {
+    const r = computeReliability({
+      ...window,
+      events: [
+        ev({
+          event_date: "2025-06-01", type: "falla",
+          out_of_service_start: "2025-06-01T00:00:00Z",
+          out_of_service_end:   "2025-06-03T00:00:00Z",
+        }),
+        ev({ event_date: "2025-07-01", type: "servicio", downtime_hours: 10 }),
+      ],
+    });
+    expect(r.downtimeHours).toBe(58); // 48 de fechas + 10 a mano
+    expect(r.downtimeSource).toBe("mixto");
+  });
+
+  it("sin ninguna de las dos fuentes dice que no hay dato", () => {
+    const r = computeReliability({ ...window, events: [relleno, ev({ event_date: "2025-10-01", type: "falla" })] });
+    expect(r.downtimeHours).toBe(0);
+    expect(r.downtimeSource).toBe("sin_dato");
+  });
+
+  it("si el fin es anterior al inicio descarta la ventana y cae a downtime_hours", () => {
+    const r = computeReliability({
+      ...window,
+      events: [
+        ev({
+          event_date: "2025-06-01", type: "falla", downtime_hours: 7,
+          out_of_service_start: "2025-06-03T00:00:00Z",
+          out_of_service_end:   "2025-06-01T00:00:00Z",
+        }),
+        relleno,
+      ],
+    });
+    expect(r.downtimeHours).toBe(7);
+    expect(r.downtimeSource).toBe("manual");
+  });
+
+  it("una ventana abierta (inicio sin fin) no se inventa: cae a downtime_hours y queda contada", () => {
+    const r = computeReliability({
+      ...window,
+      events: [
+        ev({
+          event_date: "2025-06-01", type: "falla", downtime_hours: 5,
+          out_of_service_start: "2025-06-01T00:00:00Z",
+        }),
+        relleno,
+      ],
+    });
+    expect(r.downtimeHours).toBe(5);
+    expect(r.openOutOfServiceCount).toBe(1);
+  });
+
+  it("el MTTR se deriva de las fechas cuando están cargadas", () => {
+    const r = computeReliability({
+      ...window,
+      events: [
+        ev({
+          event_date: "2025-03-01", type: "falla",
+          out_of_service_start: "2025-03-01T00:00:00Z",
+          out_of_service_end:   "2025-03-01T12:00:00Z",
+        }),
+        ev({
+          event_date: "2025-09-01", type: "falla",
+          out_of_service_start: "2025-09-01T00:00:00Z",
+          out_of_service_end:   "2025-09-01T08:00:00Z",
+        }),
+      ],
+    });
+    expect(r.mttrHours).toBe(10); // (12 + 8) / 2
+  });
+
+  it("la ventana de fechas también descuenta del tiempo operativo", () => {
+    const r = computeReliability({
+      ...window,
+      events: [
+        ev({
+          event_date: "2025-06-01", type: "servicio",
+          out_of_service_start: "2025-06-01T00:00:00Z",
+          out_of_service_end:   "2025-06-11T00:00:00Z", // 240 h
+        }),
+        relleno,
+      ],
+    });
+    expect(r.operatingHours).toBe(365 * 24 - 240);
+  });
+});
+
 describe("índice reactivo", () => {
   it("todas las intervenciones por falla da 1", () => {
     const r = computeReliability({

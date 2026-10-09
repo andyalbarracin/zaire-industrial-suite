@@ -20,6 +20,9 @@ export type OperatingSource = "horometro" | "regimen" | "calendario";
 
 export type Confidence = "alta" | "media" | "baja";
 
+/** De dónde salieron las horas de parada. Se muestra igual que `operatingSource`. */
+export type DowntimeSource = "fechas" | "manual" | "mixto" | "sin_dato";
+
 export interface ReliabilityEvent {
   type: string;
   event_date: string;
@@ -29,6 +32,10 @@ export interface ReliabilityEvent {
   // Taxonomía (F1). Si faltan o vienen null, se derivan de `type`.
   es_falla?: boolean | null;
   es_intervencion_fisica?: boolean | null;
+  // Ventana de fuera de servicio (F1a). Cuando las dos están cargadas y son coherentes,
+  // le GANAN a `downtime_hours`: la parada deja de depender de que alguien escriba horas.
+  out_of_service_start?: string | null;
+  out_of_service_end?: string | null;
 }
 
 export interface ReliabilityInput {
@@ -58,6 +65,9 @@ export interface Reliability {
   dedupedSameDay: number;
   downtimeHours: number;
   failureDowntimeHours: number;
+  downtimeSource: DowntimeSource;
+  /** Ventanas con inicio y sin fin. No se estiman: se cuentan, para que no pasen en silencio. */
+  openOutOfServiceCount: number;
   mtbfHours: number | null;
   mtbfDays: number | null;
   mtbrHours: number | null;
@@ -132,6 +142,24 @@ function isIntervention(e: ReliabilityEvent): boolean {
   return e.es_intervencion_fisica ?? PHYSICAL_TYPES.has(e.type);
 }
 
+/**
+ * Horas de parada de un evento, con su origen.
+ * Prioridad: ventana de fechas (si está completa y es coherente) sobre `downtime_hours`.
+ * Una ventana abierta (inicio sin fin) NO se estima hasta hoy —sería inventar un número
+ * que crece solo— : cae a `downtime_hours` y se reporta aparte en `openOutOfServiceCount`.
+ */
+function downtimeOf(e: ReliabilityEvent): { hours: number; origin: "fechas" | "manual" | null; open: boolean } {
+  const start = parseDay(e.out_of_service_start);
+  const end = parseDay(e.out_of_service_end);
+
+  if (start !== null && end !== null && end >= start) {
+    return { hours: (end - start) / 3_600_000, origin: "fechas", open: false };
+  }
+
+  const manual = e.downtime_hours ?? 0;
+  return { hours: manual, origin: manual > 0 ? "manual" : null, open: start !== null && end === null };
+}
+
 // ------------------------------------------------------------------- motor
 
 export function computeReliability(input: ReliabilityInput): Reliability {
@@ -162,8 +190,17 @@ export function computeReliability(input: ReliabilityInput): Reliability {
   const F = dedupedFailures.length;
   const R = dedupedInterventions.length;
 
-  const downtimeHours = inPeriod.reduce((a, x) => a + (x.e.downtime_hours ?? 0), 0);
-  const failureDowntimeHours = dedupedFailures.reduce((a, x) => a + (x.e.downtime_hours ?? 0), 0);
+  // ---- Parada: ventana de fechas si está, `downtime_hours` si no (ver downtimeOf)
+  const downtimeParts = inPeriod.map((x) => downtimeOf(x.e));
+  const downtimeHours = downtimeParts.reduce((a, p) => a + p.hours, 0);
+  const failureDowntimeHours = dedupedFailures.reduce((a, x) => a + downtimeOf(x.e).hours, 0);
+
+  const origins = new Set(
+    downtimeParts.filter((p) => p.hours > 0 && p.origin !== null).map((p) => p.origin),
+  );
+  const downtimeSource: DowntimeSource =
+    origins.size === 0 ? "sin_dato" : origins.size > 1 ? "mixto" : (origins.values().next().value as "fechas" | "manual");
+  const openOutOfServiceCount = downtimeParts.filter((p) => p.open).length;
 
   // ---- Tiempo operativo: jerarquía horómetro → régimen → calendario puro
   let operatingHours: number;
@@ -232,6 +269,8 @@ export function computeReliability(input: ReliabilityInput): Reliability {
       ),
     downtimeHours: r1(downtimeHours),
     failureDowntimeHours: r1(failureDowntimeHours),
+    downtimeSource,
+    openOutOfServiceCount,
     mtbfHours,
     mtbfDays: mtbfHours !== null ? Math.round(mtbfHours / 24) : null,
     mtbrHours,

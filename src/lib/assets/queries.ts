@@ -8,12 +8,15 @@ import { ROUTES } from "@/lib/routes";
 import { computeAssetHealth, assetRisk } from "@/lib/assets/health";
 import type { Asset, AssetEvent, AssetDocument, AssetComponent } from "@/lib/assets/types";
 
-const ASSET_SELECT = `
-  id, tag, name, type, brand, model, serial, client_id, site_id, parent_asset_id, status, criticidad,
-  installed_at, warranty_until, expected_life_years, latitude, longitude, address, specs, notes,
-  deleted_at, created_by, created_at, updated_at,
-  client:clients(id, business_name)
-`;
+// `*` y no una lista explícita de columnas, por dos razones:
+//  1. Unifica el patrón del módulo: asset_events y asset_documents ya se leen con `*`.
+//     `assets` era la excepción, no la regla.
+//  2. Una lista explícita es FAIL-CLOSED: pedir una columna que la base del tenant todavía
+//     no tiene tira 42703 y se cae la pantalla de equipos entera. Con `*`, una base sin
+//     migrar simplemente no devuelve las columnas nuevas, llegan `undefined` y el motor
+//     cae a su fuente por defecto. Es el riesgo §G.1 del addendum, resuelto en vez de repetido.
+// El join a clients sí va explícito: `*` no trae relaciones.
+const ASSET_SELECT = `*, client:clients(id, business_name)`;
 
 // Fallas de los últimos 12 meses por equipo (para el health score).
 async function failuresByAsset(sb: any): Promise<Record<string, number>> {
