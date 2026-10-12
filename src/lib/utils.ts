@@ -96,6 +96,39 @@ export function getDueDaysLabel(date_due: string | null): string {
 export type TrafficLight = "green" | "yellow" | "orange" | "red";
 
 /**
+ * Días hasta el vencimiento de un documento, garantía o certificado. Negativo = ya venció.
+ *
+ * Compara contra la **medianoche local**, igual que `isOverdue` y `getDueDaysLabel`: así lo que
+ * vence HOY da exactamente `0` y no una fracción que, al redondear, lo haría parecer vencido.
+ * `now` entra **como parámetro** para que la función sea pura y se pueda calcular en la capa de
+ * lectura (llamar a `Date.now()` durante el render rompe la hidratación).
+ */
+export function daysUntilExpiry(expiresAt: string | null | undefined, now: number): number | null {
+  if (!expiresAt) return null;
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  const days = Math.round((parseLocalDate(expiresAt).getTime() - today.getTime()) / 86_400_000);
+  return days === 0 ? 0 : days; // normaliza -0: se mostraría como "0" habiendo vencido
+}
+
+/**
+ * Semáforo de vencimiento **unificado para toda la suite**:
+ *   vencido → `red` · ≤ 7 días → `orange` · ≤ 30 días → `yellow` · resto → `green`
+ *
+ * Única implementación a propósito. Antes había dos: Field usaba estos 4 niveles y Assets solo 3
+ * (sin `orange`), así que el mismo documento se veía distinto según la pantalla. Se unificó a 4.
+ * Devuelve `null` cuando no hay fecha: "sin vencimiento" no es un estado del semáforo, y cada
+ * pantalla decide si no muestra nada o lo trata como verde.
+ */
+export function expiryLight(days: number | null): TrafficLight | null {
+  if (days === null) return null;
+  if (days < 0) return "red";
+  if (days <= 7) return "orange";
+  if (days <= 30) return "yellow";
+  return "green";
+}
+
+/**
  * Calcula el color del semáforo para un campo booleano en una lista de ítems.
  * Verde = todos completados, Amarillo = algunos, Rojo = ninguno.
  */

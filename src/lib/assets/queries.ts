@@ -5,7 +5,8 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { ROUTES } from "@/lib/routes";
-import { computeAssetHealth, assetRisk, daysUntilExpiry, expiryLight } from "@/lib/assets/health";
+import { computeAssetHealth, assetRisk } from "@/lib/assets/health";
+import { daysUntilExpiry, expiryLight } from "@/lib/utils";
 import { ASSET_EVENTS_LIMIT } from "@/lib/assets/constants";
 import type { Asset, AssetEvent, AssetDocument, AssetComponent } from "@/lib/assets/types";
 

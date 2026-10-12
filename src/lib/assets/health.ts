@@ -2,7 +2,6 @@
 // Health score del activo (0-100, condición). PURO y testeable. Molde de lib/crm/score.ts.
 // Señales: estado, fallas recientes (12m), antigüedad vs vida útil esperada.
 
-import type { TrafficLight } from "@/lib/utils";
 
 export interface AssetHealthInput {
   status: string;                    // operativo | en_reparacion | standby | baja
@@ -38,25 +37,7 @@ export function assetRisk(health: number, criticidad: number): number {
   return criticidad * (100 - health);
 }
 
-/**
- * Días hasta el vencimiento de un documento o garantía. Negativo = ya venció.
- * `now` entra COMO PARÁMETRO: así la función es pura y el cálculo puede hacerse en la capa de
- * lectura en lugar de durante el render (llamar a Date.now() en render rompe la hidratación).
- */
-export function daysUntilExpiry(expiresAt: string | null, now: number): number | null {
-  if (!expiresAt) return null;
-  return Math.round((new Date(expiresAt).getTime() - now) / 86_400_000);
-}
-
-/**
- * Semáforo de vencimiento: vencido (rojo) · por vencer en ≤30 días (amarillo) · en regla (verde).
- *
- * Mantiene A PROPÓSITO los **3 niveles** que Assets ya venía mostrando. `lib/field/queries.ts`
- * tiene su propio `expiryLight` con **4** (suma `orange` para ≤7 días). La divergencia es deuda
- * conocida: unificarla cambiaría lo que el usuario ya ve en Assets, y eso es una decisión de
- * producto, no un refactor.
- */
-export function expiryLight(days: number | null): TrafficLight | null {
-  if (days === null) return null;
-  return days < 0 ? "red" : days <= 30 ? "yellow" : "green";
-}
+// El cálculo de vencimientos NO vive acá: es de toda la suite y está unificado en
+// `lib/utils.ts` (`daysUntilExpiry` / `expiryLight`, 4 niveles). Assets tenía su propia versión
+// de 3 niveles y Field otra de 4; se unificaron a una sola para que el mismo documento no se vea
+// distinto según la pantalla.
