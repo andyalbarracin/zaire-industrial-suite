@@ -3,6 +3,13 @@
 
 import type { AssetType, AssetStatus, EventType } from "@/lib/assets/types";
 
+/**
+ * Tope de carga de eventos para los reportes de flota (molde de ORDERS_LIMIT / VISITS_LIMIT).
+ * Si se alcanza, la pantalla lo avisa con <LimitNotice>: el TCO y el top de fallas se calculan
+ * sobre lo cargado, así que truncar en silencio daría números mal sin que nada lo indique.
+ */
+export const ASSET_EVENTS_LIMIT = 2000;
+
 export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   bomba: "Bomba", sello: "Sello", compresor: "Compresor", motor: "Motor", valvula: "Válvula", otro: "Otro",
 };

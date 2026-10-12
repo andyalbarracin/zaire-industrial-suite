@@ -32,8 +32,10 @@ export default async function AssetDocumentosPage() {
             </thead>
             <tbody className="divide-y divide-(--zaire-border)">
               {docs.map((d) => {
-                const days = d.expires_at ? Math.round((new Date(d.expires_at).getTime() - Date.now()) / 86_400_000) : null;
-                const light = days == null ? null : days < 0 ? "red" : days <= 30 ? "yellow" : "green";
+                // Calculados en getAssetDocuments, no acá: Date.now() en el render es impuro
+                // y rompe la hidratación (servidor y cliente dan valores distintos).
+                const days = d.days_until_expiry ?? null;
+                const light = d.expiry_light ?? null;
                 return (
                   <tr key={d.id} className="hover:bg-subtle/80 transition-colors">
                     <td className="px-5 py-2.5 text-(--zaire-text)">{d.name ?? d.doc_type ?? "Documento"}</td>

@@ -15,6 +15,7 @@ import type {
   WorkOrder,
 } from "@/lib/field/types";
 import type { TrafficLight } from "@/lib/utils";
+import { daysUntilExpiry, expiryLight as expiryLightShared } from "@/lib/utils";
 
 // Límites de carga preventivos (evitan traer todo). El componente LimitNotice avisa si se alcanzan.
 export const VISITS_LIMIT = 1000;
@@ -270,19 +271,21 @@ export interface FieldDocumentWithExpiry extends FieldDocument {
   expiry_light: TrafficLight;
 }
 
-export function expiryLight(daysUntil: number | null): TrafficLight {
-  if (daysUntil === null) return "green";
-  if (daysUntil < 0) return "red";      // vencido
-  if (daysUntil <= 7) return "orange";  // vence en <= 7 días
-  if (daysUntil <= 30) return "yellow"; // vence en <= 30 días
-  return "green";
+// El cálculo de vencimientos se unificó en `lib/utils.ts` (`daysUntilExpiry` / `expiryLight`):
+// era la única implementación de 4 niveles, Assets tenía otra de 3, y el mismo documento se veía
+// distinto según la pantalla. Se mantiene la re-exportación porque hay componentes de Field que
+// importan `expiryLight` desde acá.
+//
+// `?? "green"` conserva el comportamiento histórico de Field: un documento SIN fecha de
+// vencimiento se muestra en verde. El helper compartido devuelve `null` en ese caso, porque
+// "sin vencimiento" no es un estado del semáforo y cada pantalla decide qué hacer con eso.
+export function expiryLight(days: number | null): TrafficLight {
+  return expiryLightShared(days) ?? "green";
 }
 
+/** Días hasta el vencimiento, contra la medianoche local (ver `daysUntilExpiry` en utils). */
 function daysUntil(dateStr: string | null): number | null {
-  if (!dateStr) return null;
-  const now = new Date();
-  const target = new Date(dateStr);
-  return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  return daysUntilExpiry(dateStr, Date.now());
 }
 
 export async function getFieldDocuments(): Promise<FieldDocumentWithExpiry[]> {

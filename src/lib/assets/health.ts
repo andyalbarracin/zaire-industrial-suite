@@ -2,6 +2,7 @@
 // Health score del activo (0-100, condición). PURO y testeable. Molde de lib/crm/score.ts.
 // Señales: estado, fallas recientes (12m), antigüedad vs vida útil esperada.
 
+
 export interface AssetHealthInput {
   status: string;                    // operativo | en_reparacion | standby | baja
   installedAt: string | null;
@@ -35,3 +36,8 @@ export function healthLight(h: number): "green" | "yellow" | "red" {
 export function assetRisk(health: number, criticidad: number): number {
   return criticidad * (100 - health);
 }
+
+// El cálculo de vencimientos NO vive acá: es de toda la suite y está unificado en
+// `lib/utils.ts` (`daysUntilExpiry` / `expiryLight`, 4 niveles). Assets tenía su propia versión
+// de 3 niveles y Field otra de 4; se unificaron a una sola para que el mismo documento no se vea
+// distinto según la pantalla.

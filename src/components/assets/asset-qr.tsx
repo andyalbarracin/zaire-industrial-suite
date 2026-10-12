@@ -11,10 +11,13 @@ export function AssetQR({ path, tag, name }: { path: string; tag: string | null;
   const [dataUrl, setDataUrl] = useState("");
   const [url, setUrl] = useState("");
 
+  // Los dos setState van DENTRO del .then(), no sincrónicos en el effect: un setState
+  // sincrónico acá dispara un render en cascada (el QR ya tiene su placeholder mientras carga).
   useEffect(() => {
     const full = window.location.origin + path;
-    setUrl(full);
-    QRCode.toDataURL(full, { width: 240, margin: 1 }).then(setDataUrl).catch(() => {});
+    QRCode.toDataURL(full, { width: 240, margin: 1 })
+      .then((qr) => { setDataUrl(qr); setUrl(full); })
+      .catch(() => {});
   }, [path]);
 
   function printTag() {
