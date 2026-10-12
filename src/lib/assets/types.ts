@@ -3,6 +3,7 @@
 // .docs/zaire-assets/sql/zaire_assets_schema.sql. Reusa tipos compartidos.
 
 import type { Client, Profile, Currency } from "@/lib/types/database";
+import type { TrafficLight } from "@/lib/utils";
 
 export type { Client, Profile, Currency };
 
@@ -88,6 +89,10 @@ export interface AssetDocument {
   updated_at: string;
   // Join
   asset?: Pick<Asset, "id" | "tag" | "name"> | null;
+  // Calculados en la capa de lectura (NO en el render: Date.now() durante el render rompe la
+  // hidratación). Molde de getFieldDocuments en lib/field/queries.ts.
+  days_until_expiry?: number | null;
+  expiry_light?: TrafficLight | null;
 }
 
 export interface AssetComponent {

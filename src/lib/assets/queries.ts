@@ -5,7 +5,8 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { ROUTES } from "@/lib/routes";
-import { computeAssetHealth, assetRisk } from "@/lib/assets/health";
+import { computeAssetHealth, assetRisk, daysUntilExpiry, expiryLight } from "@/lib/assets/health";
+import { ASSET_EVENTS_LIMIT } from "@/lib/assets/constants";
 import type { Asset, AssetEvent, AssetDocument, AssetComponent } from "@/lib/assets/types";
 
 // `*` y no una lista explícita de columnas, por dos razones:
@@ -19,12 +20,27 @@ import type { Asset, AssetEvent, AssetDocument, AssetComponent } from "@/lib/ass
 const ASSET_SELECT = `*, client:clients(id, business_name)`;
 
 // Fallas de los últimos 12 meses por equipo (para el health score).
+//
+// El error NO se descarta, y es deliberado: si esta consulta falla (RLS, permisos, red) y se
+// devolviera `{}`, todos los equipos quedarían con 0 fallas y TODA LA FLOTA SE VERÍA SANA, en
+// silencio. En un módulo de confiabilidad ese es el peor error posible: no muestra una falla,
+// muestra una mentira tranquilizadora. Mejor que explote y lo agarre `assets/error.tsx`.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function failuresByAsset(sb: any): Promise<Record<string, number>> {
   const since = new Date(Date.now() - 365 * 86_400_000).toISOString().slice(0, 10);
-  const { data } = await sb.from("asset_events").select("asset_id").eq("type", "falla").gte("event_date", since);
+  const { data, error } = await sb.from("asset_events").select("asset_id").eq("type", "falla").gte("event_date", since);
+  if (error) throw new Error(`No se pudieron leer las fallas de los equipos: ${error.message}`);
   const acc: Record<string, number> = {};
   for (const r of (data ?? []) as { asset_id: string }[]) acc[r.asset_id] = (acc[r.asset_id] ?? 0) + 1;
   return acc;
+}
+
+/** Agrega los campos de vencimiento calculados, para que la UI no los calcule en el render. */
+function withExpiry(docs: AssetDocument[], now: number): AssetDocument[] {
+  return docs.map((d) => {
+    const days = daysUntilExpiry(d.expires_at, now);
+    return { ...d, days_until_expiry: days, expiry_light: expiryLight(days) };
+  });
 }
 
 export const getAssets = cache(async (): Promise<Asset[]> => {
@@ -66,7 +82,12 @@ export const getAssetFull = cache(async (id: string): Promise<{
     expectedLifeYears: (asset as Asset).expected_life_years,
     recentFailures: evs.filter((e) => e.type === "falla" && Date.now() - new Date(e.event_date).getTime() <= 365 * 86_400_000).length,
   });
-  return { asset: { ...(asset as Asset), health }, events: evs, documents: (documents ?? []) as AssetDocument[], components: (components ?? []) as AssetComponent[] };
+  return {
+    asset: { ...(asset as Asset), health },
+    events: evs,
+    documents: withExpiry((documents ?? []) as AssetDocument[], Date.now()),
+    components: (components ?? []) as AssetComponent[],
+  };
 });
 
 // Alertas para la campana suite-wide: garantías/documentos por vencer (≤30d, incl. vencidos).
@@ -96,11 +117,13 @@ export const getAssetDocuments = cache(async (): Promise<AssetDocument[]> => {
   const { data } = await sb.from("asset_documents")
     .select("*, asset:assets(id, tag, name)")
     .is("deleted_at", null).order("expires_at", { ascending: true });
-  return (data ?? []) as AssetDocument[];
+  return withExpiry((data ?? []) as AssetDocument[], Date.now());
 });
 
 // Todos los eventos de la hoja de vida (para reportes de flota/costo/confiabilidad).
-export const getAllAssetEvents = cache(async (limit = 2000): Promise<AssetEvent[]> => {
+// El tope es EXPLÍCITO y la UI avisa cuando se alcanza (<LimitNotice>): si se truncara en
+// silencio, el TCO y el top de fallas saldrían mal sin que nada lo indique.
+export const getAllAssetEvents = cache(async (limit = ASSET_EVENTS_LIMIT): Promise<AssetEvent[]> => {
   const supabase = await createClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = supabase as any;

@@ -74,8 +74,9 @@ export function AssetDocumentsSection({ assetId, documents }: { assetId: string;
       {documents.length > 0 && (
         <ul className="space-y-1.5 mb-3">
           {documents.map((d) => {
-            const days = d.expires_at ? Math.round((new Date(d.expires_at).getTime() - Date.now()) / 86_400_000) : null;
-            const light = days == null ? null : days < 0 ? "red" : days <= 30 ? "yellow" : "green";
+            // Calculados en getAssetFull, no acá: Date.now() en el render es impuro.
+            const days = d.days_until_expiry ?? null;
+            const light = d.expiry_light ?? null;
             return (
               <li key={d.id} className="flex items-center gap-2 rounded-lg border border-(--zaire-border) bg-panel px-2.5 py-1.5">
                 <FileText className="w-3.5 h-3.5 text-(--zaire-text-muted) shrink-0" />
