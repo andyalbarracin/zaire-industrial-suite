@@ -132,8 +132,9 @@ function costByCurrency(events: readonly ReliabilityEvent[]): NameValue[] {
 
 const PHYSICAL_TYPES = new Set(["falla", "servicio"]);
 
-/** `es_falla` explícito si existe; si no, se deriva de `type`. */
-function isFailure(e: ReliabilityEvent): boolean {
+/** `es_falla` explícito si existe; si no, se deriva de `type`. Exportado para que el
+ *  ensamblador del ZHI use LA MISMA regla y la taxonomía no se defina en dos lugares. */
+export function isFailure(e: ReliabilityEvent): boolean {
   return e.es_falla ?? e.type === "falla";
 }
 

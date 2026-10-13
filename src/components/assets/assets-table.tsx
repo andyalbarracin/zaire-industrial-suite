@@ -15,7 +15,7 @@ import { StatusDot } from "@/components/shared/status-dot";
 import { ClickableRow } from "@/components/shared/clickable-row";
 import { AssetForm } from "@/components/assets/asset-form";
 import { ASSET_TYPE_LABELS, ASSET_STATUS_LABELS, ASSET_STATUS_BADGE, CRITICIDAD_LABELS } from "@/lib/assets/constants";
-import { healthLight } from "@/lib/assets/health";
+import { ZHI_BAND_LIGHT } from "@/lib/assets/constants";
 import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import type { Asset, AssetType, AssetStatus, Client } from "@/lib/assets/types";
@@ -40,7 +40,9 @@ export function AssetsTable({ initialAssets, clients, sites }: Props) {
     let data = assets;
     if (typeFilter !== "all") data = data.filter((a) => a.type === typeFilter);
     if (statusFilter !== "all") data = data.filter((a) => a.status === statusFilter);
-    if (riskOnly) data = data.filter((a) => (a.health ?? 100) < 60);
+    // "En riesgo" = banda distinta de sano. Los fuera de servicio no entran: están
+    // en reparación o de baja, no en riesgo.
+    if (riskOnly) data = data.filter((a) => a.zhi && !a.zhi.outOfService && a.zhi.band !== "sano");
     return data;
   }, [assets, typeFilter, statusFilter, riskOnly]);
 
@@ -55,7 +57,12 @@ export function AssetsTable({ initialAssets, clients, sites }: Props) {
       ),
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <StatusDot status={healthLight(row.original.health ?? 100)} size="sm" pulse={(row.original.health ?? 100) < 40} />
+          {/* Fuera de servicio: punto neutro, no verde. Un equipo en reparación no está sano. */}
+          <StatusDot
+            status={row.original.zhi && !row.original.zhi.outOfService && row.original.zhi.band ? ZHI_BAND_LIGHT[row.original.zhi.band] : "yellow"}
+            size="sm"
+            pulse={row.original.zhi?.band === "critico"}
+          />
           <div className="min-w-0">
             <p className="font-medium text-(--zaire-text) truncate">{row.original.name}</p>
             {row.original.tag && <p className="text-xs text-(--zaire-text-muted) font-mono">{row.original.tag}</p>}
@@ -67,7 +74,24 @@ export function AssetsTable({ initialAssets, clients, sites }: Props) {
     { id: "client", accessorFn: (a) => a.client?.business_name ?? "", header: "Cliente", cell: ({ row }) => <span className="text-(--zaire-text-muted) truncate max-w-40 inline-block">{row.original.client?.business_name ?? "—"}</span> },
     { accessorKey: "criticidad", header: "Criticidad", cell: ({ getValue }) => { const c = getValue() as number; return <span className={cn("text-xs", c >= 4 && "text-red-600 dark:text-red-300 font-medium")}>{CRITICIDAD_LABELS[c] ?? c}</span>; } },
     { accessorKey: "status", header: "Estado", cell: ({ getValue }) => { const s = getValue() as AssetStatus; return <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border", ASSET_STATUS_BADGE[s])}>{ASSET_STATUS_LABELS[s]}</span>; } },
-    { accessorKey: "health", header: "Salud", cell: ({ getValue }) => <span className="tabular-nums font-medium">{getValue() as number}</span> },
+    {
+      accessorKey: "health",
+      header: "Salud",
+      // Un equipo fuera de servicio no tiene salud: tiene un estado. Mostrar un número ahí
+      // sería contestar una pregunta que nadie hizo.
+      cell: ({ row }) => {
+        const z = row.original.zhi;
+        if (!z || z.outOfService || z.score === null) {
+          return <span className="text-xs text-(--zaire-text-muted)">Fuera de servicio</span>;
+        }
+        return (
+          <span className="tabular-nums font-medium">
+            {z.score}
+            {z.confidence === "baja" && <span className="ml-1 text-[10px] font-normal text-(--zaire-text-muted)">est.</span>}
+          </span>
+        );
+      },
+    },
     {
       id: "edit", header: "",
       cell: ({ row }) => (

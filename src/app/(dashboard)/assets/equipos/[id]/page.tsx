@@ -9,8 +9,8 @@ import { ROUTES } from "@/lib/routes";
 import { createClient } from "@/lib/supabase/server";
 import { getAssetFull } from "@/lib/assets/queries";
 import { computeReliability } from "@/lib/assets/reliability";
-import { healthLight } from "@/lib/assets/health";
-import { ASSET_TYPE_LABELS, ASSET_STATUS_LABELS, ASSET_STATUS_BADGE, CRITICIDAD_LABELS } from "@/lib/assets/constants";
+
+import { ASSET_TYPE_LABELS, ASSET_STATUS_LABELS, ASSET_STATUS_BADGE, CRITICIDAD_LABELS, ZHI_BAND_LABELS, ZHI_BAND_LIGHT, ZHI_CONFIDENCE_LABELS } from "@/lib/assets/constants";
 import { StatusDot } from "@/components/shared/status-dot";
 import { FieldMap } from "@/components/field/field-map";
 import { AssetQR } from "@/components/assets/asset-qr";
@@ -41,7 +41,7 @@ export default async function AssetFichaPage({ params }: { params: Promise<{ id:
     installedAt: asset.installed_at,
     regimeHoursPerDay: asset.regimen_horas_dia ?? null,
   });
-  const health = asset.health ?? 100;
+  const zhi = asset.zhi;
   // El TCO de la ficha es el acumulado de toda la hoja de vida; los KPIs son del período.
   const tco = rel.costByCurrencyAllTime.length ? rel.costByCurrencyAllTime.map((c) => formatCurrency(c.value, c.name as Currency)).join(" · ") : formatCurrency(0, "ARS");
 
@@ -62,14 +62,41 @@ export default async function AssetFichaPage({ params }: { params: Promise<{ id:
 
       {/* Confiabilidad */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Salud: número + banda + confianza. NO se muestra el cálculo ni los sub-índices (D6). */}
         <div className="zaire-card p-4">
           <p className="text-xs text-(--zaire-text-muted)">Salud</p>
-          <p className="text-2xl font-bold mt-1 tabular-nums flex items-center gap-2"><StatusDot status={healthLight(health)} size="sm" pulse={health < 40} /><span className="text-(--zaire-text)">{health}</span></p>
+          {zhi && !zhi.outOfService && zhi.band ? (
+            <>
+              <p className="text-2xl font-bold mt-1 tabular-nums flex items-center gap-2">
+                <StatusDot status={ZHI_BAND_LIGHT[zhi.band]} size="sm" pulse={zhi.band === "critico"} />
+                <span className="text-(--zaire-text)">{zhi.score}</span>
+                <span className="text-xs font-medium text-(--zaire-text-muted)">{ZHI_BAND_LABELS[zhi.band]}</span>
+              </p>
+              <p className="text-[11px] text-(--zaire-text-muted) mt-0.5">
+                Confianza: {ZHI_CONFIDENCE_LABELS[zhi.confidence]}
+              </p>
+            </>
+          ) : (
+            <p className="text-sm font-medium text-(--zaire-text-muted) mt-2">
+              {zhi?.capApplied ?? "Fuera de servicio"}
+            </p>
+          )}
         </div>
         <div className="zaire-card p-4"><p className="text-xs text-(--zaire-text-muted)">Costo acumulado (TCO)</p><p className="text-xl font-bold text-(--zaire-text) mt-1 tabular-nums truncate">{tco}</p></div>
         <div className="zaire-card p-4"><p className="text-xs text-(--zaire-text-muted)">MTBF (entre fallas)</p><p className="text-2xl font-bold text-(--zaire-text) mt-1 tabular-nums">{rel.mtbfDays != null ? `${rel.mtbfDays} d` : "—"}</p></div>
         <div className="zaire-card p-4"><p className="text-xs text-(--zaire-text-muted)">Disponibilidad</p><p className="text-2xl font-bold text-(--zaire-text) mt-1 tabular-nums">{rel.availability != null ? `${Math.round(rel.availability * 100)}%` : "—"}</p></div>
       </div>
+
+      {/* "Por qué": los 2 motivos, en lenguaje de planta. Sin fórmula, sin pesos (D6). */}
+      {zhi && !zhi.outOfService && (zhi.capApplied || zhi.motivos.length > 0) && (
+        <div className="zaire-card p-4 space-y-1.5">
+          <p className="text-xs font-medium text-(--zaire-text-muted)">Por qué</p>
+          {zhi.capApplied && <p className="text-sm text-(--zaire-text)">{zhi.capApplied}</p>}
+          {zhi.motivos.map((m) => (
+            <p key={m.subIndice} className="text-sm text-(--zaire-text)">{m.texto}</p>
+          ))}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Datos + ubicación */}

@@ -2,6 +2,9 @@
 // Labels y badges (dark-aware) de Zaire Activos. Espeja el patrón de stock/crm.
 
 import type { AssetType, AssetStatus, EventType } from "@/lib/assets/types";
+import type { ZhiBand } from "@/lib/assets/zhi";
+import type { Confidence } from "@/lib/assets/reliability";
+import type { TrafficLight } from "@/lib/utils";
 
 /**
  * Tope de carga de eventos para los reportes de flota (molde de ORDERS_LIMIT / VISITS_LIMIT).
@@ -45,4 +48,21 @@ export const EVENT_TYPE_BADGE: Record<EventType, string> = {
 /** Etiqueta de criticidad 1-5. */
 export const CRITICIDAD_LABELS: Record<number, string> = {
   1: "Muy baja", 2: "Baja", 3: "Media", 4: "Alta", 5: "Crítica",
+};
+
+// ---------------------------------------------------------- Zaire Health Index
+// Las bandas del ZHI (§6.5) reemplazan al semáforo de salud viejo, que cortaba en 70/40 y
+// no coincidía con ningún otro umbral del módulo. Ahora hay uno solo: 80 / 60 / 40.
+
+export const ZHI_BAND_LABELS: Record<ZhiBand, string> = {
+  sano: "Sano", atencion: "Atención", en_riesgo: "En riesgo", critico: "Crítico",
+};
+
+/** Color del semáforo por banda. `null` (fuera de servicio) lo decide cada pantalla. */
+export const ZHI_BAND_LIGHT: Record<ZhiBand, TrafficLight> = {
+  sano: "green", atencion: "yellow", en_riesgo: "orange", critico: "red",
+};
+
+export const ZHI_CONFIDENCE_LABELS: Record<Confidence, string> = {
+  alta: "Alta", media: "Media", baja: "Estimado",
 };
