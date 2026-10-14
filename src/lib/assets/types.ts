@@ -4,6 +4,7 @@
 
 import type { Client, Profile, Currency } from "@/lib/types/database";
 import type { TrafficLight } from "@/lib/utils";
+import type { Zhi } from "@/lib/assets/zhi";
 
 export type { Client, Profile, Currency };
 
@@ -47,7 +48,10 @@ export interface Asset {
   mtbr_referencia?: number | null;     // cada cuánto DEBERÍA intervenirse
   // Joins / calculados
   client?: Client | null;
-  health?: number;                     // 0-100, calculado on-read
+  /** Score del ZHI (0-100). `undefined` si el equipo está fuera de servicio. Alias de `zhi.score`. */
+  health?: number;
+  /** Zaire Health Index completo: banda, confianza, motivos y sub-índices. Calculado on-read. */
+  zhi?: Zhi;
 }
 
 export interface AssetEvent {

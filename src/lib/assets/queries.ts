@@ -5,7 +5,7 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { ROUTES } from "@/lib/routes";
-import { computeAssetHealth, assetRisk } from "@/lib/assets/health";
+import { computeFleetZhi } from "@/lib/assets/zhi-input";
 import { daysUntilExpiry, expiryLight } from "@/lib/utils";
 import { ASSET_EVENTS_LIMIT } from "@/lib/assets/constants";
 import type { Asset, AssetEvent, AssetDocument, AssetComponent } from "@/lib/assets/types";
@@ -20,22 +20,6 @@ import type { Asset, AssetEvent, AssetDocument, AssetComponent } from "@/lib/ass
 // El join a clients sí va explícito: `*` no trae relaciones.
 const ASSET_SELECT = `*, client:clients(id, business_name)`;
 
-// Fallas de los últimos 12 meses por equipo (para el health score).
-//
-// El error NO se descarta, y es deliberado: si esta consulta falla (RLS, permisos, red) y se
-// devolviera `{}`, todos los equipos quedarían con 0 fallas y TODA LA FLOTA SE VERÍA SANA, en
-// silencio. En un módulo de confiabilidad ese es el peor error posible: no muestra una falla,
-// muestra una mentira tranquilizadora. Mejor que explote y lo agarre `assets/error.tsx`.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function failuresByAsset(sb: any): Promise<Record<string, number>> {
-  const since = new Date(Date.now() - 365 * 86_400_000).toISOString().slice(0, 10);
-  const { data, error } = await sb.from("asset_events").select("asset_id").eq("type", "falla").gte("event_date", since);
-  if (error) throw new Error(`No se pudieron leer las fallas de los equipos: ${error.message}`);
-  const acc: Record<string, number> = {};
-  for (const r of (data ?? []) as { asset_id: string }[]) acc[r.asset_id] = (acc[r.asset_id] ?? 0) + 1;
-  return acc;
-}
-
 /** Agrega los campos de vencimiento calculados, para que la UI no los calcule en el render. */
 function withExpiry(docs: AssetDocument[], now: number): AssetDocument[] {
   return docs.map((d) => {
@@ -44,21 +28,46 @@ function withExpiry(docs: AssetDocument[], now: number): AssetDocument[] {
   });
 }
 
+/**
+ * La flota con su ZHI calculado.
+ *
+ * El ZHI necesita bastante más dato que el health viejo: los eventos de cada equipo (para el
+ * motor de confiabilidad) y sus documentos (para el pilar Integridad). Y necesita la flota
+ * COMPLETA en memoria antes de poder calcular un solo equipo, porque la referencia de cada uno
+ * sale de la mediana de los demás (§6.3). Por eso se trae todo junto y se calcula en una sola
+ * pasada de flota, en lugar de consultar por equipo.
+ *
+ * `asset.health` sigue siendo el score, para no romper a los consumidores que ya lo usan;
+ * `asset.zhi` trae el resto (banda, motivos, confianza, sub-índices).
+ */
 export const getAssets = cache(async (): Promise<Asset[]> => {
   const supabase = await createClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = supabase as any;
-  const [{ data }, fails] = await Promise.all([
+  const [{ data }, { data: eventRows }, { data: docRows }] = await Promise.all([
     sb.from("assets").select(ASSET_SELECT).is("deleted_at", null).order("name"),
-    failuresByAsset(sb),
+    sb.from("asset_events").select("*").order("event_date", { ascending: false }).limit(ASSET_EVENTS_LIMIT),
+    sb.from("asset_documents").select("*").is("deleted_at", null),
   ]);
-  return ((data ?? []) as Asset[]).map((a) => ({
-    ...a,
-    health: computeAssetHealth({
-      status: a.status, installedAt: a.installed_at, expectedLifeYears: a.expected_life_years,
-      recentFailures: fails[a.id] ?? 0,
-    }),
-  }));
+
+  const assets = (data ?? []) as Asset[];
+  const events = (eventRows ?? []) as AssetEvent[];
+  const documents = (docRows ?? []) as AssetDocument[];
+
+  const eventsBy = new Map<string, AssetEvent[]>();
+  for (const e of events) (eventsBy.get(e.asset_id) ?? eventsBy.set(e.asset_id, []).get(e.asset_id)!).push(e);
+  const docsBy = new Map<string, AssetDocument[]>();
+  for (const d of documents) (docsBy.get(d.asset_id) ?? docsBy.set(d.asset_id, []).get(d.asset_id)!).push(d);
+
+  const zhiBy = computeFleetZhi(
+    assets.map((a) => ({ asset: a, events: eventsBy.get(a.id) ?? [], documents: docsBy.get(a.id) ?? [] })),
+    Date.now(),
+  );
+
+  return assets.map((a) => {
+    const zhi = zhiBy.get(a.id);
+    return { ...a, zhi, health: zhi?.score ?? undefined };
+  });
 });
 
 export const getAssetFull = cache(async (id: string): Promise<{
@@ -78,13 +87,16 @@ export const getAssetFull = cache(async (id: string): Promise<{
     sb.from("asset_components").select("*, product:products(id, code, name, unit)").eq("asset_id", id).order("created_at"),
   ]);
   const evs = (events ?? []) as AssetEvent[];
-  const health = computeAssetHealth({
-    status: (asset as Asset).status, installedAt: (asset as Asset).installed_at,
-    expectedLifeYears: (asset as Asset).expected_life_years,
-    recentFailures: evs.filter((e) => e.type === "falla" && Date.now() - new Date(e.event_date).getTime() <= 365 * 86_400_000).length,
-  });
+
+  // El ZHI se toma del cálculo de FLOTA, no se recalcula acá. Dos razones:
+  //  1. La referencia de un equipo sale de la mediana de los demás (§6.3): sin la flota, la
+  //     ficha daría un número distinto al de la lista para el mismo equipo.
+  //  2. `getAssets` está envuelto en React.cache, así que en el mismo render no se repite.
+  const fleet = await getAssets();
+  const zhi = fleet.find((a) => a.id === id)?.zhi;
+
   return {
-    asset: { ...(asset as Asset), health },
+    asset: { ...(asset as Asset), zhi, health: zhi?.score ?? undefined },
     events: evs,
     documents: withExpiry((documents ?? []) as AssetDocument[], Date.now()),
     components: (components ?? []) as AssetComponent[],
@@ -162,8 +174,12 @@ export const getAssetDashboardStats = cache(async (): Promise<{
   const critAcc: Record<number, number> = {};
   for (const a of assets) { byStatus[a.status] += 1; critAcc[a.criticidad] = (critAcc[a.criticidad] ?? 0) + 1; }
   const byCriticidad = [1, 2, 3, 4, 5].filter((n) => critAcc[n]).map((n) => ({ name: `Crit. ${n}`, value: critAcc[n] }));
-  const atRisk = [...assets].filter((a) => (a.health ?? 100) < 60)
-    .sort((x, y) => assetRisk(y.health ?? 100, y.criticidad) - assetRisk(x.health ?? 100, x.criticidad));
+  // Los equipos fuera de servicio quedan afuera: no están "en riesgo", están en reparación o
+  // de baja, y el dashboard ya los cuenta aparte en byStatus. Se ordenan por la prioridad del
+  // §6.6 (salud × criticidad), no por salud: "¿qué atiendo primero?" no es "¿qué está peor?".
+  const atRisk = assets
+    .filter((a) => a.zhi && !a.zhi.outOfService && a.zhi.band !== "sano")
+    .sort((x, y) => (y.zhi?.priority ?? 0) - (x.zhi?.priority ?? 0));
 
   return {
     total: assets.length,

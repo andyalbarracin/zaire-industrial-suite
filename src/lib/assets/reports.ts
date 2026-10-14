@@ -2,7 +2,6 @@
 // Cálculo PURO de los reportes de Zaire Assets (flota, costo/TCO, confiabilidad, riesgo). Testable.
 
 import type { Asset, AssetEvent } from "@/lib/assets/types";
-import { assetRisk } from "@/lib/assets/health";
 import { ASSET_STATUS_LABELS, ASSET_TYPE_LABELS, CRITICIDAD_LABELS } from "@/lib/assets/constants";
 
 export interface NameValue { name: string; value: number }
@@ -58,7 +57,9 @@ export function computeAssetReports(assets: Asset[], events: AssetEvent[]): Asse
       status: ASSET_STATUS_LABELS[a.status],
       criticidad: a.criticidad,
       health: a.health ?? 100,
-      risk: assetRisk(a.health ?? 100, a.criticidad),
+      // Prioridad del §6.6: (100 − salud) × factor de criticidad. Reemplaza al `assetRisk`
+      // viejo, que multiplicaba por la criticidad cruda (1-5) en lugar de por el factor.
+      risk: a.zhi?.priority ?? 0,
     }))
     .filter((r) => r.risk > 0)
     .sort((a, b) => b.risk - a.risk)

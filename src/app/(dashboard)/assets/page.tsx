@@ -6,8 +6,8 @@ import Link from "next/link";
 import { Cog, Wrench, ShieldAlert, DollarSign, FileWarning } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
 import { getAssetDashboardStats } from "@/lib/assets/queries";
-import { ASSET_STATUS_LABELS, ASSET_STATUS_BADGE, CRITICIDAD_LABELS } from "@/lib/assets/constants";
-import { healthLight } from "@/lib/assets/health";
+import { ASSET_STATUS_LABELS, ASSET_STATUS_BADGE, CRITICIDAD_LABELS, ZHI_BAND_LIGHT } from "@/lib/assets/constants";
+
 import { StatusDot } from "@/components/shared/status-dot";
 import { AssetCharts } from "@/components/assets/asset-charts";
 import { formatCurrency, cn } from "@/lib/utils";
@@ -84,8 +84,14 @@ export default async function AssetsDashboardPage() {
                       <td className="py-2 text-right text-(--zaire-text-muted)">{CRITICIDAD_LABELS[a.criticidad] ?? a.criticidad}</td>
                       <td className="py-2 text-right">
                         <span className="inline-flex items-center gap-1.5 justify-end">
-                          <StatusDot status={healthLight(a.health ?? 100)} size="sm" pulse={(a.health ?? 100) < 40} />
-                          <b className="tabular-nums text-(--zaire-text)">{a.health}</b>
+                          {a.zhi && !a.zhi.outOfService && a.zhi.band ? (
+                            <>
+                              <StatusDot status={ZHI_BAND_LIGHT[a.zhi.band]} size="sm" pulse={a.zhi.band === "critico"} />
+                              <b className="tabular-nums text-(--zaire-text)">{a.zhi.score}</b>
+                            </>
+                          ) : (
+                            <span className="text-xs text-(--zaire-text-muted)">Fuera de servicio</span>
+                          )}
                         </span>
                       </td>
                     </tr>

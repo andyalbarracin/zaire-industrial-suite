@@ -8,10 +8,16 @@ import type { Asset, AssetEvent } from "@/lib/assets/types";
 const A = (o: Partial<Asset>): Asset => o as Asset;
 const E = (o: Partial<AssetEvent>): AssetEvent => o as AssetEvent;
 
+/** El ranking usa `zhi.priority` (§6.6), así que el fixture lo trae calculado. */
+const zhiDe = (score: number, factorCriticidad: number) => ({ priority: (100 - score) * factorCriticidad }) as Asset["zhi"];
+
 const assets = [
-  A({ id: "a1", tag: "BBA-001", name: "Bomba 1", type: "bomba", status: "operativo", criticidad: 5, health: 30 }),
-  A({ id: "a2", tag: "CMP-001", name: "Compresor 1", type: "compresor", status: "en_reparacion", criticidad: 3, health: 50 }),
-  A({ id: "a3", tag: null, name: "Motor 1", type: "motor", status: "operativo", criticidad: 2, health: 90 }),
+  // criticidad 5 → factor 1,5 · (100−30) × 1,5 = 105
+  A({ id: "a1", tag: "BBA-001", name: "Bomba 1", type: "bomba", status: "operativo", criticidad: 5, health: 30, zhi: zhiDe(30, 1.5) }),
+  // criticidad 3 → factor 1,0 · (100−50) × 1,0 = 50
+  A({ id: "a2", tag: "CMP-001", name: "Compresor 1", type: "compresor", status: "en_reparacion", criticidad: 3, health: 50, zhi: zhiDe(50, 1.0) }),
+  // criticidad 2 → factor 0,6 · (100−90) × 0,6 = 6
+  A({ id: "a3", tag: null, name: "Motor 1", type: "motor", status: "operativo", criticidad: 2, health: 90, zhi: zhiDe(90, 0.6) }),
 ];
 const events = [
   E({ asset_id: "a1", type: "falla", cost: 90000, currency: "ARS" }),
@@ -47,8 +53,10 @@ describe("computeAssetReports", () => {
     expect(rep.topFailures[0]).toEqual({ name: "CMP-001 · Compresor 1", value: 2 });
   });
 
-  it("ranking de riesgo = criticidad × déficit de salud, desc", () => {
+  it("ranking por la prioridad del ZHI (§6.6), desc", () => {
     expect(rep.riskRanking.map((r) => r.name)).toEqual(["BBA-001 · Bomba 1", "CMP-001 · Compresor 1", "Motor 1"]);
-    expect(rep.riskRanking[0].risk).toBe(350);   // 5 × (100−30)
+    // Ahora usa el FACTOR de criticidad (1,5 / 1,0 / 0,6), no la criticidad cruda:
+    // antes este caso daba 350 (5 × 70), ahora 105 (1,5 × 70).
+    expect(rep.riskRanking[0].risk).toBe(105);
   });
 });

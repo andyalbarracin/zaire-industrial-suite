@@ -15,9 +15,15 @@ import { formatDate, cn } from "@/lib/utils";
 import type { AssetDocument } from "@/lib/assets/types";
 
 const BUCKET = "asset-docs";
+// `inspeccion` y `certificado` son los dos tipos que el pilar Integridad del ZHI considera
+// CRÍTICOS: si vencen, penalizan la salud del equipo (y una inspección vencida en un equipo
+// de criticidad alta le pone un tope de 59). Ver lib/assets/zhi-input.ts.
+// Hasta ahora `inspeccion` no estaba en esta lista, así que esa penalización no se podía
+// alimentar desde la UI. La columna es TEXT libre, no hay CHECK que ampliar.
 const DOC_TYPES = [
-  { value: "manual", label: "Manual" }, { value: "certificado", label: "Certificado" },
-  { value: "plano", label: "Plano" }, { value: "garantia", label: "Garantía" }, { value: "otro", label: "Otro" },
+  { value: "inspeccion", label: "Inspección" }, { value: "certificado", label: "Certificado" },
+  { value: "garantia", label: "Garantía" }, { value: "manual", label: "Manual" },
+  { value: "plano", label: "Plano" }, { value: "otro", label: "Otro" },
 ];
 
 export function AssetDocumentsSection({ assetId, documents }: { assetId: string; documents: AssetDocument[] }) {
