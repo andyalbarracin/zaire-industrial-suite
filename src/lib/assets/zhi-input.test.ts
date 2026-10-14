@@ -262,3 +262,37 @@ describe("computeFleetZhi — las dos pasadas: flota primero, equipo después", 
     expect(r.get("a1")!.score).not.toBeNull();
   });
 });
+
+describe("modos de falla — alimentan la regla de causa raíz", () => {
+  it("junta los modos de las FALLAS del período", () => {
+    const events = [
+      ev({ event_date: "2026-03-01", type: "falla", modo_de_falla: "sello" }),
+      ev({ event_date: "2026-06-01", type: "falla", modo_de_falla: "sello" }),
+      ev({ event_date: "2026-08-01", type: "falla", modo_de_falla: "rodamiento" }),
+    ];
+    expect(build({ events }).failureModes).toEqual(["sello", "sello", "rodamiento"]);
+  });
+
+  it("ignora el modo de los eventos que NO son falla", () => {
+    const events = [ev({ event_date: "2026-06-01", type: "servicio", modo_de_falla: "sello" })];
+    expect(build({ events }).failureModes).toEqual([]);
+  });
+
+  it("descarta modos vacíos o sin cargar", () => {
+    const events = [
+      ev({ event_date: "2026-03-01", type: "falla", modo_de_falla: null }),
+      ev({ event_date: "2026-06-01", type: "falla", modo_de_falla: "   " }),
+      ev({ event_date: "2026-08-01", type: "falla", modo_de_falla: "acople" }),
+    ];
+    expect(build({ events }).failureModes).toEqual(["acople"]);
+  });
+
+  it("descarta fallas con fecha imposible", () => {
+    const events = [ev({ event_date: "0006-01-08", type: "falla", modo_de_falla: "sello" })];
+    expect(build({ events }).failureModes).toEqual([]);
+  });
+
+  it("sin eventos devuelve lista vacía, no undefined", () => {
+    expect(build().failureModes).toEqual([]);
+  });
+});

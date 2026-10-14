@@ -68,6 +68,13 @@ export function buildZhiInput({ asset, reliability, events, documents, reference
     ? null
     : Math.max(0, Math.floor((now - ultimaFalla) / DAY_MS));
 
+  // ---- Modos de falla del período (regla de causa raíz, §6.5). Solo de las FALLAS, solo
+  // los que tienen el modo cargado, y solo con fecha plausible.
+  const failureModes = events
+    .filter((e) => isFailure(e) && ts(e.event_date) !== null)
+    .map((e) => e.modo_de_falla?.trim())
+    .filter((m): m is string => !!m);
+
   // ---- Integridad: se cuenta solo lo que tiene fecha de vencimiento.
   let expiredInspections = 0;
   let expiredCriticalDocs = 0;
@@ -133,6 +140,8 @@ export function buildZhiInput({ asset, reliability, events, documents, reference
     replacementValue,
     ageYears,
     expectedLifeYears: asset.expected_life_years,
+
+    failureModes,
   };
 }
 

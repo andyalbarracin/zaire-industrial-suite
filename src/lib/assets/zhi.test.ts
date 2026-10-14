@@ -395,3 +395,121 @@ describe("determinismo", () => {
     expect(a.score).toBe(b.score);
   });
 });
+
+describe("recomendación — las 4 reglas del §6.5", () => {
+  it("un equipo sano no recibe recomendación: no hay nada que hacer", () => {
+    expect(zhi().recomendacion).toBeNull();
+  });
+
+  it("un equipo fuera de servicio tampoco: ya está en el taller", () => {
+    expect(zhi({ status: "en_reparacion", reactiveIndex: 1, interventions: 5, failures: 5 }).recomendacion).toBeNull();
+  });
+
+  describe("reemplazo — gastó más de la mitad de lo que cuesta reemplazarlo", () => {
+    it("dispara cuando el costo supera el umbral", () => {
+      // umbral = 100.000 × 0,5 = 50.000
+      const r = zhi({ maintenanceCost12m: 50_001 });
+      expect(r.recomendacion?.regla).toBe("reemplazo");
+      expect(r.recomendacion?.texto.toLowerCase()).toContain("reemplaz");
+    });
+    it("justo en el umbral NO dispara: no gastó MÁS de la mitad", () => {
+      expect(zhi({ maintenanceCost12m: 50_000 }).recomendacion?.regla).not.toBe("reemplazo");
+    });
+    it("sin valor de reposición no se puede evaluar", () => {
+      expect(zhi({ replacementValue: null, maintenanceCost12m: 999_999 }).recomendacion?.regla).not.toBe("reemplazo");
+    });
+  });
+
+  describe("causa raíz — se degrada y repite el mismo modo de falla", () => {
+    const degradando = { trend: 0.6, failures: 3, interventions: 4, reactiveIndex: 0.75 };
+
+    it("dispara con el mismo modo repetido y nombra el modo y la cantidad", () => {
+      const r = zhi({ ...degradando, reactiveIndex: 0.5, failureModes: ["sello", "sello", "rodamiento"] });
+      expect(r.recomendacion?.regla).toBe("causa_raiz");
+      expect(r.recomendacion?.texto).toContain("sello");
+      expect(r.recomendacion?.texto).toContain("2");
+    });
+
+    it("no dispara si todos los modos son distintos", () => {
+      const r = zhi({ ...degradando, reactiveIndex: 0.5, failureModes: ["sello", "rodamiento", "acople"] });
+      expect(r.recomendacion?.regla).not.toBe("causa_raiz");
+    });
+
+    it("no dispara sin tendencia: no se puede afirmar que se degrada", () => {
+      const r = zhi({ ...degradando, trend: null, reactiveIndex: 0.5, failureModes: ["sello", "sello"] });
+      expect(r.recomendacion?.regla).not.toBe("causa_raiz");
+    });
+
+    it("no dispara si la tendencia es buena", () => {
+      const r = zhi({ ...degradando, trend: 0.9, reactiveIndex: 0.5, failureModes: ["sello", "sello"] });
+      expect(r.recomendacion?.regla).not.toBe("causa_raiz");
+    });
+
+    it("ignora mayúsculas y espacios al agrupar modos", () => {
+      const r = zhi({ ...degradando, reactiveIndex: 0.5, failureModes: [" Sello ", "SELLO"] });
+      expect(r.recomendacion?.regla).toBe("causa_raiz");
+    });
+  });
+
+  describe("plan preventivo — casi todo es apagar incendios", () => {
+    it("dispara con índice reactivo por encima de 0,7", () => {
+      const r = zhi({ reactiveIndex: 0.75, failures: 3, interventions: 4 });
+      expect(r.recomendacion?.regla).toBe("plan_preventivo");
+      expect(r.recomendacion?.texto.toLowerCase()).toContain("preventivo");
+    });
+    it("justo en 0,7 no dispara", () => {
+      expect(zhi({ reactiveIndex: 0.7, failures: 7, interventions: 10 }).recomendacion?.regla).not.toBe("plan_preventivo");
+    });
+  });
+
+  describe("sobre-mantenimiento — se interviene de más", () => {
+    const sobre = { reactiveIndex: 0.1, failures: 1, interventions: 10, operatingHours: 1000, mtbrReferenceHours: 10_000 };
+
+    it("dispara con índice reactivo bajo y MTBR muy por debajo de la referencia", () => {
+      const r = zhi(sobre);
+      expect(r.recomendacion?.regla).toBe("sobre_mantenimiento");
+      expect(r.recomendacion?.texto.toLowerCase()).toContain("frecuencia");
+    });
+
+    it("no dispara si el MTBR está cerca de la referencia (se interviene lo esperado)", () => {
+      expect(zhi({ ...sobre, mtbrReferenceHours: 200 }).recomendacion?.regla).not.toBe("sobre_mantenimiento");
+    });
+
+    it("no dispara sin referencia de MTBR: no hay con qué comparar", () => {
+      expect(zhi({ ...sobre, mtbrReferenceHours: null }).recomendacion?.regla).not.toBe("sobre_mantenimiento");
+    });
+
+    it("NO dispara en un equipo sin intervenciones: no se interviene de más si no se interviene", () => {
+      // reactiveIndex null (R = 0) no es "índice reactivo bajo": es "no hay datos".
+      const r = zhi({ reactiveIndex: null, interventions: 0, failures: 0, mtbrReferenceHours: 10_000, operatingHours: 10 });
+      expect(r.recomendacion?.regla).not.toBe("sobre_mantenimiento");
+    });
+  });
+
+  describe("prioridad cuando aplican varias", () => {
+    it("reemplazo le gana a plan preventivo: si hay que cambiarlo, el plan es al aire", () => {
+      const r = zhi({ maintenanceCost12m: 90_000, reactiveIndex: 0.9, failures: 9, interventions: 10 });
+      expect(r.recomendacion?.regla).toBe("reemplazo");
+    });
+
+    it("reemplazo le gana a causa raíz", () => {
+      const r = zhi({ maintenanceCost12m: 90_000, trend: 0.6, reactiveIndex: 0.5, failureModes: ["sello", "sello"] });
+      expect(r.recomendacion?.regla).toBe("reemplazo");
+    });
+
+    it("causa raíz le gana a plan preventivo: es más concreto y accionable", () => {
+      const r = zhi({ trend: 0.6, reactiveIndex: 0.9, failures: 9, interventions: 10, failureModes: ["sello", "sello"] });
+      expect(r.recomendacion?.regla).toBe("causa_raiz");
+    });
+
+    it("devuelve UNA sola recomendación, nunca una lista", () => {
+      const r = zhi({ maintenanceCost12m: 90_000, trend: 0.6, reactiveIndex: 0.9, failures: 9, interventions: 10, failureModes: ["sello", "sello"] });
+      expect(Array.isArray(r.recomendacion)).toBe(false);
+    });
+  });
+
+  it("el texto no filtra la aritmética (D6)", () => {
+    const r = zhi({ maintenanceCost12m: 90_000 });
+    expect(r.recomendacion!.texto).not.toMatch(/[×*]|peso|sub-índice|índice reactivo|MTBR|0\.\d/);
+  });
+});
