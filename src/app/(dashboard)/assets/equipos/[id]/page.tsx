@@ -4,7 +4,7 @@
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, MapPin } from "lucide-react";
+import { ArrowLeft, MapPin, Lightbulb } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
 import { createClient } from "@/lib/supabase/server";
 import { getAssetFull } from "@/lib/assets/queries";
@@ -87,14 +87,28 @@ export default async function AssetFichaPage({ params }: { params: Promise<{ id:
         <div className="zaire-card p-4"><p className="text-xs text-(--zaire-text-muted)">Disponibilidad</p><p className="text-2xl font-bold text-(--zaire-text) mt-1 tabular-nums">{rel.availability != null ? `${Math.round(rel.availability * 100)}%` : "—"}</p></div>
       </div>
 
-      {/* "Por qué": los 2 motivos, en lenguaje de planta. Sin fórmula, sin pesos (D6). */}
-      {zhi && !zhi.outOfService && (zhi.capApplied || zhi.motivos.length > 0) && (
-        <div className="zaire-card p-4 space-y-1.5">
-          <p className="text-xs font-medium text-(--zaire-text-muted)">Por qué</p>
-          {zhi.capApplied && <p className="text-sm text-(--zaire-text)">{zhi.capApplied}</p>}
-          {zhi.motivos.map((m) => (
-            <p key={m.subIndice} className="text-sm text-(--zaire-text)">{m.texto}</p>
-          ))}
+      {/* Jerarquía del §7.2: número → por qué → qué hacer. Sin fórmula, sin pesos (D6). */}
+      {zhi && !zhi.outOfService && (zhi.capApplied || zhi.motivos.length > 0 || zhi.recomendacion) && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {(zhi.capApplied || zhi.motivos.length > 0) && (
+            <div className="zaire-card p-4 space-y-1.5 lg:col-span-2">
+              <p className="text-xs font-medium text-(--zaire-text-muted)">Por qué</p>
+              {zhi.capApplied && <p className="text-sm text-(--zaire-text)">{zhi.capApplied}</p>}
+              {zhi.motivos.map((m) => (
+                <p key={m.subIndice} className="text-sm text-(--zaire-text)">{m.texto}</p>
+              ))}
+            </div>
+          )}
+          {/* Una sola recomendación, la de mayor prioridad. Si no hay ninguna, no se muestra
+              nada: un equipo sano no necesita que le inventemos una acción. */}
+          {zhi.recomendacion && (
+            <div className="zaire-card p-4 border-l-2 border-l-zaire-blue">
+              <p className="text-xs font-medium text-(--zaire-text-muted) flex items-center gap-1.5">
+                <Lightbulb className="w-3.5 h-3.5" /> Qué hacer
+              </p>
+              <p className="text-sm text-(--zaire-text) mt-1.5">{zhi.recomendacion.texto}</p>
+            </div>
+          )}
         </div>
       )}
 

@@ -66,6 +66,31 @@ const COSTO_UMBRAL_FRACCION = 0.5;
 /** Penalización de costo por haber superado la vida útil esperada. */
 const VIDA_UTIL_SUPERADA_PENAL = 15;
 
+/**
+ * Umbrales de las recomendaciones (§6.5). Como todo lo demás: constantes en código, versionadas.
+ *
+ * El ORDEN de `PRIORIDAD_RECOMENDACION` es una decisión de producto, no una casualidad:
+ * se muestra UNA sola recomendación, y tiene que ser la que más cambia si se actúa.
+ *  1. reemplazo — si hay que cambiar el equipo, optimizar su preventivo es trabajo al aire.
+ *  2. causa_raiz — es la más concreta y accionable: un modo de falla puntual que se repite.
+ *  3. plan_preventivo — mejora sistémica, no urgente.
+ *  4. sobre_mantenimiento — ahorro, no riesgo. Lo último.
+ */
+const RECOMENDACION = {
+  /** Índice reactivo por encima de esto: casi todo lo que se hace es apagar incendios. */
+  reactivoAlto: 0.7,
+  /** Índice reactivo por debajo de esto: casi nada es por falla. */
+  reactivoBajo: 0.2,
+  /** Tendencia por debajo de esto: los intervalos se están acortando de forma relevante. */
+  tendenciaDegradando: 0.7,
+  /** Veces que el mismo modo de falla tiene que repetirse para hablar de causa raíz. */
+  modoFallaRepetido: 2,
+  /** MTBR estimado / referencia por debajo de esto: se interviene mucho más de lo esperado. */
+  mtbrSobreIntervencion: 0.5,
+} as const;
+
+const PRIORIDAD_RECOMENDACION = ["reemplazo", "causa_raiz", "plan_preventivo", "sobre_mantenimiento"] as const;
+
 /** Factor de criticidad para la prioridad de atención (§6.6). */
 function criticidadFactor(criticidad: number): number {
   if (criticidad >= 4) return 1.5;   // A
@@ -78,6 +103,14 @@ function criticidadFactor(criticidad: number): number {
 export type ZhiBand = "sano" | "atencion" | "en_riesgo" | "critico";
 
 export type ZhiSubIndexKey = keyof typeof ZHI_WEIGHTS;
+
+export type ZhiReglaRecomendacion = (typeof PRIORIDAD_RECOMENDACION)[number];
+
+export interface ZhiRecomendacion {
+  regla: ZhiReglaRecomendacion;
+  /** Qué hacer, en una frase de taller. Nunca la regla ni el umbral que la disparó (D6). */
+  texto: string;
+}
 
 export interface ZhiInput {
   // --- Estado del equipo
@@ -110,6 +143,12 @@ export interface ZhiInput {
   replacementValue: number | null;
   ageYears: number | null;
   expectedLifeYears: number | null;
+
+  /**
+   * Modos de falla de las fallas del período (`asset_events.modo_de_falla`), sin normalizar.
+   * Alimenta la regla de causa raíz. Vacío o ausente = no hay dato de modo de falla.
+   */
+  failureModes?: readonly string[];
 }
 
 export interface ZhiMotivo {
@@ -135,6 +174,8 @@ export interface Zhi {
   capApplied: string | null;
   /** (100 − salud) × factor de criticidad. Para ordenar "¿qué atiendo primero?" (§6.6). */
   priority: number | null;
+  /** Qué hacer: UNA sola, la de mayor prioridad entre las que aplican. `null` si no aplica ninguna. */
+  recomendacion: ZhiRecomendacion | null;
 }
 
 // ---------------------------------------------------------------- utilidades
@@ -156,9 +197,14 @@ function subConfiabilidad(p: ZhiInput): number | null {
 }
 
 /** §6.2 — Carga de mantenimiento: ¿cuánto lo intervenimos, y cuánto de eso fue apagar incendios? */
-function subCargaMantenimiento(p: ZhiInput): number | null {
+function mtbrEstimado(p: ZhiInput): number | null {
   if (p.mtbrReferenceHours === null || p.mtbrReferenceHours <= 0) return null;
-  const mtbrEst = coldStart(p.mtbrReferenceHours, p.operatingHours, p.interventions);
+  return coldStart(p.mtbrReferenceHours, p.operatingHours, p.interventions);
+}
+
+function subCargaMantenimiento(p: ZhiInput): number | null {
+  const mtbrEst = mtbrEstimado(p);
+  if (mtbrEst === null || p.mtbrReferenceHours === null) return null;
   const ratio = Math.min(1, mtbrEst / p.mtbrReferenceHours);
   // Sin intervenciones no hubo nada reactivo: el término reactivo vale lo máximo.
   const reactivo = p.reactiveIndex ?? 0;
@@ -233,6 +279,78 @@ function motivoTexto(key: ZhiSubIndexKey, p: ZhiInput): string {
   }
 }
 
+// ----------------------------------------------------------- recomendación
+
+/** Modo de falla que más se repite, normalizado. `null` si ninguno llega al mínimo. */
+function modoFallaRepetido(modos: readonly string[] | undefined): { modo: string; veces: number } | null {
+  if (!modos?.length) return null;
+  const cuenta = new Map<string, number>();
+  for (const m of modos) {
+    const k = m.trim().toLowerCase();
+    if (!k) continue;
+    cuenta.set(k, (cuenta.get(k) ?? 0) + 1);
+  }
+  let top: { modo: string; veces: number } | null = null;
+  for (const [modo, veces] of cuenta) {
+    if (veces >= RECOMENDACION.modoFallaRepetido && (top === null || veces > top.veces)) top = { modo, veces };
+  }
+  return top;
+}
+
+/**
+ * Qué hacer con el equipo. Las 4 reglas del §6.5, deterministas — **no hay modelo acá**.
+ * Devuelve UNA sola: la primera que aplique según `PRIORIDAD_RECOMENDACION`.
+ *
+ * `null` cuando no aplica ninguna, que es el caso de un equipo sano: no hay nada que hacer y
+ * llenar ese lugar con una frase genérica sería ruido.
+ */
+function recomendar(p: ZhiInput, mtbrEst: number | null): ZhiRecomendacion | null {
+  const candidatas = new Map<ZhiReglaRecomendacion, string>();
+
+  // 1. Reemplazo — gastó MÁS de la mitad de lo que cuesta reemplazarlo.
+  if (p.replacementValue !== null && p.replacementValue > 0 && p.maintenanceCost12m !== null) {
+    const umbral = p.replacementValue * COSTO_UMBRAL_FRACCION;
+    if (p.maintenanceCost12m > umbral) {
+      candidatas.set("reemplazo",
+        "Ya se gastó en mantenimiento más de la mitad de lo que costaría reemplazarlo. Conviene evaluar el reemplazo.");
+    }
+  }
+
+  // 2. Causa raíz — se está degradando Y repite el mismo modo de falla.
+  if (p.trend !== null && p.trend < RECOMENDACION.tendenciaDegradando) {
+    const top = modoFallaRepetido(p.failureModes);
+    if (top) {
+      candidatas.set("causa_raiz",
+        `Repite la misma falla: ${top.veces} veces por ${top.modo} en el período, y los intervalos se acortan. Conviene buscar la causa raíz.`);
+    }
+  }
+
+  // 3. Plan preventivo — casi todo lo que se hace es apagar incendios.
+  if (p.reactiveIndex !== null && p.reactiveIndex > RECOMENDACION.reactivoAlto) {
+    candidatas.set("plan_preventivo",
+      "Casi todo lo que se le hace es por falla, no planificado. Conviene armarle un plan preventivo.");
+  }
+
+  // 4. Sobre-mantenimiento — se interviene mucho más seguido de lo esperado, y casi nunca por falla.
+  // Requiere `reactiveIndex !== null`: con cero intervenciones no se interviene "de más",
+  // simplemente no hay dato.
+  if (
+    p.reactiveIndex !== null &&
+    p.reactiveIndex < RECOMENDACION.reactivoBajo &&
+    mtbrEst !== null && p.mtbrReferenceHours !== null && p.mtbrReferenceHours > 0 &&
+    mtbrEst / p.mtbrReferenceHours < RECOMENDACION.mtbrSobreIntervencion
+  ) {
+    candidatas.set("sobre_mantenimiento",
+      "Se interviene mucho más seguido de lo esperado y casi nunca por falla. Conviene revisar la frecuencia del preventivo.");
+  }
+
+  for (const regla of PRIORIDAD_RECOMENDACION) {
+    const texto = candidatas.get(regla);
+    if (texto) return { regla, texto };
+  }
+  return null;
+}
+
 // -------------------------------------------------------------------- motor
 
 export function computeZhi(p: ZhiInput): Zhi {
@@ -257,6 +375,8 @@ export function computeZhi(p: ZhiInput): Zhi {
       motivos: [],
       capApplied: p.status === "baja" ? "El equipo está dado de baja." : "El equipo está en reparación.",
       priority: null,
+      // Un equipo fuera de servicio ya está siendo atendido: recomendarle algo es ruido.
+      recomendacion: null,
     };
   }
 
@@ -311,5 +431,9 @@ export function computeZhi(p: ZhiInput): Zhi {
   const priority = score === null ? null
     : Math.round((100 - score) * criticidadFactor(p.criticidad) * 100) / 100;
 
-  return { version: ZHI_VERSION, outOfService: false, score, band, confidence: p.confidence, subIndices, motivos, capApplied, priority };
+  return {
+    version: ZHI_VERSION, outOfService: false, score, band, confidence: p.confidence,
+    subIndices, motivos, capApplied, priority,
+    recomendacion: recomendar(p, mtbrEstimado(p)),
+  };
 }
