@@ -3,16 +3,25 @@
 // Gráficos del dashboard de Assets: equipos por estado (barra) + por criticidad (pie tonal).
 
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
-import { ASSET_STATUS_LABELS } from "@/lib/assets/constants";
+import { ASSET_STATUS_LABELS, CRITICIDAD_LABELS } from "@/lib/assets/constants";
+import { DonutWithLegend } from "@/components/assets/donut-legend";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
+import { ROUTES } from "@/lib/routes";
 import type { AssetStatus } from "@/lib/assets/types";
 
-const COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "var(--chart-6)"];
+// Rampa tonal de menor a mayor criticidad. La criticidad es una escala ORDENADA, así que el color
+// tiene que ir de suave a fuerte; usar colores sueltos haría pensar en categorías sin orden.
+// Tampoco se usa el verde/amarillo/rojo del semáforo: eso significa SALUD, y criticidad no es
+// salud (una bomba crítica puede estar perfecta). Dos escalas distintas, dos lenguajes distintos.
+const CRIT_COLOR: Record<number, string> = {
+  1: "var(--chart-6)", 2: "var(--chart-5)", 3: "var(--chart-4)", 4: "var(--chart-2)", 5: "var(--chart-1)",
+};
 
 interface Props {
   byStatus: { operativo: number; en_reparacion: number; standby: number; baja: number };
-  byCriticidad: { name: string; value: number }[];
+  byCriticidad: { criticidad: number; value: number }[];
 }
 
 export function AssetCharts({ byStatus, byCriticidad }: Props) {
@@ -35,17 +44,24 @@ export function AssetCharts({ byStatus, byCriticidad }: Props) {
       </div>
 
       <div className="zaire-card p-5">
-        <h3 className="text-sm font-semibold text-(--zaire-text) mb-4">Equipos por criticidad</h3>
-        <ResponsiveContainer width="100%" height={240}>
-          {byCriticidad.length > 0 ? (
-            <PieChart>
-              <Pie data={byCriticidad} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={85} label={(e) => `${e.name}: ${e.value}`}>
-                {byCriticidad.map((_, i) => (<Cell key={i} fill={COLORS[i % COLORS.length]} />))}
-              </Pie>
-              <Tooltip /><Legend />
-            </PieChart>
-          ) : <div className="flex items-center justify-center h-full text-sm text-(--zaire-text-muted)">Sin datos</div>}
-        </ResponsiveContainer>
+        <div className="flex items-center gap-1.5 mb-4">
+          <h3 className="text-sm font-semibold text-(--zaire-text)">Equipos por criticidad</h3>
+          <InfoTooltip text="Criticidad es cuánto duele que este equipo se pare: 5 es un equipo sin respaldo que frena la línea; 1 es uno que puede esperar. La carga el usuario al dar de alta el equipo y no cambia sola." />
+        </div>
+        {/* La etiqueta lleva el número Y la palabra ("4 · Alta"). "Crit. 4" sola obliga a
+            acordarse de una escala que nadie memoriza. */}
+        <DonutWithLegend
+          items={byCriticidad.map((c) => ({
+            key: String(c.criticidad),
+            label: `${c.criticidad} · ${CRITICIDAD_LABELS[c.criticidad] ?? ""}`.trim(),
+            value: c.value,
+            color: CRIT_COLOR[c.criticidad] ?? "var(--chart-3)",
+            href: `${ROUTES.assets.equipos}?criticidad=${c.criticidad}`,
+          }))}
+          centerValue={byCriticidad.reduce((s, c) => s + c.value, 0)}
+          centerLabel="equipos"
+          height={200}
+        />
       </div>
     </div>
   );

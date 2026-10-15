@@ -3,13 +3,14 @@
 // (Fase 5 suma detalle de confiabilidad; Fase 7, gráficos + campana.)
 
 import Link from "next/link";
-import { Cog, Wrench, ShieldAlert, DollarSign, FileWarning } from "lucide-react";
+import { Cog, Wrench, ShieldAlert, DollarSign, FileWarning, ArrowRight } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
 import { getAssetDashboardStats } from "@/lib/assets/queries";
 import { ASSET_STATUS_LABELS, ASSET_STATUS_BADGE, CRITICIDAD_LABELS, ZHI_BAND_LIGHT } from "@/lib/assets/constants";
 
 import { StatusDot } from "@/components/shared/status-dot";
 import { AssetCharts } from "@/components/assets/asset-charts";
+import { FleetHealth } from "@/components/assets/fleet-health";
 import { formatCurrency, cn } from "@/lib/utils";
 import type { Currency } from "@/lib/assets/types";
 
@@ -21,18 +22,25 @@ export default async function AssetsDashboardPage() {
     ? stats.serviceCostMonth.map((c) => formatCurrency(c.value, c.name as Currency)).join(" · ")
     : formatCurrency(0, "ARS");
 
+  // Cada KPI lleva a donde está lo que cuenta, y filtrado. Un número que no se puede abrir
+  // obliga a ir al listado y reconstruir el filtro a mano, que es justo lo que el panel
+  // tendría que ahorrar.
   const kpis = [
-    { label: "Equipos", value: String(stats.total), icon: Cog, color: "text-blue-600 dark:text-blue-300", bg: "bg-blue-50 dark:bg-blue-500/15" },
-    { label: "En reparación", value: String(stats.byStatus.en_reparacion), icon: Wrench, color: "text-amber-600 dark:text-amber-300", bg: "bg-amber-50 dark:bg-amber-500/15" },
-    { label: "En riesgo", value: String(stats.atRiskCount), icon: ShieldAlert, color: "text-red-600 dark:text-red-300", bg: "bg-red-50 dark:bg-red-500/15" },
-    { label: "Costo servicio (mes)", value: costLabel, icon: DollarSign, color: "text-green-600 dark:text-green-300", bg: "bg-green-50 dark:bg-green-500/15" },
+    { label: "Equipos", value: String(stats.total), icon: Cog, color: "text-blue-600 dark:text-blue-300", bg: "bg-blue-50 dark:bg-blue-500/15",
+      href: ROUTES.assets.equipos, hint: "Ver todos los equipos" },
+    { label: "En reparación", value: String(stats.byStatus.en_reparacion), icon: Wrench, color: "text-amber-600 dark:text-amber-300", bg: "bg-amber-50 dark:bg-amber-500/15",
+      href: `${ROUTES.assets.equipos}?estado=en_reparacion`, hint: "Ver los equipos en reparación" },
+    { label: "En riesgo", value: String(stats.atRiskCount), icon: ShieldAlert, color: "text-red-600 dark:text-red-300", bg: "bg-red-50 dark:bg-red-500/15",
+      href: `${ROUTES.assets.equipos}?riesgo=1`, hint: "Ver los equipos en riesgo" },
+    { label: "Costo servicio (mes)", value: costLabel, icon: DollarSign, color: "text-green-600 dark:text-green-300", bg: "bg-green-50 dark:bg-green-500/15",
+      href: ROUTES.assets.reportes, hint: "Ver el detalle de costos" },
   ];
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-(--zaire-text)">Panel Assets</h1>
-        <p className="text-sm text-(--zaire-text-muted) mt-0.5">Gemelo digital de {stats.total} equipo(s) · salud, costo y confiabilidad</p>
+        <p className="text-sm text-(--zaire-text-muted) mt-0.5">Gestión de activos industriales</p>
       </div>
 
       {/* KPIs */}
@@ -41,7 +49,16 @@ export default async function AssetsDashboardPage() {
           const fc = idx === 0 ? "zaire-card-feature" : idx === 3 ? "zaire-card-feature-2" : null;
           const feature = !!fc;
           return (
-            <div key={k.label} className={cn("p-4", fc ?? "zaire-card")}>
+            <Link
+              key={k.label}
+              href={k.href}
+              aria-label={k.hint}
+              className={cn(
+                "p-4 block cursor-pointer transition-transform hover:-translate-y-0.5",
+                "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zaire-blue",
+                "group", fc ?? "zaire-card",
+              )}
+            >
               <div className="flex items-center justify-between">
                 <span className={cn("text-xs font-medium", feature ? "text-(--feature-fg-muted)" : "text-(--zaire-text-muted)")}>{k.label}</span>
                 <span className={cn("w-8 h-8 rounded-lg flex items-center justify-center", feature ? "bg-white/15 backdrop-blur-sm" : k.bg)}>
@@ -49,10 +66,20 @@ export default async function AssetsDashboardPage() {
                 </span>
               </div>
               <p className={cn("text-2xl font-bold mt-2 tabular-nums truncate", feature ? "text-(--feature-fg)" : "text-(--zaire-text)")}>{k.value}</p>
-            </div>
+              {/* La flecha aparece al pasar por encima: avisa que la card se abre sin
+                  agregarle ruido permanente a un panel que ya tiene cuatro números. */}
+              <span className={cn(
+                "text-[11px] mt-1 inline-flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100",
+                feature ? "text-(--feature-fg-muted)" : "text-zaire-blue",
+              )}>
+                {k.hint} <ArrowRight className="w-3 h-3" />
+              </span>
+            </Link>
           );
         })}
       </div>
+
+      <FleetHealth bands={stats.bands} reliability={stats.fleetReliability} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-fade-up-1">
         {/* Equipos en riesgo */}

@@ -1,24 +1,30 @@
 "use client";
 // assets-table.tsx — src/components/assets/assets-table.tsx — 2026-07-20
-// Equipos: búsqueda, filtros (tipo/estado/en riesgo), ABM (AssetForm) y filas clickeables a la ficha.
+// Equipos: búsqueda, filtros (tipo/estado/banda/criticidad), ABM (AssetForm) y filas clickeables a la ficha.
+//
+// Los filtros arrancan desde la URL (?estado=, ?banda=, ?criticidad=, ?riesgo=1) para que el panel
+// pueda mandar acá ya filtrado. Cuando la lista llega filtrada desde afuera se muestra un chip que
+// dice por qué: una tabla que aparece recortada sin explicación se lee como un error.
 
 import { useState, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   useReactTable, getCoreRowModel, getFilteredRowModel, getSortedRowModel, getPaginationRowModel,
   flexRender, type ColumnDef, type SortingState,
 } from "@tanstack/react-table";
-import { Search, Plus, ArrowUpDown, ShieldAlert } from "lucide-react";
+import { Search, Plus, ArrowUpDown, ShieldAlert, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusDot } from "@/components/shared/status-dot";
 import { ClickableRow } from "@/components/shared/clickable-row";
 import { AssetForm } from "@/components/assets/asset-form";
-import { ASSET_TYPE_LABELS, ASSET_STATUS_LABELS, ASSET_STATUS_BADGE, CRITICIDAD_LABELS } from "@/lib/assets/constants";
+import { ASSET_TYPE_LABELS, ASSET_STATUS_LABELS, ASSET_STATUS_BADGE, CRITICIDAD_LABELS, ZHI_BAND_LABELS } from "@/lib/assets/constants";
 import { ZHI_BAND_LIGHT } from "@/lib/assets/constants";
 import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import type { Asset, AssetType, AssetStatus, Client } from "@/lib/assets/types";
+import type { ZhiBand } from "@/lib/assets/zhi";
 
 interface Props {
   initialAssets: Asset[];
@@ -27,11 +33,17 @@ interface Props {
 }
 
 export function AssetsTable({ initialAssets, clients, sites }: Props) {
+  const params = useSearchParams();
   const [assets, setAssets] = useState<Asset[]>(initialAssets);
   const [globalFilter, setGlobalFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [riskOnly, setRiskOnly] = useState(false);
+  // Los tres filtros que el panel puede mandar por URL se leen UNA vez, al montar: después
+  // mandan los controles de la tabla. Si se leyeran en cada render, tocar un filtro acá y
+  // volver atrás con el navegador pelearía contra la URL.
+  const [statusFilter, setStatusFilter] = useState(() => params.get("estado") ?? "all");
+  const [bandFilter, setBandFilter] = useState<ZhiBand | "all">(() => (params.get("banda") as ZhiBand) ?? "all");
+  const [critFilter, setCritFilter] = useState(() => params.get("criticidad") ?? "all");
+  const [riskOnly, setRiskOnly] = useState(() => params.get("riesgo") === "1");
   const [sorting, setSorting] = useState<SortingState>([]);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Asset | null>(null);
@@ -40,11 +52,13 @@ export function AssetsTable({ initialAssets, clients, sites }: Props) {
     let data = assets;
     if (typeFilter !== "all") data = data.filter((a) => a.type === typeFilter);
     if (statusFilter !== "all") data = data.filter((a) => a.status === statusFilter);
+    if (bandFilter !== "all") data = data.filter((a) => !a.zhi?.outOfService && a.zhi?.band === bandFilter);
+    if (critFilter !== "all") data = data.filter((a) => String(a.criticidad) === critFilter);
     // "En riesgo" = banda distinta de sano. Los fuera de servicio no entran: están
     // en reparación o de baja, no en riesgo.
     if (riskOnly) data = data.filter((a) => a.zhi && !a.zhi.outOfService && a.zhi.band !== "sano");
     return data;
-  }, [assets, typeFilter, statusFilter, riskOnly]);
+  }, [assets, typeFilter, statusFilter, bandFilter, critFilter, riskOnly]);
 
   const columns = useMemo<ColumnDef<Asset>[]>(() => [
     {
@@ -133,6 +147,12 @@ export function AssetsTable({ initialAssets, clients, sites }: Props) {
           <SelectContent><SelectItem value="all">Todos los estados</SelectItem>{Object.entries(ASSET_STATUS_LABELS).map(([v, l]) => (<SelectItem key={v} value={v}>{l}</SelectItem>))}</SelectContent>
         </Select>
         <Button variant={riskOnly ? "default" : "outline"} size="sm" onClick={() => setRiskOnly((v) => !v)} className="h-9"><ShieldAlert className="w-4 h-4 mr-1.5" /> En riesgo</Button>
+        {bandFilter !== "all" && (
+          <FilterChip label={`Salud: ${ZHI_BAND_LABELS[bandFilter]}`} onClear={() => setBandFilter("all")} />
+        )}
+        {critFilter !== "all" && (
+          <FilterChip label={`Criticidad: ${critFilter} · ${CRITICIDAD_LABELS[Number(critFilter)] ?? ""}`} onClear={() => setCritFilter("all")} />
+        )}
         <Button onClick={() => { setEditing(null); setFormOpen(true); }} className="ml-auto h-9"><Plus className="w-4 h-4 mr-1.5" /> Nuevo equipo</Button>
       </div>
 
@@ -165,5 +185,17 @@ export function AssetsTable({ initialAssets, clients, sites }: Props) {
 
       <AssetForm open={formOpen} onOpenChange={setFormOpen} asset={editing} clients={clients} sites={sites} onSaved={handleSaved} />
     </div>
+  );
+}
+
+/** Chip de un filtro que llegó desde afuera. Siempre se puede sacar sin salir de la pantalla. */
+function FilterChip({ label, onClear }: { label: string; onClear: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-medium bg-zaire-blue/10 text-zaire-blue border border-zaire-blue/20">
+      {label}
+      <button type="button" onClick={onClear} aria-label={`Quitar filtro ${label}`} className="cursor-pointer hover:opacity-70">
+        <X className="w-3.5 h-3.5" />
+      </button>
+    </span>
   );
 }

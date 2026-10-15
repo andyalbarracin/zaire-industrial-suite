@@ -5,7 +5,8 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { ROUTES } from "@/lib/routes";
-import { computeFleetZhi } from "@/lib/assets/zhi-input";
+import { computeFleet } from "@/lib/assets/zhi-input";
+import { bandDistribution, fleetReliability, type BandSlice, type FleetReliability } from "@/lib/assets/reports";
 import { daysUntilExpiry, expiryLight } from "@/lib/utils";
 import { ASSET_EVENTS_LIMIT } from "@/lib/assets/constants";
 import type { Asset, AssetEvent, AssetDocument, AssetComponent } from "@/lib/assets/types";
@@ -59,14 +60,14 @@ export const getAssets = cache(async (): Promise<Asset[]> => {
   const docsBy = new Map<string, AssetDocument[]>();
   for (const d of documents) (docsBy.get(d.asset_id) ?? docsBy.set(d.asset_id, []).get(d.asset_id)!).push(d);
 
-  const zhiBy = computeFleetZhi(
+  const fleetBy = computeFleet(
     assets.map((a) => ({ asset: a, events: eventsBy.get(a.id) ?? [], documents: docsBy.get(a.id) ?? [] })),
     Date.now(),
   );
 
   return assets.map((a) => {
-    const zhi = zhiBy.get(a.id);
-    return { ...a, zhi, health: zhi?.score ?? undefined };
+    const r = fleetBy.get(a.id);
+    return { ...a, zhi: r?.zhi, reliability: r?.reliability, health: r?.zhi.score ?? undefined };
   });
 });
 
@@ -149,12 +150,14 @@ export const getAllAssetEvents = cache(async (limit = ASSET_EVENTS_LIMIT): Promi
 export const getAssetDashboardStats = cache(async (): Promise<{
   total: number;
   byStatus: { operativo: number; en_reparacion: number; standby: number; baja: number };
-  byCriticidad: { name: string; value: number }[];
+  byCriticidad: { criticidad: number; value: number }[];
   criticalCount: number;
   atRiskCount: number;
   expiringDocs: number;
   serviceCostMonth: { name: string; value: number }[];
   atRisk: Asset[];
+  bands: BandSlice[];
+  fleetReliability: FleetReliability;
 }> => {
   const supabase = await createClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -173,7 +176,9 @@ export const getAssetDashboardStats = cache(async (): Promise<{
   const byStatus = { operativo: 0, en_reparacion: 0, standby: 0, baja: 0 };
   const critAcc: Record<number, number> = {};
   for (const a of assets) { byStatus[a.status] += 1; critAcc[a.criticidad] = (critAcc[a.criticidad] ?? 0) + 1; }
-  const byCriticidad = [1, 2, 3, 4, 5].filter((n) => critAcc[n]).map((n) => ({ name: `Crit. ${n}`, value: critAcc[n] }));
+  // Se devuelve el NÚMERO, no un texto armado: la etiqueta la decide la pantalla, que es la que
+  // sabe cuánto espacio tiene. Acá "Crit. 4" obligaba a todos a mostrar esa abreviatura.
+  const byCriticidad = [1, 2, 3, 4, 5].filter((n) => critAcc[n]).map((n) => ({ criticidad: n, value: critAcc[n] }));
   // Los equipos fuera de servicio quedan afuera: no están "en riesgo", están en reparación o
   // de baja, y el dashboard ya los cuenta aparte en byStatus. Se ordenan por la prioridad del
   // §6.6 (salud × criticidad), no por salud: "¿qué atiendo primero?" no es "¿qué está peor?".
@@ -187,6 +192,8 @@ export const getAssetDashboardStats = cache(async (): Promise<{
     byCriticidad,
     criticalCount: assets.filter((a) => a.criticidad >= 4).length,
     atRiskCount: atRisk.length,
+    bands: bandDistribution(assets),
+    fleetReliability: fleetReliability(assets),
     expiringDocs: expiringDocs ?? 0,
     serviceCostMonth: Object.entries(byCur).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value),
     atRisk: atRisk.slice(0, 8),
