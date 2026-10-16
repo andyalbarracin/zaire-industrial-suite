@@ -66,3 +66,23 @@ export const ZHI_BAND_LIGHT: Record<ZhiBand, TrafficLight> = {
 export const ZHI_CONFIDENCE_LABELS: Record<Confidence, string> = {
   alta: "Alta", media: "Media", baja: "Estimado",
 };
+
+// ------------------------------------------------------------------ documentos
+/** Bucket privado de los documentos de equipos. Se accede siempre con signed URLs. */
+export const ASSET_DOCS_BUCKET = "asset-docs";
+
+// `inspeccion` y `certificado` son los dos tipos que el pilar Integridad del ZHI considera
+// CRÍTICOS: si vencen, penalizan la salud del equipo (y una inspección vencida en un equipo
+// de criticidad alta le pone un tope de 59). Ver lib/assets/zhi-input.ts.
+// La columna es TEXT libre, no hay CHECK que ampliar.
+export const DOC_TYPES = [
+  { value: "inspeccion", label: "Inspección" }, { value: "certificado", label: "Certificado" },
+  { value: "garantia", label: "Garantía" }, { value: "manual", label: "Manual" },
+  { value: "plano", label: "Plano" }, { value: "otro", label: "Otro" },
+];
+
+/** Ruta del archivo dentro del bucket. Misma convención en el alta y en la ficha. */
+export function assetDocPath(assetId: string, fileName: string): string {
+  const ext = fileName.split(".").pop() ?? "dat";
+  return `assets/${assetId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+}

@@ -1,12 +1,14 @@
 "use client";
 // assets-table.tsx — src/components/assets/assets-table.tsx — 2026-07-20
-// Equipos: búsqueda, filtros (tipo/estado/banda/criticidad), ABM (AssetForm) y filas clickeables a la ficha.
+// Equipos: búsqueda, filtros (tipo/estado/banda/criticidad) y filas clickeables a la ficha.
+// El alta y la edición son PÁGINAS, no un modal: ver components/assets/asset-form-page.tsx.
 //
 // Los filtros arrancan desde la URL (?estado=, ?banda=, ?criticidad=, ?riesgo=1) para que el panel
 // pueda mandar acá ya filtrado. Cuando la lista llega filtrada desde afuera se muestra un chip que
 // dice por qué: una tabla que aparece recortada sin explicación se lee como un error.
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   useReactTable, getCoreRowModel, getFilteredRowModel, getSortedRowModel, getPaginationRowModel,
@@ -18,35 +20,35 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusDot } from "@/components/shared/status-dot";
 import { ClickableRow } from "@/components/shared/clickable-row";
-import { AssetForm } from "@/components/assets/asset-form";
 import { ASSET_TYPE_LABELS, ASSET_STATUS_LABELS, ASSET_STATUS_BADGE, CRITICIDAD_LABELS, ZHI_BAND_LABELS } from "@/lib/assets/constants";
 import { ZHI_BAND_LIGHT } from "@/lib/assets/constants";
 import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
-import type { Asset, AssetType, AssetStatus, Client } from "@/lib/assets/types";
+import type { Asset, AssetType, AssetStatus } from "@/lib/assets/types";
 import type { ZhiBand } from "@/lib/assets/zhi";
 
 interface Props {
   initialAssets: Asset[];
-  clients: Client[];
-  sites: { id: string; name: string }[];
 }
 
-export function AssetsTable({ initialAssets, clients, sites }: Props) {
+export function AssetsTable({ initialAssets }: Props) {
   const params = useSearchParams();
-  const [assets, setAssets] = useState<Asset[]>(initialAssets);
+  const assets = initialAssets;
   const [globalFilter, setGlobalFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   // Los tres filtros que el panel puede mandar por URL se leen UNA vez, al montar: después
   // mandan los controles de la tabla. Si se leyeran en cada render, tocar un filtro acá y
   // volver atrás con el navegador pelearía contra la URL.
-  const [statusFilter, setStatusFilter] = useState(() => params.get("estado") ?? "all");
-  const [bandFilter, setBandFilter] = useState<ZhiBand | "all">(() => (params.get("banda") as ZhiBand) ?? "all");
-  const [critFilter, setCritFilter] = useState(() => params.get("criticidad") ?? "all");
+  //
+  // Todo lo que llega por URL se VALIDA contra los valores que existen. La URL la escribe
+  // cualquiera: sin validar, un `?banda=cualquiercosa` dejaba la tabla vacía con un chip que
+  // decía "Salud: undefined", y el usuario no tenía forma de saber si el filtro estaba roto o
+  // si de verdad no había equipos. Un valor que no existe se ignora y la tabla se ve entera.
+  const [statusFilter, setStatusFilter] = useState(() => validar(params.get("estado"), ASSET_STATUS_LABELS));
+  const [bandFilter, setBandFilter] = useState<ZhiBand | "all">(() => validar(params.get("banda"), ZHI_BAND_LABELS) as ZhiBand | "all");
+  const [critFilter, setCritFilter] = useState(() => validar(params.get("criticidad"), CRITICIDAD_LABELS));
   const [riskOnly, setRiskOnly] = useState(() => params.get("riesgo") === "1");
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<Asset | null>(null);
 
   const filtered = useMemo(() => {
     let data = assets;
@@ -109,11 +111,12 @@ export function AssetsTable({ initialAssets, clients, sites }: Props) {
     {
       id: "edit", header: "",
       cell: ({ row }) => (
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); setEditing(row.original); setFormOpen(true); }}
+        <Link
+          href={ROUTES.assets.equipoEditar(row.original.id)}
+          // La fila entera navega a la ficha: esta acción tiene que frenar ese click.
+          onClick={(e) => e.stopPropagation()}
           className="text-xs text-zaire-blue hover:underline"
-        >Editar</button>
+        >Editar</Link>
       ),
     },
   ], []);
@@ -126,10 +129,6 @@ export function AssetsTable({ initialAssets, clients, sites }: Props) {
     getSortedRowModel: getSortedRowModel(), getPaginationRowModel: getPaginationRowModel(),
     initialState: { pagination: { pageSize: 20 } },
   });
-
-  function handleSaved(a: Asset) {
-    setAssets((prev) => { const i = prev.findIndex((x) => x.id === a.id); if (i >= 0) { const n = [...prev]; n[i] = { ...n[i], ...a }; return n; } return [a, ...prev]; });
-  }
 
   return (
     <div className="zaire-card">
@@ -153,7 +152,7 @@ export function AssetsTable({ initialAssets, clients, sites }: Props) {
         {critFilter !== "all" && (
           <FilterChip label={`Criticidad: ${critFilter} · ${CRITICIDAD_LABELS[Number(critFilter)] ?? ""}`} onClear={() => setCritFilter("all")} />
         )}
-        <Button onClick={() => { setEditing(null); setFormOpen(true); }} className="ml-auto h-9"><Plus className="w-4 h-4 mr-1.5" /> Nuevo equipo</Button>
+        <Button asChild className="ml-auto h-9"><Link href={ROUTES.assets.equipoNuevo}><Plus className="w-4 h-4 mr-1.5" /> Nuevo equipo</Link></Button>
       </div>
 
       <div className="overflow-x-auto">
@@ -183,9 +182,13 @@ export function AssetsTable({ initialAssets, clients, sites }: Props) {
         </div>
       </div>
 
-      <AssetForm open={formOpen} onOpenChange={setFormOpen} asset={editing} clients={clients} sites={sites} onSaved={handleSaved} />
     </div>
   );
+}
+
+/** Devuelve el valor solo si es una clave real del diccionario; si no, "all" (sin filtro). */
+function validar(valor: string | null, valores: Record<string | number, string>): string {
+  return valor && Object.prototype.hasOwnProperty.call(valores, valor) ? valor : "all";
 }
 
 /** Chip de un filtro que llegó desde afuera. Siempre se puede sacar sin salir de la pantalla. */

@@ -11,20 +11,11 @@ import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { StatusDot } from "@/components/shared/status-dot";
 import { logAssetAudit } from "@/lib/assets/audit";
+import { ASSET_DOCS_BUCKET as BUCKET, DOC_TYPES, assetDocPath } from "@/lib/assets/constants";
+import { validateDocFile, DOC_ACCEPT } from "@/lib/assets/doc-upload";
 import { formatDate, cn } from "@/lib/utils";
 import type { AssetDocument } from "@/lib/assets/types";
 
-const BUCKET = "asset-docs";
-// `inspeccion` y `certificado` son los dos tipos que el pilar Integridad del ZHI considera
-// CRÍTICOS: si vencen, penalizan la salud del equipo (y una inspección vencida en un equipo
-// de criticidad alta le pone un tope de 59). Ver lib/assets/zhi-input.ts.
-// Hasta ahora `inspeccion` no estaba en esta lista, así que esa penalización no se podía
-// alimentar desde la UI. La columna es TEXT libre, no hay CHECK que ampliar.
-const DOC_TYPES = [
-  { value: "inspeccion", label: "Inspección" }, { value: "certificado", label: "Certificado" },
-  { value: "garantia", label: "Garantía" }, { value: "manual", label: "Manual" },
-  { value: "plano", label: "Plano" }, { value: "otro", label: "Otro" },
-];
 
 export function AssetDocumentsSection({ assetId, documents }: { assetId: string; documents: AssetDocument[] }) {
   const router = useRouter();
@@ -34,10 +25,14 @@ export function AssetDocumentsSection({ assetId, documents }: { assetId: string;
   const [busyId, setBusyId] = useState<string | null>(null);
 
   async function upload(file: File) {
+    // Se valida ANTES de abrir la conexión: un archivo que no corresponde no tiene por qué
+    // viajar entero para que lo rechacen del otro lado.
+    const problema = validateDocFile(file.name, file.size);
+    if (problema) { toast.error(problema); return; }
+
     setUploading(true);
     const supabase = createClient();
-    const ext = file.name.split(".").pop() ?? "dat";
-    const path = `assets/${assetId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const path = assetDocPath(assetId, file.name);
     const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: false });
     if (upErr) { toast.error("Error al subir el archivo"); setUploading(false); return; }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -108,7 +103,7 @@ export function AssetDocumentsSection({ assetId, documents }: { assetId: string;
         <Input type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} className="h-9 w-40" title="Vencimiento (opcional)" />
         <label className={cn("inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm font-medium cursor-pointer transition-colors", uploading ? "bg-subtle-2 text-(--zaire-text-muted)" : "bg-zaire-navy-mid text-white hover:bg-zaire-navy")}>
           {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />} Subir
-          <input type="file" className="hidden" disabled={uploading} onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = ""; }} />
+          <input type="file" accept={DOC_ACCEPT} className="hidden" disabled={uploading} onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = ""; }} />
         </label>
       </div>
     </div>

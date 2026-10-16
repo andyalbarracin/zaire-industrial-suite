@@ -3,11 +3,12 @@
 // (Fase 5 suma detalle de confiabilidad; Fase 7, gráficos + campana.)
 
 import Link from "next/link";
-import { Cog, Wrench, ShieldAlert, DollarSign, FileWarning, ArrowRight } from "lucide-react";
+import { Cog, Wrench, ShieldAlert, DollarSign, FileWarning, ArrowRight, Plus } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
 import { getAssetDashboardStats } from "@/lib/assets/queries";
 import { ASSET_STATUS_LABELS, ASSET_STATUS_BADGE, CRITICIDAD_LABELS, ZHI_BAND_LIGHT } from "@/lib/assets/constants";
 
+import { Button } from "@/components/ui/button";
 import { StatusDot } from "@/components/shared/status-dot";
 import { AssetCharts } from "@/components/assets/asset-charts";
 import { FleetHealth } from "@/components/assets/fleet-health";
@@ -38,9 +39,12 @@ export default async function AssetsDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-(--zaire-text)">Panel Assets</h1>
-        <p className="text-sm text-(--zaire-text-muted) mt-0.5">Gestión de activos industriales</p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-(--zaire-text)">Panel Assets</h1>
+          <p className="text-sm text-(--zaire-text-muted) mt-0.5">Gestión de activos industriales</p>
+        </div>
+        <Button asChild><Link href={ROUTES.assets.equipoNuevo}><Plus className="w-4 h-4 mr-1.5" /> Nuevo equipo</Link></Button>
       </div>
 
       {/* KPIs */}

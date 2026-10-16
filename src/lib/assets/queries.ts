@@ -80,20 +80,29 @@ export const getAssetFull = cache(async (id: string): Promise<{
   const supabase = await createClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = supabase as any;
-  const { data: asset } = await sb.from("assets").select(ASSET_SELECT).eq("id", id).is("deleted_at", null).maybeSingle();
-  if (!asset) return null;
-  const [{ data: events }, { data: documents }, { data: components }] = await Promise.all([
+  // TODO lo que la ficha necesita, en UNA sola tanda.
+  //
+  // Antes eran tres esperas encadenadas: el equipo, después sus eventos/documentos/componentes,
+  // y recién al final la flota. Ninguna dependía de la anterior —todas se filtran por el mismo
+  // `id`— así que lo único que aportaba el encadenamiento era sumar dos idas y vueltas a la base
+  // (~250-750 ms según la latencia) a cada apertura de ficha.
+  //
+  // El `if (!asset)` pasa a verificarse después. El costo de equivocarse es traer de más para un
+  // id que no existe, que no es un caso que valga la pena optimizar.
+  const [{ data: asset }, { data: events }, { data: documents }, { data: components }, fleet] = await Promise.all([
+    sb.from("assets").select(ASSET_SELECT).eq("id", id).is("deleted_at", null).maybeSingle(),
     sb.from("asset_events").select("*").eq("asset_id", id).order("event_date", { ascending: false }).order("created_at", { ascending: false }),
     sb.from("asset_documents").select("*").eq("asset_id", id).is("deleted_at", null).order("expires_at", { ascending: true }),
     sb.from("asset_components").select("*, product:products(id, code, name, unit)").eq("asset_id", id).order("created_at"),
+    // El ZHI se toma del cálculo de FLOTA, no se recalcula acá. Dos razones:
+    //  1. La referencia de un equipo sale de la mediana de los demás (§6.3): sin la flota, la
+    //     ficha daría un número distinto al de la lista para el mismo equipo.
+    //  2. `getAssets` está envuelto en React.cache, así que en el mismo render no se repite.
+    getAssets(),
   ]);
-  const evs = (events ?? []) as AssetEvent[];
+  if (!asset) return null;
 
-  // El ZHI se toma del cálculo de FLOTA, no se recalcula acá. Dos razones:
-  //  1. La referencia de un equipo sale de la mediana de los demás (§6.3): sin la flota, la
-  //     ficha daría un número distinto al de la lista para el mismo equipo.
-  //  2. `getAssets` está envuelto en React.cache, así que en el mismo render no se repite.
-  const fleet = await getAssets();
+  const evs = (events ?? []) as AssetEvent[];
   const zhi = fleet.find((a) => a.id === id)?.zhi;
 
   return {
