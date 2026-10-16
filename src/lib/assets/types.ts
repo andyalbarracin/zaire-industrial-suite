@@ -5,6 +5,7 @@
 import type { Client, Profile, Currency } from "@/lib/types/database";
 import type { TrafficLight } from "@/lib/utils";
 import type { Zhi } from "@/lib/assets/zhi";
+import type { Reliability } from "@/lib/assets/reliability";
 
 export type { Client, Profile, Currency };
 
@@ -52,6 +53,8 @@ export interface Asset {
   health?: number;
   /** Zaire Health Index completo: banda, confianza, motivos y sub-índices. Calculado on-read. */
   zhi?: Zhi;
+  /** La confiabilidad que alimentó al índice. La vista de flota saca de acá sus medianas. */
+  reliability?: Reliability;
 }
 
 export interface AssetEvent {

@@ -2,7 +2,7 @@
 // Tests de los reportes de flota: TCO por moneda (sin mezclar), costo por equipo, top fallas, ranking de riesgo.
 
 import { describe, it, expect } from "vitest";
-import { computeAssetReports } from "@/lib/assets/reports";
+import { computeAssetReports, fleetReliability, bandDistribution } from "@/lib/assets/reports";
 import type { Asset, AssetEvent } from "@/lib/assets/types";
 
 const A = (o: Partial<Asset>): Asset => o as Asset;
@@ -58,5 +58,70 @@ describe("computeAssetReports", () => {
     // Ahora usa el FACTOR de criticidad (1,5 / 1,0 / 0,6), no la criticidad cruda:
     // antes este caso daba 350 (5 × 70), ahora 105 (1,5 × 70).
     expect(rep.riskRanking[0].risk).toBe(105);
+  });
+});
+
+describe("fleetReliability — la MEDIANA, no el promedio", () => {
+  const A2 = (id: string, mtbf: number | null, mttr: number | null, avail: number | null, band: string | null) =>
+    A({ id, name: id, status: "operativo", criticidad: 3,
+        zhi: { band, outOfService: band === null } as Asset["zhi"],
+        reliability: { mtbfDays: mtbf, mttrHours: mttr, availability: avail } } as Partial<Asset>);
+
+  it("un outlier no mueve la mediana", () => {
+    // Seis equipos entre 40 y 90 días, y uno absurdo de 4000.
+    // El promedio daría ~620 días: diría que la flota es excelente. La mediana dice la verdad.
+    const flota = [40, 50, 60, 70, 80, 90, 4000].map((d, i) => A2(`a${i}`, d, 24, 0.9, "sano"));
+    const r = fleetReliability(flota);
+    expect(r.mtbfDays).toBe(70);
+  });
+
+  it("con cantidad par promedia los dos del medio", () => {
+    const flota = [40, 60, 80, 100].map((d, i) => A2(`a${i}`, d, 24, 0.9, "sano"));
+    expect(fleetReliability(flota).mtbfDays).toBe(70);
+  });
+
+  it("los equipos sin dato no cuentan ni arrastran", () => {
+    const flota = [A2("a1", 40, 24, 0.9, "sano"), A2("a2", null, null, null, "sano"), A2("a3", 60, 48, 0.8, "sano")];
+    const r = fleetReliability(flota);
+    expect(r.mtbfDays).toBe(50);
+    expect(r.conDato).toBe(2);
+  });
+
+  it("una flota sin ningún dato no inventa ceros", () => {
+    const r = fleetReliability([A2("a1", null, null, null, "sano")]);
+    expect(r.mtbfDays).toBeNull();
+    expect(r.mttrDays).toBeNull();
+    expect(r.availability).toBeNull();
+    expect(r.conDato).toBe(0);
+  });
+
+  it("el MTTR se devuelve en DÍAS, igual que el resto", () => {
+    const r = fleetReliability([A2("a1", 40, 48, 0.9, "sano"), A2("a2", 60, 48, 0.9, "sano")]);
+    expect(r.mttrDays).toBe(2);
+  });
+
+  it("los equipos fuera de servicio no entran en la mediana", () => {
+    const flota = [A2("a1", 40, 24, 0.9, "sano"), A2("a2", 9999, 24, 0.9, null)];
+    expect(fleetReliability(flota).mtbfDays).toBe(40);
+  });
+});
+
+describe("bandDistribution — para el donut", () => {
+  const AB = (id: string, band: string | null) =>
+    A({ id, name: id, status: "operativo", criticidad: 3, zhi: { band, outOfService: band === null } as Asset["zhi"] } as Partial<Asset>);
+
+  it("cuenta por banda y deja las vacías afuera", () => {
+    const d = bandDistribution([AB("a", "sano"), AB("b", "sano"), AB("c", "critico")]);
+    expect(d).toEqual([{ band: "sano", value: 2 }, { band: "critico", value: 1 }]);
+  });
+
+  it("los fuera de servicio van en su propia categoría, no como una banda", () => {
+    const d = bandDistribution([AB("a", "sano"), AB("b", null)]);
+    expect(d.find((x) => x.band === "fuera_de_servicio")?.value).toBe(1);
+  });
+
+  it("respeta el orden de gravedad: sano primero, fuera de servicio al final", () => {
+    const d = bandDistribution([AB("a", "critico"), AB("b", "sano"), AB("c", null), AB("d", "atencion")]);
+    expect(d.map((x) => x.band)).toEqual(["sano", "atencion", "critico", "fuera_de_servicio"]);
   });
 });

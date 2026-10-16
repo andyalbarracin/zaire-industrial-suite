@@ -166,7 +166,20 @@ export interface FleetZhiMember {
  *
  * PURO: `now` entra como parámetro. Devuelve un ZHI por equipo, indexado por `asset.id`.
  */
-export function computeFleetZhi(members: readonly FleetZhiMember[], now: number): Map<string, Zhi> {
+/** Lo que el cálculo de flota deja por equipo: el índice y la confiabilidad que lo alimentó. */
+export interface FleetResult {
+  zhi: Zhi;
+  reliability: Reliability;
+}
+
+/**
+ * Las dos pasadas, con la confiabilidad de cada equipo incluida.
+ *
+ * La confiabilidad se devuelve en lugar de descartarse porque la vista de flota necesita las
+ * medianas de MTBF/MTTR/disponibilidad, y recalcularlas afuera daría números distintos a los
+ * que el índice usó para el mismo equipo.
+ */
+export function computeFleet(members: readonly FleetZhiMember[], now: number): Map<string, FleetResult> {
   // 1ª pasada
   const reliabilities = members.map((m) => ({
     member: m,
@@ -183,14 +196,21 @@ export function computeFleetZhi(members: readonly FleetZhiMember[], now: number)
   );
 
   // 2ª pasada
-  const out = new Map<string, Zhi>();
+  const out = new Map<string, FleetResult>();
   for (const { member, reliability } of reliabilities) {
     const references = resolveReferences(member.asset, fleet);
     const input = buildZhiInput({
       asset: member.asset, reliability, events: member.events,
       documents: member.documents, references, now,
     });
-    out.set(member.asset.id, computeZhi(input));
+    out.set(member.asset.id, { zhi: computeZhi(input), reliability });
   }
+  return out;
+}
+
+/** Solo el índice, para quien no necesita la confiabilidad cruda. */
+export function computeFleetZhi(members: readonly FleetZhiMember[], now: number): Map<string, Zhi> {
+  const out = new Map<string, Zhi>();
+  for (const [id, r] of computeFleet(members, now)) out.set(id, r.zhi);
   return out;
 }

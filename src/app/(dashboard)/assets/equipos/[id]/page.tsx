@@ -4,14 +4,18 @@
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, MapPin, Lightbulb } from "lucide-react";
+import { ArrowLeft, MapPin, Lightbulb, StickyNote } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
 import { createClient } from "@/lib/supabase/server";
 import { getAssetFull } from "@/lib/assets/queries";
+import { getLabelCompany } from "@/lib/assets/label-company";
 import { computeReliability } from "@/lib/assets/reliability";
 
 import { ASSET_TYPE_LABELS, ASSET_STATUS_LABELS, ASSET_STATUS_BADGE, CRITICIDAD_LABELS, ZHI_BAND_LABELS, ZHI_BAND_LIGHT, ZHI_CONFIDENCE_LABELS } from "@/lib/assets/constants";
-import { StatusDot } from "@/components/shared/status-dot";
+import { HealthRing } from "@/components/assets/health-ring";
+import { ReliabilityKpis } from "@/components/assets/reliability-kpis";
+import { ReactiveIndexCard } from "@/components/assets/reactive-index-card";
+import { buildReliabilityKpis } from "@/lib/assets/kpi-text";
 import { FieldMap } from "@/components/field/field-map";
 import { AssetQR } from "@/components/assets/asset-qr";
 import { AssetEventsSection } from "@/components/assets/asset-events-section";
@@ -25,7 +29,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AssetFichaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const full = await getAssetFull(id);
+  const [full, company] = await Promise.all([getAssetFull(id), getLabelCompany()]);
   if (!full || !full.asset) notFound();
   const { asset, events, documents, components } = full;
 
@@ -42,6 +46,11 @@ export default async function AssetFichaPage({ params }: { params: Promise<{ id:
     regimeHoursPerDay: asset.regimen_horas_dia ?? null,
   });
   const zhi = asset.zhi;
+  const kpis = buildReliabilityKpis(rel, asset.regimen_horas_dia ?? null);
+  const kpiReactivo = kpis.find((k) => k.sigla === "Índice reactivo")!;
+  const kpisDeTiempo = kpis.filter((k) => k !== kpiReactivo);
+  const hayDiagnostico = !!(zhi && !zhi.outOfService && (zhi.capApplied || zhi.motivos.length > 0 || zhi.recomendacion));
+
   // El TCO de la ficha es el acumulado de toda la hoja de vida; los KPIs son del período.
   const tco = rel.costByCurrencyAllTime.length ? rel.costByCurrencyAllTime.map((c) => formatCurrency(c.value, c.name as Currency)).join(" · ") : formatCurrency(0, "ARS");
 
@@ -60,57 +69,72 @@ export default async function AssetFichaPage({ params }: { params: Promise<{ id:
         </p>
       </div>
 
-      {/* Confiabilidad */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Salud: número + banda + confianza. NO se muestra el cálculo ni los sub-índices (D6). */}
-        <div className="zaire-card p-4">
-          <p className="text-xs text-(--zaire-text-muted)">Salud</p>
-          {zhi && !zhi.outOfService && zhi.band ? (
-            <>
-              <p className="text-2xl font-bold mt-1 tabular-nums flex items-center gap-2">
-                <StatusDot status={ZHI_BAND_LIGHT[zhi.band]} size="sm" pulse={zhi.band === "critico"} />
-                <span className="text-(--zaire-text)">{zhi.score}</span>
-                <span className="text-xs font-medium text-(--zaire-text-muted)">{ZHI_BAND_LABELS[zhi.band]}</span>
+      {/* Hero: el anillo con el número adentro + banda + confianza. El anillo nunca va solo. */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="zaire-card p-5 flex items-center gap-4">
+          <HealthRing score={zhi?.outOfService ? null : zhi?.score ?? null} light={zhi?.band ? ZHI_BAND_LIGHT[zhi.band] : null} />
+          <div className="min-w-0">
+            <p className="text-xs text-(--zaire-text-muted)">Salud del equipo</p>
+            {zhi && !zhi.outOfService && zhi.band ? (
+              <>
+                <p className="text-lg font-bold text-(--zaire-text) leading-tight">{ZHI_BAND_LABELS[zhi.band]}</p>
+                <p className="text-[11px] text-(--zaire-text-muted) mt-0.5">
+                  Confianza: {ZHI_CONFIDENCE_LABELS[zhi.confidence]}
+                </p>
+                <p className="text-[11px] text-(--zaire-text-muted)">Últimos {rel.periodDays} días</p>
+              </>
+            ) : (
+              <p className="text-sm font-medium text-(--zaire-text-muted) mt-1">
+                {zhi?.capApplied ?? "Fuera de servicio"}
               </p>
-              <p className="text-[11px] text-(--zaire-text-muted) mt-0.5">
-                Confianza: {ZHI_CONFIDENCE_LABELS[zhi.confidence]}
-              </p>
-            </>
-          ) : (
-            <p className="text-sm font-medium text-(--zaire-text-muted) mt-2">
-              {zhi?.capApplied ?? "Fuera de servicio"}
-            </p>
-          )}
+            )}
+          </div>
         </div>
-        <div className="zaire-card p-4"><p className="text-xs text-(--zaire-text-muted)">Costo acumulado (TCO)</p><p className="text-xl font-bold text-(--zaire-text) mt-1 tabular-nums truncate">{tco}</p></div>
-        <div className="zaire-card p-4"><p className="text-xs text-(--zaire-text-muted)">MTBF (entre fallas)</p><p className="text-2xl font-bold text-(--zaire-text) mt-1 tabular-nums">{rel.mtbfDays != null ? `${rel.mtbfDays} d` : "—"}</p></div>
-        <div className="zaire-card p-4"><p className="text-xs text-(--zaire-text-muted)">Disponibilidad</p><p className="text-2xl font-bold text-(--zaire-text) mt-1 tabular-nums">{rel.availability != null ? `${Math.round(rel.availability * 100)}%` : "—"}</p></div>
+        <div className="zaire-card p-5 lg:col-span-2 flex flex-col justify-center">
+          <p className="text-xs text-(--zaire-text-muted)">Costo acumulado (TCO)</p>
+          <p className="text-2xl font-bold text-(--zaire-text) mt-1 tabular-nums truncate">{tco}</p>
+          <p className="text-[11px] text-(--zaire-text-muted) mt-1">
+            Toda la hoja de vida, por moneda. Nunca se suman monedas distintas.
+          </p>
+        </div>
       </div>
 
-      {/* Jerarquía del §7.2: número → por qué → qué hacer. Sin fórmula, sin pesos (D6). */}
-      {zhi && !zhi.outOfService && (zhi.capApplied || zhi.motivos.length > 0 || zhi.recomendacion) && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {(zhi.capApplied || zhi.motivos.length > 0) && (
-            <div className="zaire-card p-4 space-y-1.5 lg:col-span-2">
-              <p className="text-xs font-medium text-(--zaire-text-muted)">Por qué</p>
-              {zhi.capApplied && <p className="text-sm text-(--zaire-text)">{zhi.capApplied}</p>}
-              {zhi.motivos.map((m) => (
-                <p key={m.subIndice} className="text-sm text-(--zaire-text)">{m.texto}</p>
-              ))}
-            </div>
-          )}
-          {/* Una sola recomendación, la de mayor prioridad. Si no hay ninguna, no se muestra
-              nada: un equipo sano no necesita que le inventemos una acción. */}
-          {zhi.recomendacion && (
-            <div className="zaire-card p-4 border-l-2 border-l-zaire-blue">
-              <p className="text-xs font-medium text-(--zaire-text-muted) flex items-center gap-1.5">
-                <Lightbulb className="w-3.5 h-3.5" /> Qué hacer
-              </p>
-              <p className="text-sm text-(--zaire-text) mt-1.5">{zhi.recomendacion.texto}</p>
-            </div>
-          )}
-        </div>
-      )}
+      {/* Los KPI de confiabilidad: la frase manda, la sigla va chica con tooltip (§7.1).
+          Arriba van los CUATRO que miden tiempo. Son cuatro y no cinco a propósito: 4 entra
+          parejo en 1, 2 o 4 columnas y nunca deja una card sola colgando al achicar la
+          pantalla. El quinto (índice reactivo) baja al bloque de diagnóstico, que es donde
+          significa algo. */}
+      <ReliabilityKpis kpis={kpisDeTiempo} />
+
+      {/* Jerarquía del §7.2: número → por qué → qué hacer. Sin fórmula, sin pesos (D6).
+          El índice reactivo ocupa la tercera columna: antes quedaba vacía cuando el equipo no
+          tenía recomendación, y "Por qué" flotaba solo contra el borde izquierdo. */}
+      <div className={cn("grid gap-4", hayDiagnostico ? "grid-cols-1 lg:grid-cols-3" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3")}>
+        {hayDiagnostico && (
+          <div className="lg:col-span-2 space-y-4">
+            {(zhi!.capApplied || zhi!.motivos.length > 0) && (
+              <div className="zaire-card p-4 space-y-1.5">
+                <p className="text-xs font-medium text-(--zaire-text-muted)">Por qué</p>
+                {zhi!.capApplied && <p className="text-sm text-(--zaire-text)">{zhi!.capApplied}</p>}
+                {zhi!.motivos.map((m) => (
+                  <p key={m.subIndice} className="text-sm text-(--zaire-text)">{m.texto}</p>
+                ))}
+              </div>
+            )}
+            {/* Una sola recomendación, la de mayor prioridad. Si no hay ninguna, no se muestra
+                nada: un equipo sano no necesita que le inventemos una acción. */}
+            {zhi!.recomendacion && (
+              <div className="zaire-card p-4 border-l-2 border-l-zaire-blue">
+                <p className="text-xs font-medium text-(--zaire-text-muted) flex items-center gap-1.5">
+                  <Lightbulb className="w-3.5 h-3.5" /> Qué hacer
+                </p>
+                <p className="text-sm text-(--zaire-text) mt-1.5">{zhi!.recomendacion.texto}</p>
+              </div>
+            )}
+          </div>
+        )}
+        <ReactiveIndexCard kpi={kpiReactivo} reactiveIndex={rel.reactiveIndex} />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Datos + ubicación */}
@@ -126,7 +150,16 @@ export default async function AssetFichaPage({ params }: { params: Promise<{ id:
             <Field label="Ubicación" value={asset.address ?? "—"} />
             <Field label="Fallas (período)" value={String(rel.failures)} />
           </div>
-          {asset.notes && <p className="text-sm text-(--zaire-text-muted) border-t border-(--zaire-border) pt-3">{asset.notes}</p>}
+          {asset.notes && (
+            <div className="border-t border-(--zaire-border) pt-3">
+              <p className="text-xs font-medium text-(--zaire-text-muted) flex items-center gap-1.5 mb-1.5">
+                <StickyNote className="w-3.5 h-3.5" /> Notas del equipo
+              </p>
+              {/* Prosa libre del cliente: lo que no entra en ningún campo ("vibra en frío",
+                  "no pararla los lunes"). Se respetan los saltos de línea que haya escrito. */}
+              <p className="text-sm text-(--zaire-text) leading-relaxed whitespace-pre-line">{asset.notes}</p>
+            </div>
+          )}
           {asset.latitude != null && asset.longitude != null && (
             <div className="border-t border-(--zaire-border) pt-3">
               <p className="text-xs text-(--zaire-text-muted) mb-2 flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> Ubicación en mapa</p>
@@ -136,7 +169,17 @@ export default async function AssetFichaPage({ params }: { params: Promise<{ id:
         </div>
 
         {/* QR */}
-        <AssetQR path={ROUTES.assets.equipo(asset.id)} tag={asset.tag} name={asset.name} />
+        <AssetQR
+          path={ROUTES.assets.equipo(asset.id)}
+          company={company}
+          data={{
+            tag: asset.tag, name: asset.name,
+            tipo: asset.type ? ASSET_TYPE_LABELS[asset.type] : null,
+            marca: asset.brand, modelo: asset.model, serie: asset.serial,
+            ubicacion: asset.address,
+            criticidad: `${asset.criticidad} · ${CRITICIDAD_LABELS[asset.criticidad] ?? ""}`.trim(),
+          }}
+        />
       </div>
 
       {/* Componentes / genealogía */}
