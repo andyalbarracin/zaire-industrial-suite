@@ -2,7 +2,7 @@
 // Tests de los reportes de flota: TCO por moneda (sin mezclar), costo por equipo, top fallas, ranking de riesgo.
 
 import { describe, it, expect } from "vitest";
-import { computeAssetReports, fleetReliability, bandDistribution } from "@/lib/assets/reports";
+import { computeAssetReports, fleetReliability, bandDistribution, topConsumers } from "@/lib/assets/reports";
 import type { Asset, AssetEvent } from "@/lib/assets/types";
 
 const A = (o: Partial<Asset>): Asset => o as Asset;
@@ -123,5 +123,107 @@ describe("bandDistribution — para el donut", () => {
   it("respeta el orden de gravedad: sano primero, fuera de servicio al final", () => {
     const d = bandDistribution([AB("a", "critico"), AB("b", "sano"), AB("c", null), AB("d", "atencion")]);
     expect(d.map((x) => x.band)).toEqual(["sano", "atencion", "critico", "fuera_de_servicio"]);
+  });
+});
+
+describe("topConsumers — los 10 equipos que más te consumen (§7.5)", () => {
+  const NOW = Date.UTC(2026, 9, 15);
+  const dia = 86_400_000;
+  const hace = (d: number) => new Date(NOW - d * dia).toISOString().slice(0, 10);
+
+  const EQ = (id: string, name: string, tag: string | null = null) =>
+    A({ id, name, tag, status: "operativo", criticidad: 3 } as Partial<Asset>);
+
+  const EV = (asset_id: string, o: Partial<AssetEvent> = {}) =>
+    E({ asset_id, type: "falla", event_date: hace(30), cost: null, currency: "ARS", downtime_hours: null, ...o });
+
+  it("ordena por horas fuera de servicio, que es lo que de verdad duele", () => {
+    const assets = [EQ("a1", "Bomba 1"), EQ("a2", "Bomba 2")];
+    const events = [
+      EV("a1", { downtime_hours: 4 }),
+      EV("a2", { downtime_hours: 40 }),   // menos intervenciones, mucho más parada
+      EV("a1", { downtime_hours: 4 }),
+      EV("a1", { downtime_hours: 4 }),
+    ];
+    const r = topConsumers(assets, events, NOW);
+    expect(r.orderedBy).toBe("horas");
+    expect(r.rows[0].name).toContain("Bomba 2");
+    expect(r.rows[0].horasFuera).toBe(40);
+    expect(r.rows[1].intervenciones).toBe(3);
+  });
+
+  it("sin NINGÚN dato de parada cae a cantidad de intervenciones, y lo declara", () => {
+    // Es el caso normal al principio: nadie carga horas. Ordenar por un cero constante
+    // daría un ranking arbitrario disfrazado de dato.
+    const assets = [EQ("a1", "Bomba 1"), EQ("a2", "Bomba 2")];
+    const events = [EV("a1"), EV("a2"), EV("a2"), EV("a2")];
+    const r = topConsumers(assets, events, NOW);
+    expect(r.orderedBy).toBe("intervenciones");
+    expect(r.rows[0].name).toContain("Bomba 2");
+    expect(r.rows[0].intervenciones).toBe(3);
+  });
+
+  it("la parada por fechas le gana a las horas cargadas a mano", () => {
+    const assets = [EQ("a1", "Bomba 1")];
+    const events = [EV("a1", {
+      downtime_hours: 1,
+      out_of_service_start: hace(10), out_of_service_end: hace(8),
+    } as Partial<AssetEvent>)];
+    expect(topConsumers(assets, events, NOW).rows[0].horasFuera).toBe(48);
+  });
+
+  it("cuenta TODA intervención, no solo las fallas: un preventivo también consume", () => {
+    const assets = [EQ("a1", "Bomba 1")];
+    const events = [EV("a1", { type: "servicio" }), EV("a1", { type: "falla" })];
+    expect(topConsumers(assets, events, NOW).rows[0].intervenciones).toBe(2);
+  });
+
+  it("el costo no mezcla monedas: solo suma la dominante", () => {
+    const assets = [EQ("a1", "Bomba 1")];
+    const events = [
+      EV("a1", { cost: 100000, currency: "ARS" }),
+      EV("a1", { cost: 500, currency: "USD" }),
+      EV("a1", { cost: 50000, currency: "ARS" }),
+    ];
+    const r = topConsumers(assets, events, NOW);
+    expect(r.currency).toBe("ARS");
+    expect(r.rows[0].costo).toBe(150000);
+  });
+
+  it("solo mira los últimos 12 meses: lo viejo no te consume hoy", () => {
+    const assets = [EQ("a1", "Bomba 1")];
+    const events = [EV("a1", { event_date: hace(400), downtime_hours: 99 }), EV("a1", { downtime_hours: 5 })];
+    const r = topConsumers(assets, events, NOW);
+    expect(r.rows[0].horasFuera).toBe(5);
+    expect(r.rows[0].intervenciones).toBe(1);
+  });
+
+  it("los equipos sin ninguna intervención no entran: no consumieron nada", () => {
+    const assets = [EQ("a1", "Bomba 1"), EQ("a2", "La que nunca se tocó")];
+    const r = topConsumers(assets, [EV("a1", { downtime_hours: 3 })], NOW);
+    expect(r.rows).toHaveLength(1);
+    expect(r.rows[0].name).toContain("Bomba 1");
+  });
+
+  it("devuelve como mucho 10, que es el nombre de la vista", () => {
+    const assets = Array.from({ length: 15 }, (_, i) => EQ(`a${i}`, `Bomba ${i}`));
+    const events = assets.map((a) => EV(a.id, { downtime_hours: 1 }));
+    expect(topConsumers(assets, events, NOW).rows.length).toBe(10);
+  });
+
+  it("usa el TAG cuando existe, que es como lo llaman en planta", () => {
+    const r = topConsumers([EQ("a1", "Bomba 1", "BBA-01")], [EV("a1", { downtime_hours: 1 })], NOW);
+    expect(r.rows[0].name).toBe("BBA-01 · Bomba 1");
+  });
+
+  it("un evento de un equipo que no está en la lista no rompe nada", () => {
+    const r = topConsumers([EQ("a1", "Bomba 1")], [EV("a1", { downtime_hours: 2 }), EV("fantasma", { downtime_hours: 99 })], NOW);
+    expect(r.rows).toHaveLength(1);
+    expect(r.rows[0].horasFuera).toBe(2);
+  });
+
+  it("una flota sin eventos devuelve una lista vacía, no ceros inventados", () => {
+    const r = topConsumers([EQ("a1", "Bomba 1")], [], NOW);
+    expect(r.rows).toEqual([]);
   });
 });

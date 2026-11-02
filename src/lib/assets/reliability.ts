@@ -149,7 +149,13 @@ function isIntervention(e: ReliabilityEvent): boolean {
  * Una ventana abierta (inicio sin fin) NO se estima hasta hoy —sería inventar un número
  * que crece solo— : cae a `downtime_hours` y se reporta aparte en `openOutOfServiceCount`.
  */
-function downtimeOf(e: ReliabilityEvent): { hours: number; origin: "fechas" | "manual" | null; open: boolean } {
+/**
+ * Horas que el equipo estuvo fuera de servicio por este evento.
+ *
+ * La ventana de fechas le GANA a `downtime_hours`: cuando alguien cargó ingreso y entrega, ese
+ * dato es más confiable que un número escrito a mano.
+ */
+export function downtimeOf(e: ReliabilityEvent): { hours: number; origin: "fechas" | "manual" | null; open: boolean } {
   const start = parseDay(e.out_of_service_start);
   const end = parseDay(e.out_of_service_end);
 

@@ -170,6 +170,13 @@ export interface FleetZhiMember {
 export interface FleetResult {
   zhi: Zhi;
   reliability: Reliability;
+  /**
+   * Contra qué se comparó este equipo. Se devuelve porque el Mapa de confiabilidad (§7.4) ubica
+   * cada punto por su MTBF **relativo a su referencia**, no por el MTBF crudo: 40 días entre
+   * fallas es excelente para una bomba exigida y pésimo para un motor nuevo. Sin la referencia,
+   * el eje compara peras con manzanas.
+   */
+  references: { mtbf: ResolvedReference; mtbr: ResolvedReference };
 }
 
 /**
@@ -203,7 +210,7 @@ export function computeFleet(members: readonly FleetZhiMember[], now: number): M
       asset: member.asset, reliability, events: member.events,
       documents: member.documents, references, now,
     });
-    out.set(member.asset.id, { zhi: computeZhi(input), reliability });
+    out.set(member.asset.id, { zhi: computeZhi(input), reliability, references });
   }
   return out;
 }
