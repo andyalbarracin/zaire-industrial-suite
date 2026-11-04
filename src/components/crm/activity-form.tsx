@@ -17,7 +17,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ClientSelect } from "@/components/clients/client-select";
-import { ACTIVITY_TYPES, ACTIVITY_TYPE_LABELS } from "@/lib/crm/constants";
+import { ACTIVITY_TYPES } from "@/lib/crm/constants";
+import { ACTIVITY_ICON } from "./activity-timeline";
+import { cn } from "@/lib/utils";
 import type { CrmActivity, ActivityType, CrmOpportunity, Client } from "@/lib/crm/types";
 
 const NONE = "__none__";
@@ -38,10 +40,16 @@ interface ActivityFormProps {
   activity: CrmActivity | null;
   clients: Client[];
   opportunities: Pick<CrmOpportunity, "id" | "title" | "client_id">[];
+  /**
+   * Valores con los que arranca una actividad NUEVA. Lo usa la ficha de la oportunidad para
+   * que cargar una actividad desde adentro no obligue a volver a elegir cliente y oportunidad.
+   * No aplica al editar: ahí mandan los datos de la actividad.
+   */
+  preset?: { clientId: string | null; opportunityId: string };
   onSaved: (activity: CrmActivity) => void;
 }
 
-export function ActivityForm({ open, onOpenChange, activity, clients, opportunities, onSaved }: ActivityFormProps) {
+export function ActivityForm({ open, onOpenChange, activity, clients, opportunities, preset, onSaved }: ActivityFormProps) {
   const isEdit = !!activity;
 
   const {
@@ -60,14 +68,14 @@ export function ActivityForm({ open, onOpenChange, activity, clients, opportunit
     if (open) {
       reset({
         activity_type: activity?.activity_type ?? "nota",
-        opportunity_id: activity?.opportunity_id ?? NONE,
+        opportunity_id: activity?.opportunity_id ?? preset?.opportunityId ?? NONE,
         subject: activity?.subject ?? "",
         body: activity?.body ?? "",
         due_at: activity?.due_at ? activity.due_at.slice(0, 16) : "",
       });
-      setClientId(activity?.client_id ?? null);
+      setClientId(activity?.client_id ?? preset?.clientId ?? null);
     }
-  }, [open, activity, reset]);
+  }, [open, activity, preset, reset]);
 
   const type = watch("activity_type") as ActivityType;
   const opportunityId = watch("opportunity_id");
@@ -86,7 +94,9 @@ export function ActivityForm({ open, onOpenChange, activity, clients, opportunit
       body: data.body?.trim() || null,
       client_id: clientId,
       opportunity_id: data.opportunity_id === NONE ? null : data.opportunity_id,
-      due_at: data.activity_type === "tarea" && data.due_at ? new Date(data.due_at).toISOString() : null,
+      // Antes solo se guardaba para las tareas y se descartaba en silencio para el resto.
+      // Ahora se guarda siempre: quien avisa por la campana es el TIPO, no la fecha.
+      due_at: data.due_at ? new Date(data.due_at).toISOString() : null,
     };
 
     if (isEdit && activity) {
@@ -116,24 +126,42 @@ export function ActivityForm({ open, onOpenChange, activity, clients, opportunit
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-2">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>Tipo</Label>
-              <Select value={type} onValueChange={(v) => setValue("activity_type", v ?? "nota")}>
-                <SelectTrigger className="w-full">
-                  <SelectValue>{ACTIVITY_TYPE_LABELS[type]}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {ACTIVITY_TYPES.map((a) => (<SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>))}
-                </SelectContent>
-              </Select>
+          {/* El tipo va en chips: es un toque en vez de abrir un desplegable y elegir. */}
+          <div className="space-y-1.5">
+            <Label>Tipo</Label>
+            <div className="flex flex-wrap gap-1.5">
+              {ACTIVITY_TYPES.map((a) => {
+                const Icon = ACTIVITY_ICON[a.value as ActivityType];
+                const on = type === a.value;
+                return (
+                  <button
+                    key={a.value} type="button" aria-pressed={on}
+                    onClick={() => setValue("activity_type", a.value)}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 px-2.5 h-9 rounded-lg border text-sm font-medium cursor-pointer transition-colors",
+                      on
+                        ? "border-zaire-blue bg-zaire-blue/10 text-zaire-blue"
+                        : "border-(--zaire-border) text-(--zaire-text-muted) hover:bg-subtle",
+                    )}
+                  >
+                    <Icon className="w-3.5 h-3.5" /> {a.label}
+                  </button>
+                );
+              })}
             </div>
-            {type === "tarea" && (
-              <div className="space-y-1.5">
-                <Label htmlFor="due_at">Vencimiento</Label>
-                <Input id="due_at" type="datetime-local" {...register("due_at")} />
-              </div>
-            )}
+          </div>
+
+          {/* La fecha se muestra para TODOS los tipos, no solo para las tareas: una reunión o
+              una llamada también pasan un día a una hora. Antes el campo estaba detrás de
+              `type === "tarea"`, y por eso parecía que no existía. */}
+          <div className="space-y-1.5">
+            <Label htmlFor="due_at">Fecha y hora</Label>
+            <Input id="due_at" type="datetime-local" {...register("due_at")} />
+            <p className="text-[11px] text-(--zaire-text-muted)">
+              {type === "tarea"
+                ? "Las tareas con fecha aparecen en la campana hasta que se marcan como hechas."
+                : "Queda registrada en la actividad. Solo las tareas avisan por la campana."}
+            </p>
           </div>
 
           <div className="space-y-1.5">

@@ -17,12 +17,15 @@ import type { CrmOpportunity, CrmPipelineStage } from "@/lib/crm/types";
 interface OpportunitiesKanbanProps {
   opportunities: CrmOpportunity[];
   stages: CrmPipelineStage[];
+  /** Abre la ficha completa. Es la acción principal de la tarjeta. */
+  onOpen: (opp: CrmOpportunity) => void;
+  /** Edición rápida sin salir del tablero (el lápiz). */
   onEdit: (opp: CrmOpportunity) => void;
   onRequestDelete: (opp: CrmOpportunity) => void;
   onStageChanged: (id: string, stage: string, closedAt: string | null) => void;
 }
 
-export function OpportunitiesKanban({ opportunities, stages, onEdit, onRequestDelete, onStageChanged }: OpportunitiesKanbanProps) {
+export function OpportunitiesKanban({ opportunities, stages, onOpen, onEdit, onRequestDelete, onStageChanged }: OpportunitiesKanbanProps) {
   const [dragging, setDragging] = useState<{ id: string; stage: string } | null>(null);
   const [overStage, setOverStage] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<{ opp: CrmOpportunity; target: CrmPipelineStage } | null>(null);
@@ -132,8 +135,8 @@ export function OpportunitiesKanban({ opportunities, stages, onEdit, onRequestDe
                           <div className="flex items-start justify-between gap-1.5">
                             <button
                               type="button"
-                              onClick={() => onEdit(o)}
-                              className="text-sm font-medium text-(--zaire-text) text-left truncate hover:text-zaire-blue flex-1"
+                              onClick={() => onOpen(o)}
+                              className="text-sm font-medium text-(--zaire-text) text-left truncate hover:text-zaire-blue flex-1 cursor-pointer"
                             >
                               {o.title}
                             </button>
