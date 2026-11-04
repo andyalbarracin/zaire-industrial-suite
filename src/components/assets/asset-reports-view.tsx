@@ -1,6 +1,7 @@
 "use client";
 // asset-reports-view.tsx — src/components/assets/asset-reports-view.tsx — 2026-07-20
-// Reportes de Zaire Assets: KPIs + gráficos (recharts, degradé del tema) + ranking de riesgo + export XLS/CSV/PDF.
+// Reportes de Zaire Assets: KPIs + gráficos (recharts, degradé del tema) + ranking de riesgo +
+// "los que más te consumen" + export XLS/CSV/PDF.
 
 import { useMemo } from "react";
 import {
@@ -11,13 +12,32 @@ import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
 import { downloadCSV } from "@/lib/export";
 import { formatCurrency, formatCurrencyCompact } from "@/lib/utils";
-import { computeAssetReports } from "@/lib/assets/reports";
+import { computeAssetReports, topConsumers, type TopConsumers } from "@/lib/assets/reports";
+import { buildReliabilityMap } from "@/lib/assets/reliability-map";
+import { ReliabilityMapChart } from "@/components/assets/reliability-map";
+import { ROUTES } from "@/lib/routes";
+import Link from "next/link";
 import type { Asset, AssetEvent, Currency } from "@/lib/assets/types";
 
 const COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "var(--chart-6)"];
 
 export function AssetReportsView({ assets, events }: { assets: Asset[]; events: AssetEvent[] }) {
   const rep = useMemo(() => computeAssetReports(assets, events), [assets, events]);
+  // El reloj lo lee `topConsumers` por su cuenta (tiene `now = Date.now()` por defecto), igual
+  // que `computeReliability`. Ningún componente llama a Date.now() en su render: el compilador
+  // de React lo marca como impuro, y con razón —dos renders del mismo dato darían distinto—.
+  // La impureza vive en la capa pura, que es donde el resto del módulo ya la tiene.
+  const consumo = useMemo(() => topConsumers(assets, events), [assets, events]);
+
+  // El mapa se arma con lo que la pasada de flota YA calculó (confiabilidad + referencia): no
+  // recalcula nada, solo ubica. Así no puede contradecir a la ficha de cada equipo.
+  const mapa = useMemo(() => buildReliabilityMap(assets.map((a) => ({
+    id: a.id, name: a.name, tag: a.tag, criticidad: a.criticidad,
+    mtbfHours: a.reliability?.mtbfHours ?? null,
+    referenceHours: a.mtbfReferenceHours ?? null,
+    reactiveIndex: a.reliability?.reactiveIndex ?? null,
+    outOfService: a.zhi?.outOfService ?? false,
+  }))), [assets]);
   const cur = rep.primaryCurrency as Currency;
   const today = new Date().toISOString().slice(0, 10);
 
@@ -28,6 +48,10 @@ export function AssetReportsView({ assets, events }: { assets: Asset[]; events: 
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rep.costByAsset.map((r) => ({ Equipo: r.name, [`Costo ${rep.primaryCurrency}`]: Math.round(r.value) }))), "Costo x Equipo");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rep.riskRanking.map((r) => ({ Equipo: r.name, Estado: r.status, Criticidad: r.criticidad, Salud: r.health, Riesgo: r.risk }))), "Ranking de Riesgo");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rep.topFailures.map((r) => ({ Equipo: r.name, Fallas: r.value }))), "Top Fallas");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(consumo.rows.map((r) => ({
+      Equipo: r.name, Intervenciones: r.intervenciones, "Horas fuera de servicio": Math.round(r.horasFuera),
+      [`Costo ${consumo.currency}`]: Math.round(r.costo),
+    }))), "Mas Consumen");
     XLSX.writeFile(wb, `Zaire_Assets_Reportes_${today}.xlsx`);
   }
   function exportCSV() {
@@ -95,6 +119,10 @@ export function AssetReportsView({ assets, events }: { assets: Asset[]; events: 
         </ChartCard>
       </div>
 
+      <ReliabilityMapChart map={mapa} />
+
+      <ConsumersTable data={consumo} />
+
       <RiskTable rows={rep.riskRanking} />
     </div>
   );
@@ -118,8 +146,13 @@ function ChartCard({ title, children }: { title: string; children: React.ReactEl
   );
 }
 
+// Las bandas del ZHI (80/60/40), no los umbrales viejos de 70/40 que tenía esta vista: el mismo
+// número tiene que pintarse igual en todo el módulo.
 function healthColor(h: number): string {
-  return h >= 70 ? "text-green-600 dark:text-green-400" : h >= 40 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400";
+  if (h >= 80) return "text-green-600 dark:text-green-400";
+  if (h >= 60) return "text-amber-600 dark:text-amber-400";
+  if (h >= 40) return "text-orange-600 dark:text-orange-400";
+  return "text-red-600 dark:text-red-400";
 }
 
 function RiskTable({ rows }: { rows: { name: string; status: string; criticidad: number; health: number; risk: number }[] }) {
@@ -148,6 +181,72 @@ function RiskTable({ rows }: { rows: { name: string; status: string; criticidad:
               </tr>
             ))}
             {rows.length === 0 && (<tr><td colSpan={5} className="px-4 py-8 text-center text-(--zaire-text-muted)">Sin equipos en riesgo</td></tr>)}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+const horas = (h: number) => {
+  // Más de dos días en horas deja de decir algo: "72 h" se entiende peor que "3 días".
+  if (h <= 0) return "—";
+  if (h < 48) return `${Math.round(h)} h`;
+  const d = Math.round(h / 24);
+  return `${d} ${d === 1 ? "día" : "días"}`;
+};
+
+/**
+ * "Los 10 equipos que más te consumen" (§7.5). En la industria, la lista de malos actores.
+ *
+ * No repite al ranking de riesgo que está debajo: ése ordena por "¿qué atiendo primero?" (salud ×
+ * criticidad, mira hacia adelante). Éste ordena por lo que YA te costó. Un equipo puede estar
+ * sano hoy y haber sido el que más plata y horas se llevó en el año.
+ *
+ * El criterio de orden se muestra en pantalla a propósito: un ranking cuyo criterio no se ve es
+ * un ranking en el que no se puede confiar.
+ */
+function ConsumersTable({ data }: { data: TopConsumers }) {
+  const porHoras = data.orderedBy === "horas";
+  return (
+    <div className="zaire-card overflow-hidden">
+      <div className="px-5 py-3 border-b border-(--zaire-border)">
+        <h3 className="text-sm font-semibold text-(--zaire-text)">Los equipos que más te consumen</h3>
+        <p className="text-xs text-(--zaire-text-muted) mt-0.5">
+          Últimos {data.periodMonths} meses · ordenado por {porHoras ? "tiempo fuera de servicio" : "cantidad de intervenciones"}
+          {!porHoras && " (todavía no hay horas de parada cargadas)"}
+        </p>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-subtle border-b border-(--zaire-border) text-xs text-(--zaire-text-muted) uppercase tracking-wide">
+            <tr>
+              <th className="text-left px-4 py-2.5">Equipo</th>
+              <th className="text-right px-4 py-2.5">Intervenciones</th>
+              <th className="text-right px-4 py-2.5">Fuera de servicio</th>
+              <th className="text-right px-4 py-2.5">Costo ({data.currency})</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-(--zaire-border)">
+            {data.rows.map((r) => (
+              <tr key={r.id} className="hover:bg-subtle transition-colors">
+                <td className="px-4 py-2.5">
+                  <Link href={ROUTES.assets.equipo(r.id)} className="text-(--zaire-text) hover:text-zaire-blue hover:underline">
+                    {r.name}
+                  </Link>
+                </td>
+                <td className={`px-4 py-2.5 text-right tabular-nums ${!porHoras ? "font-semibold text-(--zaire-text)" : ""}`}>{r.intervenciones}</td>
+                <td className={`px-4 py-2.5 text-right tabular-nums ${porHoras ? "font-semibold text-(--zaire-text)" : "text-(--zaire-text-muted)"}`}>{horas(r.horasFuera)}</td>
+                <td className="px-4 py-2.5 text-right tabular-nums text-(--zaire-text-muted)">
+                  {r.costo > 0 ? formatCurrency(r.costo, data.currency as Currency) : "—"}
+                </td>
+              </tr>
+            ))}
+            {data.rows.length === 0 && (
+              <tr><td colSpan={4} className="px-4 py-8 text-center text-(--zaire-text-muted)">
+                Ningún equipo tuvo intervenciones en los últimos {data.periodMonths} meses.
+              </td></tr>
+            )}
           </tbody>
         </table>
       </div>

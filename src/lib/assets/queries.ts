@@ -67,7 +67,11 @@ export const getAssets = cache(async (): Promise<Asset[]> => {
 
   return assets.map((a) => {
     const r = fleetBy.get(a.id);
-    return { ...a, zhi: r?.zhi, reliability: r?.reliability, health: r?.zhi.score ?? undefined };
+    return {
+      ...a, zhi: r?.zhi, reliability: r?.reliability,
+      mtbfReferenceHours: r?.references.mtbf.hours ?? null,
+      health: r?.zhi.score ?? undefined,
+    };
   });
 });
 

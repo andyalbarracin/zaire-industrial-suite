@@ -3,6 +3,7 @@
 
 import type { Asset, AssetEvent } from "@/lib/assets/types";
 import type { ZhiBand } from "@/lib/assets/zhi";
+import { downtimeOf } from "@/lib/assets/reliability";
 import { ASSET_STATUS_LABELS, ASSET_TYPE_LABELS, CRITICIDAD_LABELS } from "@/lib/assets/constants";
 
 export interface NameValue { name: string; value: number }
@@ -149,4 +150,87 @@ export function bandDistribution(assets: readonly Asset[]): BandSlice[] {
   }
   // Las bandas vacías quedan afuera: un gajo de 0 no aporta nada y ensucia la leyenda.
   return BAND_ORDER.filter((b) => acc.has(b)).map((band) => ({ band, value: acc.get(band)! }));
+}
+
+// ------------------------------------------- "Los 10 que más te consumen" (§7.5)
+
+/** Ventana del ranking. Lo de hace dos años no es lo que te está consumiendo hoy. */
+const CONSUMO_MESES = 12;
+
+export interface ConsumerRow {
+  id: string;
+  /** TAG · nombre, que es como lo llaman en planta. */
+  name: string;
+  intervenciones: number;
+  horasFuera: number;
+  /** Acumulado en la moneda dominante de la flota. Las otras monedas NO se suman. */
+  costo: number;
+}
+
+export interface TopConsumers {
+  rows: ConsumerRow[];
+  /**
+   * Por qué criterio quedó ordenado. La UI **tiene que decirlo**: un ranking cuyo criterio no
+   * se ve es un ranking en el que no se puede confiar.
+   */
+  orderedBy: "horas" | "intervenciones";
+  currency: string;
+  periodMonths: number;
+}
+
+/**
+ * Los equipos que más recursos consumen: en la industria, la lista de "malos actores".
+ *
+ * NO es el ranking de riesgo (ése ordena por "¿qué atiendo primero?"), ni el de fallas (ése
+ * cuenta cuántas veces se rompió). Éste responde **"¿cuál me está saliendo caro tenerlo?"**, que
+ * es la pregunta de un gerente y la que justifica reemplazar un equipo.
+ *
+ * ORDEN: por **horas fuera de servicio**, que es lo que de verdad duele —una parada frena la
+ * línea, una intervención planificada no—. Pero si **nadie** cargó paradas (el caso normal al
+ * principio), ordenar por un cero constante daría un ranking arbitrario disfrazado de dato: ahí
+ * cae a **cantidad de intervenciones** y lo declara en `orderedBy` para que la UI lo diga.
+ *
+ * Los equipos sin ninguna intervención en el período **no aparecen**: no consumieron nada.
+ */
+export function topConsumers(
+  assets: readonly Asset[],
+  events: readonly AssetEvent[],
+  now: number = Date.now(),
+): TopConsumers {
+  const desde = new Date(now);
+  desde.setUTCMonth(desde.getUTCMonth() - CONSUMO_MESES);
+  const desdeStr = desde.toISOString().slice(0, 10);
+
+  const enPeriodo = events.filter((e) => e.event_date >= desdeStr);
+
+  // Moneda dominante: la misma regla que el resto del módulo, nunca se suman monedas distintas.
+  const porMoneda: Record<string, number> = {};
+  for (const e of enPeriodo) if (e.cost) porMoneda[e.currency || "ARS"] = (porMoneda[e.currency || "ARS"] ?? 0) + e.cost;
+  const currency = Object.entries(porMoneda).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "ARS";
+
+  const nombre: Record<string, string> = {};
+  for (const a of assets) nombre[a.id] = a.tag ? `${a.tag} · ${a.name}` : a.name;
+
+  const acc = new Map<string, ConsumerRow>();
+  for (const e of enPeriodo) {
+    // Un evento de un equipo que no está en la lista (borrado, o de otra página) se ignora.
+    if (!nombre[e.asset_id]) continue;
+    const row = acc.get(e.asset_id) ?? { id: e.asset_id, name: nombre[e.asset_id], intervenciones: 0, horasFuera: 0, costo: 0 };
+    // TODA intervención cuenta, no solo las fallas: un preventivo también consume gente y horas.
+    row.intervenciones += 1;
+    row.horasFuera += downtimeOf(e).hours;
+    if (e.cost && (e.currency || "ARS") === currency) row.costo += e.cost;
+    acc.set(e.asset_id, row);
+  }
+
+  const rows = [...acc.values()];
+  const hayParadas = rows.some((r) => r.horasFuera > 0);
+  const orderedBy = hayParadas ? "horas" : "intervenciones";
+
+  rows.sort((a, b) =>
+    hayParadas
+      ? b.horasFuera - a.horasFuera || b.intervenciones - a.intervenciones
+      : b.intervenciones - a.intervenciones || b.costo - a.costo);
+
+  return { rows: rows.slice(0, 10), orderedBy, currency, periodMonths: CONSUMO_MESES };
 }

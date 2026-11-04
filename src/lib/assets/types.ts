@@ -55,6 +55,8 @@ export interface Asset {
   zhi?: Zhi;
   /** La confiabilidad que alimentó al índice. La vista de flota saca de acá sus medianas. */
   reliability?: Reliability;
+  /** Contra qué se comparó. Lo usa el Mapa de confiabilidad para su eje X. */
+  mtbfReferenceHours?: number | null;
 }
 
 export interface AssetEvent {
