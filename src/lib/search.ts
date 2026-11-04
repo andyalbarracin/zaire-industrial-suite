@@ -150,7 +150,7 @@ export async function searchSuite(q: string): Promise<SearchGroup[]> {
     href: ROUTES.trace.orden(order.id),
   })));
   push("crm_leads", "Leads · CRM", d(leads, "crm/leads").map((l) => ({ title: l.company_name ?? l.contact_name ?? "Lead", subtitle: l.company_name && l.contact_name ? l.contact_name : "", href: ROUTES.crm.lead(l.id) })));
-  push("crm_opps", "Oportunidades · CRM", d(opps, "crm/oportunidades").map((o) => ({ title: o.title, subtitle: o.client?.business_name ?? "", href: ROUTES.crm.pipeline })));
+  push("crm_opps", "Oportunidades · CRM", d(opps, "crm/oportunidades").map((o) => ({ title: o.title, subtitle: o.client?.business_name ?? "", href: ROUTES.crm.oportunidad(o.id) })));
   push("crm_contacts", "Contactos · CRM", d(contacts, "crm/contactos").map((c) => ({ title: c.full_name, subtitle: c.role_title ?? "", href: ROUTES.crm.contacto(c.id) })));
   push("crm_quotes", "Cotizaciones · CRM", d(quotes, "crm/cotizaciones").map((q2) => ({ title: q2.quote_number ?? q2.title, subtitle: q2.title, href: ROUTES.crm.cotizacion(q2.id) })));
   push("field_visits", "Visitas · Field", d(visits, "field/visitas").map((v) => ({ title: v.visit_number ?? "Visita", subtitle: v.client?.business_name ?? "", href: ROUTES.field.visita(v.id) })));

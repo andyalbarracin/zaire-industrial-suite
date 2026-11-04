@@ -4,11 +4,13 @@
 // dinámicas, alta/edición/eliminación de oportunidades y export. Estado optimista compartido.
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Plus, Search, Download, LayoutGrid, List, Pencil, Trash2, SlidersHorizontal } from "lucide-react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { logCrmAudit } from "@/lib/crm/audit";
+import { ROUTES } from "@/lib/routes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FilterBar } from "@/components/field/filter-bar";
@@ -36,6 +38,7 @@ export function PipelineView({ initialOpportunities, initialStages, clients, pro
   const [view, setView] = useState<"board" | "list">("board");
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState<string>("");
+  const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<CrmOpportunity | null>(null);
   const [deleting, setDeleting] = useState<CrmOpportunity | null>(null);
@@ -90,6 +93,8 @@ export function PipelineView({ initialOpportunities, initialStages, clients, pro
 
   function openNew() { setEditing(null); setFormOpen(true); }
   function openEdit(o: CrmOpportunity) { setEditing(o); setFormOpen(true); }
+  // La tarjeta lleva a la ficha; el lápiz queda para corregir algo sin salir del tablero.
+  function openDetail(o: CrmOpportunity) { router.push(ROUTES.crm.oportunidad(o.id)); }
 
   function exportRows() {
     return filtered.map((o) => ({
@@ -165,7 +170,7 @@ export function PipelineView({ initialOpportunities, initialStages, clients, pro
           <OpportunitiesKanban
             opportunities={filtered}
             stages={stages}
-            onEdit={openEdit}
+            onOpen={openDetail} onEdit={openEdit}
             onRequestDelete={setDeleting}
             onStageChanged={handleStageChanged}
           />
@@ -188,7 +193,7 @@ export function PipelineView({ initialOpportunities, initialStages, clients, pro
                 {filtered.map((o) => {
                   const st = stageByKey.get(o.stage);
                   return (
-                    <tr key={o.id} onClick={() => openEdit(o)} className="hover:bg-subtle/80 cursor-pointer">
+                    <tr key={o.id} onClick={() => openDetail(o)} className="hover:bg-subtle/80 cursor-pointer">
                       <td className="px-4 py-3 font-medium text-(--zaire-text)">{o.title}</td>
                       <td className="px-4 py-3 text-(--zaire-text-muted)">{o.client?.business_name ?? "—"}</td>
                       <td className="px-4 py-3">

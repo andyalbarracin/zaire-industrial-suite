@@ -17,6 +17,7 @@ import type {
   CrmQuote,
   Client,
 } from "@/lib/crm/types";
+import type { AuditLog } from "@/lib/types/database";
 import { isModuleEnabled } from "@/lib/modules";
 import { computeAccountScore } from "@/lib/crm/score";
 
@@ -180,7 +181,7 @@ export async function getContact(id: string): Promise<CrmContact | null> {
 }
 
 // Actividades filtradas por entidad (para las fichas de detalle).
-async function activitiesBy(column: "lead_id" | "client_id" | "contact_id", value: string): Promise<CrmActivity[]> {
+async function activitiesBy(column: "lead_id" | "client_id" | "contact_id" | "opportunity_id", value: string): Promise<CrmActivity[]> {
   const supabase = await createClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = supabase as any;
@@ -196,6 +197,28 @@ async function activitiesBy(column: "lead_id" | "client_id" | "contact_id", valu
 export const getActivitiesForLead = (leadId: string) => activitiesBy("lead_id", leadId);
 export const getActivitiesForClient = (clientId: string) => activitiesBy("client_id", clientId);
 export const getActivitiesForContact = (contactId: string) => activitiesBy("contact_id", contactId);
+export const getActivitiesForOpportunity = (opportunityId: string) => activitiesBy("opportunity_id", opportunityId);
+
+/**
+ * Historial de cambios de una entidad del CRM, leído de `audit_logs`.
+ *
+ * No hace falta una tabla nueva: `logCrmAudit()` ya viene escribiendo ahí cada alta, edición y
+ * borrado (`entity_type` = 'crm_opportunity', 'crm_lead', …) con el usuario y la fecha. Lo único
+ * que faltaba era mostrarlo: hasta ahora se registraba y no se leía desde ninguna pantalla.
+ */
+export async function getEntityHistory(entityType: string, entityId: string): Promise<AuditLog[]> {
+  const supabase = await createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any;
+  const { data } = await sb
+    .from("audit_logs")
+    .select("id, entity_type, entity_id, action, description, user_id, user_name, created_at")
+    .eq("entity_type", entityType)
+    .eq("entity_id", entityId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  return (data ?? []) as AuditLog[];
+}
 
 export async function getContactsForClient(clientId: string): Promise<CrmContact[]> {
   const supabase = await createClient();
